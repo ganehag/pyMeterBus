@@ -1,18 +1,38 @@
 from mbus_h import *
 
-class MBusDataInformationBlock:
+class switch(object):
+    def __init__(self, value):
+        self.value = value
+        self.fall = False
+
+    def __iter__(self):
+        """Return the match method once, then stop"""
+        yield self.match
+        raise StopIteration
+
+    def match(self, *args):
+        """Indicate whether or not to enter a case suite"""
+        if self.fall or not args:
+            return True
+        elif self.value in args: # changed for v1.5, see below
+            self.fall = True
+            return True
+        else:
+            return False
+
+class MBusDataInformationBlock(object):
 	def __init__(self):
 		self.dif = None # CHAR
 		self.dife = []  # CHAR[10]
 
-class MBusValueInformationBlock:
+class MBusValueInformationBlock(object):
 	def __init__(self):
 		self.vif = None # CHAR
 		self.vife = []  # CHAR[10]
 
 		self.custom_vif = [] # CHAR[128]
 
-class MBusTelegram:
+class MBusTelegram(object):
 	def __init__(self):
 		self.type = None
 		self.base_size = None

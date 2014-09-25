@@ -1,12 +1,12 @@
+import json
+from mbus_c import *
 from mbus_h import *
 from mbus_telegram import *
 from exceptions import *
 
 class MBusLongFrame(MBusTelegram):
 	def __init__(self, dbuf=None):
-		return
-			# self.dump_records()
-
+		super(MBusLongFrame, self).__init__()
 
 	def compute_crc(self):
 		return sum(self.data) % 256
@@ -48,13 +48,13 @@ class MBusLongFrame(MBusTelegram):
 		if not base_frame.check_crc():
 			raise MBusFrameCRCError(base_frame.compute_crc(), base_frame.checksum)
 
-		# d = base_frame.parse_user_data()
+		d = base_frame.parse_user_data()
 
-		# base_frame.records = []
-		# base_frame.info = d
+		base_frame.records = []
+		base_frame.info = d
 
-		# if 'records' in d:
-		# 	base_frame.records = d['records']
+		if 'records' in d:
+		 	base_frame.records = d['records']
 
 		return base_frame
 
@@ -93,7 +93,7 @@ class MBusLongFrame(MBusTelegram):
 
 			jdata['mbus_data'].append(row)
 
-		self.print_hdr(self.info)
+		# self.print_hdr(self.info)
 		print json.dumps(jdata, indent=4, separators=(',', ': '))
 
 
@@ -264,7 +264,7 @@ class MBusLongFrame(MBusTelegram):
 				newRecord.data_len = self.data_size - i
 				newRecord.data = data[i:i+newRecord.data_len] # eat remaining
 				i += newRecord.data_len
-				records.append( newRecord )
+				self.records.append( newRecord )
 				continue
 
 			# calculate length of data record
