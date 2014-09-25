@@ -50,7 +50,6 @@ class TelegramVariableDataRecord(object):
 	def vifes(self, value):
 	    self._vifes = value
 	
-	
 	@property
 	def dataField(self):
 	    return self._dataField
