@@ -37,17 +37,17 @@ class TelegramDataField(TelegramField):
 
         for case in switch(enc):
             if case(TelegramEncoding.ENCODING_INTEGER):
-                self.parsedValue = self.decodeInt * pow(10, multiplier)
+                self.parsed_value = self.decodeInt * pow(10, multiplier)
                 break
             if case(TelegramEncoding.ENCODING_BCD):
-                self.parsedValue = self.decodeBCD * pow(10, multiplier)
+                self.parsed_value = self.decodeBCD * pow(10, multiplier)
                 # print self.
                 break
             if case(TelegramEncoding.ENCODING_REAL):
-                self.parsedValue = self.decodeReal * pow(10, multiplier)
+                self.parsed_value = self.decodeReal * pow(10, multiplier)
                 break
             if case(TelegramEncoding.ENCODING_VARIABLE_LENGTH):
-                self.parsedValue = self.decodeASCII
+                self.parsed_value = self.decodeASCII
                 break
             if case(TelegramEncoding.ENCODING_NULL):
                 pass
@@ -59,19 +59,19 @@ class TelegramDataField(TelegramField):
         for case in switch(dateType):
             if case(MeasureUnit.DATE):
                 # Type G: Day.Month.Year
-                self.parsedValue = self.decodeDate
+                self.parsed_value = self.decodeDate
                 break
             if case(MeasureUnit.DATE_TIME):
                 # Type F: Day.Month.Year Hour:Minute
-                self.parsedValue = self.decodeDateTime
+                self.parsed_value = self.decodeDateTime
                 break
             if case(MeasureUnit.TIME):
                 # Typ J: Hour:Minute:Second
-                self.parsedValue = self.decodeTimeWithSeconds
+                self.parsed_value = self.decodeTimeWithSeconds
                 break
             if case(MeasureUnit.DATE_TIME_S):
                 # Typ I: Day.Month.Year Hour:Minute:Second
-                self.parsedValue = self.decodeDateTimeWithSeconds
+                self.parsed_value = self.decodeDateTimeWithSeconds
                 break
             if case():
                 return False
@@ -81,4 +81,4 @@ class TelegramDataField(TelegramField):
     def debug(self):
         print "Field-Value (bytes):".ljust(30),
         print ", ".join(map(hex, self.field_parts))
-        print "Field-Value:".ljust(30), self.parsedValue
+        print "Field-Value:".ljust(30), self.parsed_value

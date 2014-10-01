@@ -184,11 +184,7 @@ class TelegramBodyPayload(object):
 
     def to_JSON(self):
         return json.dumps({
-            'records': [{
-                'value': r.dataField.parsedValue,
-                'unit': r.dataField.parent.vif.m_unit.name,
-                'type': str(r.dataField.parent.vif.type)
-            } for r in self.records]
+            'records': [json.loads(r.to_JSON()) for r in self.records]
         }, sort_keys=False, indent=4)
 
 
@@ -290,6 +286,7 @@ class TelegramBodyHeader(object):
             self.manufacturer_field.decodeManufacturer
         print "Version:".ljust(30), hex(self.vField.field_parts[0])
         print "Medium:".ljust(30), hex(self.medField.field_parts[0])
+        print "AccessNo:".ljust(30), self.acc_nr_field.field_parts[0]
         print "StatusField:".ljust(30), hex(self.statusField.field_parts[0])
         print "Sig-Fields:".ljust(30), ", ".join(
             map(hex, self.sigField.field_parts))  # FIX PARSE
@@ -301,6 +298,7 @@ class TelegramBodyHeader(object):
             'manufactorer': self.manufacturer_field.decodeManufacturer,
             'version': hex(self.version_field.field_parts[0]),
             'medium': hex(self.measure_medium_field.field_parts[0]),
+            'access_no': self.acc_nr_field.field_parts[0],
             'status': hex(self.status_field.field_parts[0]),
             'sign': ", ".join(map(hex, self.sig_field.field_parts))
         }, sort_keys=False, indent=4)
