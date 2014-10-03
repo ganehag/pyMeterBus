@@ -280,16 +280,16 @@ class TelegramBodyHeader(object):
 
     def debug(self):
         print "Type of TelegramBodyHeader:".ljust(30), hex(
-            self.ciField.field_parts[0])
+            self.ci_field.field_parts[0])
         print "Identification#:".ljust(30), ", ".join(map(hex, self.id_nr))
         print "Manufacturer:".ljust(30), \
             self.manufacturer_field.decodeManufacturer
-        print "Version:".ljust(30), hex(self.vField.field_parts[0])
-        print "Medium:".ljust(30), hex(self.medField.field_parts[0])
+        print "Version:".ljust(30), hex(self.version_field.field_parts[0])
+        print "Medium:".ljust(30), hex(self.measure_medium_field.field_parts[0])
         print "AccessNo:".ljust(30), self.acc_nr_field.field_parts[0]
-        print "StatusField:".ljust(30), hex(self.statusField.field_parts[0])
+        print "StatusField:".ljust(30), hex(self.status_field.field_parts[0])
         print "Sig-Fields:".ljust(30), ", ".join(
-            map(hex, self.sigField.field_parts))  # FIX PARSE
+            map(hex, self.sig_field.field_parts))  # FIX PARSE
 
     def to_JSON(self):
         return json.dumps({
