@@ -61,6 +61,11 @@ class TelegramVariableDataRecord(object):
         return vif_table.VIFTable.lut[code]
 
     @property
+    def unit(self):
+        _, unit, _ = self._parse_vifx()
+        return unit
+
+    @property
     def parsed_value(self):
         mult, unit, typ = self._parse_vifx()
 

@@ -1,8 +1,5 @@
 import json
 
-from dif_telegram_field import DIFTelegramField, DIFETelegramField
-from vif_telegram_field import VIFTelegramField, VIFETelegramField
-
 from telegram_field import TelegramField
 from telegram_data_field import TelegramDataField
 from telegram_variable_data_record import TelegramVariableDataRecord
@@ -56,62 +53,31 @@ class TelegramBodyPayload(object):
     def _parseVariableDataRecord(self, startPos):
         lowerBoundary = 0
         upperBoundary = 0
-        # lvar_bit = False
+
+        # self.body.debug_fields(startPos, 0)
 
         rec = TelegramVariableDataRecord()
-        # dif = DIFTelegramField()
-        # # vif = VIFTelegramField()
 
-        # dif.field_parts.append(self.body.field_parts[startPos])
-        # dif.parse()
-
-        # # vif.parent = rec
-        # rec.dif = dif
-        # # rec.vif = vif
-        # rec.difes = []
-        # # rec.vifes = []
-
-        # if dif.is_end_of_user_data:
-        #     # only manufacturer specific data left, stop parsing
-        #     return len(self.body.field_parts)
-
-        # elif dif.function_type == \
-        #         TelegramFunctionType.SPECIAL_FUNCTION_FILL_BYTE:
-        #     return startPos + 1
-
-        # self.body.debug_fields(startPos + 1, 0)
-
-        # if dif.is_extension_bit:
-        #     for part in self.body.field_parts[startPos + 1:]:
-        #         dife = DIFETelegramField()
-        #         dife.field_parts.append(part)
-        #         rec.difes.append(dife)
-
-        #         if not dife.is_extension_bit:
-        #             break
-
-        #######################################################
-
+        # Data Information Block
         rec.dib.field_parts.append(self.body.field_parts[
             startPos])
 
-        if rec.dib.is_eoud:
-            # only manufacturer specific data left, stop parsing
+        if rec.dib.is_eoud:  # End of User Data
             return len(self.body.field_parts)
 
         elif rec.dib.function_type == \
                 TelegramFunctionType.SPECIAL_FUNCTION_FILL_BYTE:
             return startPos + 1
 
-        self.body.debug_fields(startPos, 0)
-
         if rec.dib.has_extension_bit:
             for count, part in enumerate(
                     self.body.field_parts[startPos + 1:]):
                 rec.dib.field_parts.append(part)
+
                 if not rec.dib.has_extension_bit:
                     break
 
+        # Value Information Block
         rec.vib.field_parts.append(self.body.field_parts[
             startPos + len(rec.dib.field_parts)])
 
@@ -119,48 +85,16 @@ class TelegramBodyPayload(object):
             for count, part in enumerate(
                     self.body.field_parts[startPos + 1 + len(rec.dib.field_parts):]):
                 rec.vib.field_parts.append(part)
-                self.body.debug_fields(startPos + 1 + len(rec.dib.field_parts) + count, 2)
+
                 if not rec.vib.has_extension_bit:
                     break
 
-        # rec.vib.debug_fields(0)
-
-        # # Increase startPos by 1 (DIF) and the count of DIFEs
-        # vif.field_parts.append(self.body.field_parts[
-        #     startPos + 1 + len(rec.difes)])
-
-        # vif.parse()
-
-        # if vif.is_extension_bit:
-        #     # increase startPosition by 2 (DIF and VIF) and the number of DIFEs
-        #     for count, part in enumerate(
-        #             self.body.field_parts[startPos + 2 + len(rec.difes):]):
-        #         vife = VIFETelegramField()
-        #         vife.field_parts.append(part)
-        #         vife.parent = rec
-        #         vife.parse()
-        #         rec.vifes.append(vife)
-
-        #         self.body.debug_fields(startPos + 2 + len(rec.difes) + count, 2)
-
-        #         if not vife.is_extension_bit:
-        #             break
-
-        #     # self.body.debug_fields(startPos + 2 + len(rec.difes))
-
-        #     # Check for LVAR bit WTF!!!!
-        #     # FIXME! ??? Should this even be here?
-        #     # lvar_bit = rec.vifes[0].is_lvar_bit
-
-        # lowerBoundary = startPos + 2 + len(rec.difes) + len(rec.vifes)
         lowerBoundary = startPos + len(rec.dib.field_parts) + len(rec.vib.field_parts)
-
-        # if there exist a LVAR Byte at the beginning of the data field,
-        # change the data field length
-        # if lvar_bit:
 
         length, encoding = rec.dib.length_encoding
 
+        # if there exist a LVAR Byte at the beginning of the data field,
+        # change the data field length
         if encoding == TelegramEncoding.ENCODING_VARIABLE_LENGTH:
             length = self.body.field_parts[lowerBoundary]
             lowerBoundary += 1
@@ -170,7 +104,7 @@ class TelegramBodyPayload(object):
         if length == 0:
             return upperBoundary
 
-        # Load Remaining data as DataFields
+        # Data Block
         if len(self.body.field_parts) >= upperBoundary:
             dataField = TelegramDataField(rec)
             dataField.field_parts += \
@@ -180,81 +114,7 @@ class TelegramBodyPayload(object):
 
         self.records.append(rec)
 
-        # self.body.debug_fields(upperBoundary, 1)
-
         return upperBoundary
-
-
-        # if dif.data_field_encoding == TelegramEncoding.ENCODING_VARIABLE_LENGTH:
-        #     dif.data_field_length = self.body.field_parts[lowerBoundary]
-        #     lowerBoundary += 1
-
-        # upperBoundary = lowerBoundary + dif.data_field_length
-
-        # if dif.data_field_length == 0:
-        #     return upperBoundary
-
-        # if len(self.body.field_parts) >= upperBoundary:
-        #     dataField = TelegramDataField(rec)
-        #     dataField.field_parts += \
-        #         self.body.field_parts[lowerBoundary:upperBoundary]
-        #     dataField.parse()
-        #     rec.dataField = dataField
-
-        # self.records.append(rec)
-
-        # self.body.debug_fields(upperBoundary, 1)
-
-        # return upperBoundary
-
-    # def _parseDIFEFields(self, pos):
-    #     difeList = []
-    #     extension_bit_set = True
-    #     dife = None
-
-    #     while extension_bit_set:
-    #         if len(self.body.field_parts) < pos:
-    #             # TODO: Throw Exception
-    #             pass
-
-    #         dife = DIFETelegramField()
-    #         dife.field_parts.append(self.body.field_parts[pos])
-
-    #         difeList.append(dife)
-    #         extension_bit_set = dife.is_extension_bit
-    #         pos += 1
-
-    #     return difeList
-
-    # def _parseVIFEFields(self, position, parent):
-    #     vifeList = []
-    #     extension_bit_set = True
-    #     vife = None
-
-    #     while extension_bit_set:
-    #         if len(self.body.field_parts) < position:
-    #             # TODO: throw exception
-    #             pass
-
-    #         vife = self._processSingleVIFEField(
-    #             self.body.field_parts[position], parent)
-    #         vifeList.append(vife)
-    #         extension_bit_set = vife.is_extension_bit
-    #         position += 1
-
-    #     return vifeList
-
-    # def _processSingleDIFEField(self, field_value):
-    #     dife = DIFETelegramField()
-    #     dife.field_parts.append(field_value)
-    #     return dife
-
-    # def _processSingleVIFEField(self, field_value, parent):
-    #     vife = VIFETelegramField()
-    #     vife.field_parts.append(field_value)
-    #     vife.parent = parent
-    #     vife.parse()
-    #     return vife
 
     def debug(self):
         print "-------------------------------------------------------------"
@@ -270,9 +130,8 @@ class TelegramBodyPayload(object):
         print "-------------------------------------------------------------"
 
     def to_JSON(self):
-        return json.dumps({
-            'records': [json.loads(r.to_JSON()) for r in self.records]
-        }, sort_keys=False, indent=4)
+        return json.dumps([json.loads(r.to_JSON()) for r in self.records],
+                          sort_keys=False, indent=4)
 
 
 class TelegramBodyHeader(object):
@@ -434,5 +293,5 @@ class TelegramBody(object):
     def to_JSON(self):
         return json.dumps({
             'header': json.loads(self.bodyHeader.to_JSON()),
-            'payload': json.loads(self.bodyPayload.to_JSON()),
+            'records': json.loads(self.bodyPayload.to_JSON()),
         }, sort_keys=False, indent=4)

@@ -41,6 +41,79 @@ class VIFUnit(Enum):
     MANUFACTURER_SPEC = 0x7F        # E111 1111
 
 
+class VIFUnitExt(Enum):
+    # Currency Units
+    CURRENCY_CREDIT = 0x03  # E000 00nn Credit of 10 nn-3 of the nominal ...
+    CURRENCY_DEBIT = 0x07   # E000 01nn Debit of 10 nn-3 of the nominal ...
+
+    # Enhanced Identification
+    ACCESS_NUMBER = 0x08     # E000 1000 Access Number (transmission count)
+    MEDIUM = 0x09            # E000 1001 Medium (as in fixed header)
+    MANUFACTURER = 0x0A      # E000 1010 Manufacturer (as in fixed header)
+    PARAMETER_SET_ID = 0x0B  # E000 1011 Parameter set identification Enha ...
+    MODEL_VERSION = 0x0C     # E000 1100 Model / Version
+    HARDWARE_VERSION = 0x0D  # E000 1101 Hardware version #
+    FIRMWARE_VERSION = 0x0E  # E000 1110 Firmware version #
+    SOFTWARE_VERSION = 0x0F  # E000 1111 Software version #
+
+    # Implementation of all TC294 WG1 requirements (improved selection ..)
+    CUSTOMER_LOCATION = 0x10            # E001 0000 Customer location
+    CUSTOMER = 0x11                     # E001 0001 Customer
+    ACCESS_CODE_USER = 0x12             # E001 0010 Access Code User
+    ACCESS_CODE_OPERATOR = 0x13         # E001 0011 Access Code Operator
+    ACCESS_CODE_SYSTEM_OPERATOR = 0x14  # E001 0100 Access Code System Operator
+    ACCESS_CODE_DEVELOPER = 0x15        # E001 0101 Access Code Developer
+    PASSWORD = 0x16                     # E001 0110 Password
+    ERROR_FLAGS = 0x17                  # E001 0111 Error flags (binary)
+    ERROR_MASKS = 0x18                  # E001 1000 Error mask
+    RESERVED = 0x19                     # E001 1001 Reserved
+    DIGITAL_OUTPUT = 0x1A               # E001 1010 Digital Output (binary)
+    DIGITAL_INPUT = 0x1B                # E001 1011 Digital Input (binary)
+    BAUDRATE = 0x1C                     # E001 1100 Baudrate [Baud]
+    RESPONSE_DELAY = 0x1D               # E001 1101 response delay time
+    RETRY = 0x1E                        # E001 1110 Retry
+    RESERVED_2 = 0x1F                   # E001 1111 Reserved
+
+    # Enhanced storage management
+    FIRST_STORAGE_NR = 0x20             # E010 0000 First storage
+    LAST_STORAGE_NR = 0x21              # E010 0001 Last storage
+    SIZE_OF_STORAGE_BLOCK = 0x22        # E010 0010 Size of storage block
+    RESERVED_3 = 0x23                   # E010 0011 Reserved
+    STORAGE_INTERVAL = 0x27             # E010 01nn Storage interval
+    STORAGE_INTERVAL_MONTH = 0x28       # E010 1000 Storage interval month(s)
+    STORAGE_INTERVAL_YEARS = 0x29       # E010 1001 Storage interval year(s)
+
+    # E010 1010 Reserved
+    # E010 1011 Reserved
+    DURATION_SINCE_LAST_READOUT = 0x2F  # E010 11nn Duration since last ...
+
+    #  Enhanced tarif management
+    START_OF_TARIFF = 0x30              # E011 0000 Start (date/time) of tariff
+    DURATION_OF_TARIFF = 0x3            # E011 00nn Duration of tariff
+    PERIOD_OF_TARIFF = 0x37             # E011 01nn Period of tariff
+    PERIOD_OF_TARIFF_MONTH = 0x38       # E011 1000 Period of tariff months(s)
+    PERIOD_OF_TARIFF_YEARS = 0x39       # E011 1001 Period of tariff year(s)
+    DIMENSIONLESS = 0x3A                # E011 1010 dimensionless / no VIF
+
+    # E011 1011 Reserved
+    # E011 11xx Reserved
+    # Electrical units
+    VOLTS = 0x4F                            # E100 nnnn 10 nnnn-9 Volts
+    AMPERE = 0x5F                           # E101 nnnn 10 nnnn-12 A
+    RESET_COUNTER = 0x60                    # E110 0000 Reset counter
+    CUMULATION_COUNTER = 0x61               # E110 0001 Cumulation counter
+    CONTROL_SIGNAL = 0x62                   # E110 0010 Control signal
+    DAY_OF_WEEK = 0x63                      # E110 0011 Day of week
+    WEEK_NUMBER = 0x64                      # E110 0100 Week number
+    TIME_POINT_OF_DAY_CHANGE = 0x65         # E110 0101 Time point of day ...
+    STATE_OF_PARAMETER_ACTIVATION = 0x66    # E110 0110 State of parameter
+    SPECIAL_SUPPLIER_INFORMATION = 0x67     # E110 0111 Special supplier ...
+    DURATION_SINCE_LAST_CUMULATION = 0x6B   # E110 10pp Duration since last
+    OPERATING_TIME_BATTERY = 0x6F           # E110 11pp Operating time battery
+    DATEAND_TIME_OF_BATTERY_CHANGE = 0x70   # E111 0000 Date and time of bat...
+    # E111 0001 to E111 1111 Reserved
+
+
 class MeasureUnit(Enum):
     KWH = "kWh"
     WH = "WH"
@@ -69,6 +142,8 @@ class MeasureUnit(Enum):
     V = "V"
     A = "A"
     HCA = "H.C.A"
+    CURRENCY = "Currency unit"
+    BAUD = "Baud"
 
 
 class VIFTable(object):
@@ -218,7 +293,7 @@ class VIFTable(object):
         0x6B: (1.0e0,  MeasureUnit.BAR, VIFUnit.PRESSURE),
 
         # E110 110n     Time Point */
-        0x6C: (1.0e0, MeasureUnit.DATE, VIFUnit.DATE),  # type G
+        0x6C: (1.0e0, MeasureUnit.DATE, VIFUnit.DATE),            # type G
         0x6D: (1.0e0, MeasureUnit.DATE_TIME, VIFUnit.DATE_TIME),  # type F
 
         # E110 1110     Units for H.C.A. dimensionless */
@@ -234,10 +309,10 @@ class VIFTable(object):
         0x73: (86400.0, MeasureUnit.SECONDS, VIFUnit.AVG_DURATION),  # days
 
         # E111 01nn     Actuality Duration s */
-        0x74: (1.0, MeasureUnit.SECONDS, VIFUnit.AVG_DURATION),  # seconds/
-        0x75: (60.0, MeasureUnit.SECONDS, VIFUnit.AVG_DURATION),  # minutes
-        0x76: (3600.0, MeasureUnit.SECONDS, VIFUnit.AVG_DURATION),  # hours
-        0x77: (86400.0, MeasureUnit.SECONDS, VIFUnit.AVG_DURATION),  # days
+        0x74: (1.0, MeasureUnit.SECONDS, VIFUnit.ACTUALITY_DURATION),
+        0x75: (60.0, MeasureUnit.SECONDS, VIFUnit.ACTUALITY_DURATION),
+        0x76: (3600.0, MeasureUnit.SECONDS, VIFUnit.ACTUALITY_DURATION),
+        0x77: (86400.0, MeasureUnit.SECONDS, VIFUnit.ACTUALITY_DURATION),
 
         # Fabrication No */
         0x78: (1.0, MeasureUnit.NONE, VIFUnit.FABRICATION_NO),
@@ -265,245 +340,243 @@ class VIFTable(object):
         # See 8.4.4 a, only some of them are here. Using range 0x100 - 0x1FF
 
         # E000 00nn Credit of 10nn-3 of the nominal local legal currency units
-        0x100: (1.0e-3, "Currency units", "Credit"),
-        0x101: (1.0e-2, "Currency units", "Credit"),
-        0x102: (1.0e-1, "Currency units", "Credit"),
-        0x103: (1.0e0,  "Currency units", "Credit"),
+        0x100: (1.0e-3, MeasureUnit.CURRENCY, VIFUnitExt.CURRENCY_CREDIT),
+        0x101: (1.0e-2, MeasureUnit.CURRENCY, VIFUnitExt.CURRENCY_CREDIT),
+        0x102: (1.0e-1, MeasureUnit.CURRENCY, VIFUnitExt.CURRENCY_CREDIT),
+        0x103: (1.0e0,  MeasureUnit.CURRENCY, VIFUnitExt.CURRENCY_CREDIT),
 
         # E000 01nn Debit of 10nn-3 of the nominal local legal currency units
-        0x104: (1.0e-3, "Currency units", "Debit"),
-        0x105: (1.0e-2, "Currency units", "Debit"),
-        0x106: (1.0e-1, "Currency units", "Debit"),
-        0x107: (1.0e0,  "Currency units", "Debit"),
+        0x104: (1.0e-3, MeasureUnit.CURRENCY, VIFUnitExt.CURRENCY_DEBIT),
+        0x105: (1.0e-2, MeasureUnit.CURRENCY, VIFUnitExt.CURRENCY_DEBIT),
+        0x106: (1.0e-1, MeasureUnit.CURRENCY, VIFUnitExt.CURRENCY_DEBIT),
+        0x107: (1.0e0,  MeasureUnit.CURRENCY, VIFUnitExt.CURRENCY_DEBIT),
 
         # E000 1000 Access Number (transmission count) */
-        0x108: (1.0e0,  "", "Access Number (transmission count)"),
+        0x108: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.ACCESS_NUMBER),
 
         # E000 1001 Medium (as in fixed header) */
-        0x109: (1.0e0,  "", "Device type"),
+        0x109: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.MEDIUM),
 
         # E000 1010 Manufacturer (as in fixed header) */
-        0x10A: (1.0e0,  "", "Manufacturer"),
+        0x10A: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.MANUFACTURER),
 
         # E000 1011 Parameter set identification */
-        0x10B: (1.0e0,  "", "Parameter set identification"),
+        0x10B: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.PARAMETER_SET_ID),
 
         # E000 1100 Model / Version */
-        0x10C: (1.0e0,  "", "Device type"),
+        0x10C: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.MODEL_VERSION),
 
         # E000 1101 Hardware version # */
-        0x10D: (1.0e0,  "", "Hardware version"),
+        0x10D: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.HARDWARE_VERSION),
 
         # E000 1110 Firmware version # */
-        0x10E: (1.0e0,  "", "Firmware version"),
+        0x10E: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.FIRMWARE_VERSION),
 
         # E000 1111 Software version # */
-        0x10F: (1.0e0,  "", "Software version"),
-
+        0x10F: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.SOFTWARE_VERSION),
 
         # E001 0000 Customer location */
-        0x110: (1.0e0,  "", "Customer location"),
+        0x110: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.CUSTOMER_LOCATION),
 
         # E001 0001 Customer */
-        0x111: (1.0e0,  "", "Customer"),
+        0x111: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.CUSTOMER),
 
         # E001 0010 Access Code User */
-        0x112: (1.0e0,  "", "Access Code User"),
+        0x112: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.ACCESS_CODE_USER),
 
         # E001 0011 Access Code Operator */
-        0x113: (1.0e0,  "", "Access Code Operator"),
+        0x113: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.ACCESS_CODE_OPERATOR),
 
         # E001 0100 Access Code System Operator */
-        0x114: (1.0e0,  "", "Access Code System Operator"),
+        0x114: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.ACCESS_CODE_SYSTEM_OPERATOR),
 
         # E001 0101 Access Code Developer */
-        0x115: (1.0e0,  "", "Access Code Developer"),
+        0x115: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.ACCESS_CODE_DEVELOPER),
 
         # E001 0110 Password */
-        0x116: (1.0e0,  "", "Password"),
+        0x116: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.PASSWORD),
 
         # E001 0111 Error flags (binary) */
-        0x117: (1.0e0,  "", "Error flags"),
+        0x117: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.ERROR_FLAGS),
 
         # E001 1000 Error mask */
-        0x118: (1.0e0,  "", "Error mask"),
+        0x118: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.ERROR_MASKS),
 
         # E001 1001 Reserved */
-        0x119: (1.0e0,  "Reserved", "Reserved"),
+        0x119: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
 
 
         # E001 1010 Digital Output (binary) */
-        0x11A: (1.0e0,  "", "Digital Output"),
+        0x11A: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.DIGITAL_OUTPUT),
 
         # E001 1011 Digital Input (binary) */
-        0x11B: (1.0e0,  "", "Digital Input"),
+        0x11B: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.DIGITAL_INPUT),
 
         # E001 1100 Baudrate [Baud] */
-        0x11C: (1.0e0,  "Baud", "Baudrate"),
+        0x11C: (1.0e0,  MeasureUnit.BAUD, VIFUnitExt.BAUDRATE),
 
         # E001 1101 Response delay time [bittimes] */
-        0x11D: (1.0e0,  "Bittimes", "Response delay time"),
+        0x11D: (1.0e0,  "Bittimes", VIFUnitExt.RESPONSE_DELAY),
 
         # E001 1110 Retry */
-        0x11E: (1.0e0,  "", "Retry"),
+        0x11E: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RETRY),
 
         # E001 1111 Reserved */
-        0x11F: (1.0e0,  "Reserved", "Reserved"),
-
+        0x11F: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED_2),
 
         # E010 0000 First storage # for cyclic storage */
-        0x120: (1.0e0,  "", "First storage # for cyclic storage"),
+        0x120: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.FIRST_STORAGE_NR),
 
         # E010 0001 Last storage # for cyclic storage */
-        0x121: (1.0e0,  "", "Last storage # for cyclic storage"),
+        0x121: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.LAST_STORAGE_NR),
 
         # E010 0010 Size of storage block */
-        0x122: (1.0e0,  "", "Size of storage block"),
+        0x122: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.SIZE_OF_STORAGE_BLOCK),
 
         # E010 0011 Reserved */
-        0x123: (1.0e0,  "Reserved", "Reserved"),
+        0x123: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED_3),
 
         # E010 01nn Storage interval [sec(s)..day(s)] */
-        0x124: (1.0,  MeasureUnit.SECONDS, "Storage interval"),  # second(s)
-        0x125: (60.0,  MeasureUnit.SECONDS, "Storage interval"),  # minute(s)
-        0x126: (3600.0,  MeasureUnit.SECONDS, "Storage interval"),  # hour(s)
-        0x127: (86400.0,  MeasureUnit.SECONDS, "Storage interval"),  # day(s)
-        0x128: (2629743.83, MeasureUnit.SECONDS, "Storage interval"),  # months
-        0x129: (31556926.0, MeasureUnit.SECONDS, "Storage interval"),  # years
+        0x124: (1.0,  MeasureUnit.SECONDS, VIFUnitExt.STORAGE_INTERVAL),
+        0x125: (60.0,  MeasureUnit.SECONDS, VIFUnitExt.STORAGE_INTERVAL),
+        0x126: (3600.0,  MeasureUnit.SECONDS, VIFUnitExt.STORAGE_INTERVAL),
+        0x127: (86400.0,  MeasureUnit.SECONDS, VIFUnitExt.STORAGE_INTERVAL),
+        0x128: (2629743.83, MeasureUnit.SECONDS, VIFUnitExt.STORAGE_INTERVAL),
+        0x129: (31556926.0, MeasureUnit.SECONDS, VIFUnitExt.STORAGE_INTERVAL),
 
         # E010 1010 Reserved */
-        0x12A: (1.0e0,  "Reserved", "Reserved"),
+        0x12A: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
 
         # E010 1011 Reserved */
-        0x12B: (1.0e0,  "Reserved", "Reserved"),
+        0x12B: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
 
         # E010 11nn Duration since last readout [sec(s)..day(s)] */
-        0x12C: (1.0, MeasureUnit.SECONDS, "Duration since last readout"),  # seconds */
-        0x12D: (60.0, MeasureUnit.SECONDS, "Duration since last readout"),  # minutes */
-        0x12E: (3600.0, MeasureUnit.SECONDS, "Duration since last readout"),  # hours   */
-        0x12F: (86400.0, MeasureUnit.SECONDS, "Duration since last readout"),  # days    */
+        0x12C: (1.0, MeasureUnit.SECONDS, VIFUnitExt.DURATION_SINCE_LAST_READOUT),  # seconds */
+        0x12D: (60.0, MeasureUnit.SECONDS, VIFUnitExt.DURATION_SINCE_LAST_READOUT),  # minutes */
+        0x12E: (3600.0, MeasureUnit.SECONDS, VIFUnitExt.DURATION_SINCE_LAST_READOUT),  # hours   */
+        0x12F: (86400.0, MeasureUnit.SECONDS, VIFUnitExt.DURATION_SINCE_LAST_READOUT),  # days    */
 
         # E011 0000 Start (date/time) of tariff  */
         # The information about usage of data type F (date and time) or data type G (date) can */
         # be derived from the datafield (0010b: type G / 0100: type F). */
-        0x130: (1.0e0,  "Reserved", "Reserved"),  # ???? */
+        0x130: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),  # ???? */
 
         # E011 00nn Duration of tariff (nn=01 ..11: min to days) */
-        0x131: (60.0,  MeasureUnit.SECONDS, "Storage interval"),   # minute(s) */
-        0x132: (3600.0,  MeasureUnit.SECONDS, "Storage interval"),   # hour(s)   */
-        0x133: (86400.0,  MeasureUnit.SECONDS, "Storage interval"),   # day(s)    */
+        0x131: (60.0,  MeasureUnit.SECONDS, VIFUnitExt.STORAGE_INTERVAL),   # minute(s) */
+        0x132: (3600.0,  MeasureUnit.SECONDS, VIFUnitExt.STORAGE_INTERVAL),   # hour(s)   */
+        0x133: (86400.0,  MeasureUnit.SECONDS, VIFUnitExt.STORAGE_INTERVAL),   # day(s)    */
 
         # E011 01nn Period of tariff [sec(s) to day(s)]  */
-        0x134: (1.0, MeasureUnit.SECONDS, "Period of tariff"),  # seconds  */
-        0x135: (60.0, MeasureUnit.SECONDS, "Period of tariff"),  # minutes  */
-        0x136: (3600.0, MeasureUnit.SECONDS, "Period of tariff"),  # hours    */
-        0x137: (86400.0, MeasureUnit.SECONDS, "Period of tariff"),  # days     */
-        0x138: (2629743.83, MeasureUnit.SECONDS, "Period of tariff"),  # month(s) */
-        0x139: (31556926.0, MeasureUnit.SECONDS, "Period of tariff"),  # year(s)  */
+        0x134: (1.0, MeasureUnit.SECONDS, VIFUnitExt.PERIOD_OF_TARIFF),  # seconds  */
+        0x135: (60.0, MeasureUnit.SECONDS, VIFUnitExt.PERIOD_OF_TARIFF),  # minutes  */
+        0x136: (3600.0, MeasureUnit.SECONDS, VIFUnitExt.PERIOD_OF_TARIFF),  # hours    */
+        0x137: (86400.0, MeasureUnit.SECONDS, VIFUnitExt.PERIOD_OF_TARIFF),  # days     */
+        0x138: (2629743.83, MeasureUnit.SECONDS, VIFUnitExt.PERIOD_OF_TARIFF),  # month(s) */
+        0x139: (31556926.0, MeasureUnit.SECONDS, VIFUnitExt.PERIOD_OF_TARIFF),  # year(s)  */
 
         # E011 1010 dimensionless / no VIF */
-        0x13A: (1.0e0,  "", "Dimensionless"),
+        0x13A: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.DIMENSIONLESS),
 
         # E011 1011 Reserved */
-        0x13B: (1.0e0,  "Reserved", "Reserved"),
+        0x13B: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
 
         # E011 11xx Reserved */
-        0x13C: (1.0e0,  "Reserved", "Reserved"),
-        0x13D: (1.0e0,  "Reserved", "Reserved"),
-        0x13E: (1.0e0,  "Reserved", "Reserved"),
-        0x13F: (1.0e0,  "Reserved", "Reserved"),
+        0x13C: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x13D: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x13E: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x13F: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
 
         # E100 nnnn   Volts electrical units */
-        0x140: (1.0e-9, "V", "Voltage"),
-        0x141: (1.0e-8, "V", "Voltage"),
-        0x142: (1.0e-7, "V", "Voltage"),
-        0x143: (1.0e-6, "V", "Voltage"),
-        0x144: (1.0e-5, "V", "Voltage"),
-        0x145: (1.0e-4, "V", "Voltage"),
-        0x146: (1.0e-3, "V", "Voltage"),
-        0x147: (1.0e-2, "V", "Voltage"),
-        0x148: (1.0e-1, "V", "Voltage"),
-        0x149: (1.0e0,  "V", "Voltage"),
-        0x14A: (1.0e1,  "V", "Voltage"),
-        0x14B: (1.0e2,  "V", "Voltage"),
-        0x14C: (1.0e3,  "V", "Voltage"),
-        0x14D: (1.0e4,  "V", "Voltage"),
-        0x14E: (1.0e5,  "V", "Voltage"),
-        0x14F: (1.0e6,  "V", "Voltage"),
+        0x140: (1.0e-9, MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x141: (1.0e-8, MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x142: (1.0e-7, MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x143: (1.0e-6, MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x144: (1.0e-5, MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x145: (1.0e-4, MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x146: (1.0e-3, MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x147: (1.0e-2, MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x148: (1.0e-1, MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x149: (1.0e0,  MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x14A: (1.0e1,  MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x14B: (1.0e2,  MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x14C: (1.0e3,  MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x14D: (1.0e4,  MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x14E: (1.0e5,  MeasureUnit.V, VIFUnitExt.VOLTS),
+        0x14F: (1.0e6,  MeasureUnit.V, VIFUnitExt.VOLTS),
 
         # E101 nnnn   A */
-        0x150: (1.0e-12, "A", "Current"),
-        0x151: (1.0e-11, "A", "Current"),
-        0x152: (1.0e-10, "A", "Current"),
-        0x153: (1.0e-9,  "A", "Current"),
-        0x154: (1.0e-8,  "A", "Current"),
-        0x155: (1.0e-7,  "A", "Current"),
-        0x156: (1.0e-6,  "A", "Current"),
-        0x157: (1.0e-5,  "A", "Current"),
-        0x158: (1.0e-4,  "A", "Current"),
-        0x159: (1.0e-3,  "A", "Current"),
-        0x15A: (1.0e-2,  "A", "Current"),
-        0x15B: (1.0e-1,  "A", "Current"),
-        0x15C: (1.0e0,   "A", "Current"),
-        0x15D: (1.0e1,   "A", "Current"),
-        0x15E: (1.0e2,   "A", "Current"),
-        0x15F: (1.0e3,   "A", "Current"),
+        0x150: (1.0e-12, MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x151: (1.0e-11, MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x152: (1.0e-10, MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x153: (1.0e-9,  MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x154: (1.0e-8,  MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x155: (1.0e-7,  MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x156: (1.0e-6,  MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x157: (1.0e-5,  MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x158: (1.0e-4,  MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x159: (1.0e-3,  MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x15A: (1.0e-2,  MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x15B: (1.0e-1,  MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x15C: (1.0e0,   MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x15D: (1.0e1,   MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x15E: (1.0e2,   MeasureUnit.A, VIFUnitExt.AMPERE),
+        0x15F: (1.0e3,   MeasureUnit.A, VIFUnitExt.AMPERE),
 
         # E110 0000 Reset counter */
-        0x160: (1.0e0,  "", "Reset counter"),
+        0x160: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESET_COUNTER),
 
         # E110 0001 Cumulation counter */
-        0x161: (1.0e0,  "", "Cumulation counter"),
+        0x161: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.CUMULATION_COUNTER),
 
         # E110 0010 Control signal */
-        0x162: (1.0e0,  "", "Control signal"),
+        0x162: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.CONTROL_SIGNAL),
 
         # E110 0011 Day of week */
-        0x163: (1.0e0,  "", "Day of week"),
+        0x163: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.DAY_OF_WEEK),
 
         # E110 0100 Week number */
-        0x164: (1.0e0,  "", "Week number"),
+        0x164: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.WEEK_NUMBER),
 
         # E110 0101 Time point of day change */
-        0x165: (1.0e0,  "", "Time point of day change"),
+        0x165: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.TIME_POINT_OF_DAY_CHANGE),
 
         # E110 0110 State of parameter activation */
-        0x166: (1.0e0,  "", "State of parameter activation"),
+        0x166: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.STATE_OF_PARAMETER_ACTIVATION),
 
         # E110 0111 Special supplier information */
-        0x167: (1.0e0,  "", "Special supplier information"),
+        0x167: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.SPECIAL_SUPPLIER_INFORMATION),
 
         # E110 10pp Duration since last cumulation [hour(s)..years(s)] */
-        0x168: (3600.0, MeasureUnit.SECONDS, "Duration since last cumulation"),  # hours    */
-        0x169: (86400.0, MeasureUnit.SECONDS, "Duration since last cumulation"),  # days     */
-        0x16A: (2629743.83, MeasureUnit.SECONDS, "Duration since last cumulation"),  # month(s) */
-        0x16B: (31556926.0, MeasureUnit.SECONDS, "Duration since last cumulation"),  # year(s)  */
+        0x168: (3600.0, MeasureUnit.SECONDS, VIFUnitExt.DURATION_SINCE_LAST_CUMULATION),  # hours    */
+        0x169: (86400.0, MeasureUnit.SECONDS, VIFUnitExt.DURATION_SINCE_LAST_CUMULATION),  # days     */
+        0x16A: (2629743.83, MeasureUnit.SECONDS, VIFUnitExt.DURATION_SINCE_LAST_CUMULATION),  # month(s) */
+        0x16B: (31556926.0, MeasureUnit.SECONDS, VIFUnitExt.DURATION_SINCE_LAST_CUMULATION),  # year(s)  */
 
         # E110 11pp Operating time battery [hour(s)..years(s)] */
-        0x16C: (3600.0, MeasureUnit.SECONDS, "Operating time battery"),  # hours    */
-        0x16D: (86400.0, MeasureUnit.SECONDS, "Operating time battery"),  # days     */
-        0x16E: (2629743.83, MeasureUnit.SECONDS, "Operating time battery"),  # month(s) */
-        0x16F: (31556926.0, MeasureUnit.SECONDS, "Operating time battery"),  # year(s)  */
+        0x16C: (3600.0, MeasureUnit.SECONDS, VIFUnitExt.OPERATING_TIME_BATTERY),  # hours    */
+        0x16D: (86400.0, MeasureUnit.SECONDS, VIFUnitExt.OPERATING_TIME_BATTERY),  # days     */
+        0x16E: (2629743.83, MeasureUnit.SECONDS, VIFUnitExt.OPERATING_TIME_BATTERY),  # month(s) */
+        0x16F: (31556926.0, MeasureUnit.SECONDS, VIFUnitExt.OPERATING_TIME_BATTERY),  # year(s)  */
 
         # E111 0000 Date and time of battery change */
-        0x170: (1.0e0,  "", "Date and time of battery change"),
+        0x170: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.DATEAND_TIME_OF_BATTERY_CHANGE),
 
         # E111 0001-1111 Reserved */
-        0x171: (1.0e0,  "Reserved", "Reserved"),
-        0x172: (1.0e0,  "Reserved", "Reserved"),
-        0x173: (1.0e0,  "Reserved", "Reserved"),
-        0x174: (1.0e0,  "Reserved", "Reserved"),
-        0x175: (1.0e0,  "Reserved", "Reserved"),
-        0x176: (1.0e0,  "Reserved", "Reserved"),
-        0x177: (1.0e0,  "Reserved", "Reserved"),
-        0x178: (1.0e0,  "Reserved", "Reserved"),
-        0x179: (1.0e0,  "Reserved", "Reserved"),
-        0x17A: (1.0e0,  "Reserved", "Reserved"),
-        0x17B: (1.0e0,  "Reserved", "Reserved"),
-        0x17C: (1.0e0,  "Reserved", "Reserved"),
-        0x17D: (1.0e0,  "Reserved", "Reserved"),
-        0x17E: (1.0e0,  "Reserved", "Reserved"),
-        0x17F: (1.0e0,  "Reserved", "Reserved"),
+        0x171: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x172: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x173: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x174: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x175: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x176: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x177: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x178: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x179: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x17A: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x17B: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x17C: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x17D: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x17E: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x17F: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
 
 
         # Alternate VIFE-Code Extension table (following VIF=0FBh for primary VIF)
