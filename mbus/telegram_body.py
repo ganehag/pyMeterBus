@@ -6,14 +6,17 @@ from vif_telegram_field import VIFTelegramField, VIFETelegramField
 from telegram_field import TelegramField
 from telegram_data_field import TelegramDataField
 from telegram_variable_data_record import TelegramVariableDataRecord
-from mbus_protocol import TelegramFunctionType
+
+from value_information_block import ValueInformationBlock
+
+from mbus_protocol import TelegramFunctionType, TelegramEncoding
 
 
 class TelegramBodyPayload(object):
     def __init__(self, payload=None):
-        self._body_field = TelegramField()
+        self._body = TelegramField()
         if payload is not None:
-            self._body_field = TelegramField(payload)
+            self._body = TelegramField(payload)
 
         self._records = []
 
@@ -26,18 +29,18 @@ class TelegramBodyPayload(object):
         self._records = value
 
     @property
-    def body_field(self):
-        return self._body_field
+    def body(self):
+        return self._body
 
-    @body_field.setter
-    def body_field(self, value):
-        self._body_field = TelegramField(value)
+    @body.setter
+    def body(self, value):
+        self._body = TelegramField(value)
 
     def createTelegramBodyPayload(self, payload):
-        self.body_field = payload
+        self.body = payload
 
     def setTelegramBodyPayload(self, payload):
-        self.body_field = payload
+        self.body = payload
 
     def parse(self):
         self.records = []
@@ -45,7 +48,7 @@ class TelegramBodyPayload(object):
         recordPos = 0
 
         try:
-            while recordPos < len(self.body_field.field_parts):
+            while recordPos < len(self.body.field_parts):
                 recordPos = self._parseVariableDataRecord(recordPos)
         except IndexError:
             raise
@@ -53,121 +56,205 @@ class TelegramBodyPayload(object):
     def _parseVariableDataRecord(self, startPos):
         lowerBoundary = 0
         upperBoundary = 0
-        lvar_bit = False
+        # lvar_bit = False
 
         rec = TelegramVariableDataRecord()
-        dif = DIFTelegramField()
-        dif.field_parts.append(self.body_field.field_parts[startPos])
-        dif.parse()
+        # dif = DIFTelegramField()
+        # # vif = VIFTelegramField()
 
-        rec.dif = dif
+        # dif.field_parts.append(self.body.field_parts[startPos])
+        # dif.parse()
 
-        if dif.is_end_of_user_data:
+        # # vif.parent = rec
+        # rec.dif = dif
+        # # rec.vif = vif
+        # rec.difes = []
+        # # rec.vifes = []
+
+        # if dif.is_end_of_user_data:
+        #     # only manufacturer specific data left, stop parsing
+        #     return len(self.body.field_parts)
+
+        # elif dif.function_type == \
+        #         TelegramFunctionType.SPECIAL_FUNCTION_FILL_BYTE:
+        #     return startPos + 1
+
+        # self.body.debug_fields(startPos + 1, 0)
+
+        # if dif.is_extension_bit:
+        #     for part in self.body.field_parts[startPos + 1:]:
+        #         dife = DIFETelegramField()
+        #         dife.field_parts.append(part)
+        #         rec.difes.append(dife)
+
+        #         if not dife.is_extension_bit:
+        #             break
+
+        #######################################################
+
+        rec.dib.field_parts.append(self.body.field_parts[
+            startPos])
+
+        if rec.dib.is_eoud:
             # only manufacturer specific data left, stop parsing
-            return len(self.body_field.field_parts)
+            return len(self.body.field_parts)
 
-        elif dif.function_type == \
+        elif rec.dib.function_type == \
                 TelegramFunctionType.SPECIAL_FUNCTION_FILL_BYTE:
             return startPos + 1
 
-        difeList = []
-        if dif.is_extension_bit:
-            difeList = self._parseDIFEFields(startPos + 1)
+        self.body.debug_fields(startPos, 0)
 
-        rec.difes += difeList
+        if rec.dib.has_extension_bit:
+            for count, part in enumerate(
+                    self.body.field_parts[startPos + 1:]):
+                rec.dib.field_parts.append(part)
+                if not rec.dib.has_extension_bit:
+                    break
 
-        # Increase startPos by 1 (DIF) and the count of DIFEs
-        vif = VIFTelegramField()
-        vif.field_parts.append(
-            self.body_field.field_parts[startPos + 1 + len(difeList)])
-        vif.parent = rec
-        vif.parse()
+        rec.vib.field_parts.append(self.body.field_parts[
+            startPos + len(rec.dib.field_parts)])
 
-        rec.vif = vif
+        if rec.vib.has_extension_bit:
+            for count, part in enumerate(
+                    self.body.field_parts[startPos + 1 + len(rec.dib.field_parts):]):
+                rec.vib.field_parts.append(part)
+                self.body.debug_fields(startPos + 1 + len(rec.dib.field_parts) + count, 2)
+                if not rec.vib.has_extension_bit:
+                    break
 
-        vifeList = []
+        # rec.vib.debug_fields(0)
 
-        if vif.is_extension_bit:
-            # increase startPosition by 2 (DIF and VIF) and the number of DIFEs
-            vifeList = self._parseVIFEFields(startPos + 2 + len(difeList), rec)
-            # check if there exist a LVAR Byte at the beginning of the data
-            # field
-            lvar_bit = vifeList[0].is_lvar_bit
+        # # Increase startPos by 1 (DIF) and the count of DIFEs
+        # vif.field_parts.append(self.body.field_parts[
+        #     startPos + 1 + len(rec.difes)])
 
-        rec.vifes += vifeList
+        # vif.parse()
 
-        lowerBoundary = startPos + 2 + len(difeList) + len(vifeList)
+        # if vif.is_extension_bit:
+        #     # increase startPosition by 2 (DIF and VIF) and the number of DIFEs
+        #     for count, part in enumerate(
+        #             self.body.field_parts[startPos + 2 + len(rec.difes):]):
+        #         vife = VIFETelegramField()
+        #         vife.field_parts.append(part)
+        #         vife.parent = rec
+        #         vife.parse()
+        #         rec.vifes.append(vife)
+
+        #         self.body.debug_fields(startPos + 2 + len(rec.difes) + count, 2)
+
+        #         if not vife.is_extension_bit:
+        #             break
+
+        #     # self.body.debug_fields(startPos + 2 + len(rec.difes))
+
+        #     # Check for LVAR bit WTF!!!!
+        #     # FIXME! ??? Should this even be here?
+        #     # lvar_bit = rec.vifes[0].is_lvar_bit
+
+        # lowerBoundary = startPos + 2 + len(rec.difes) + len(rec.vifes)
+        lowerBoundary = startPos + len(rec.dib.field_parts) + len(rec.vib.field_parts)
 
         # if there exist a LVAR Byte at the beginning of the data field,
         # change the data field length
-        if lvar_bit:
-            dif.data_field_length = self.body_field.field_parts[lowerBoundary]
+        # if lvar_bit:
+
+        length, encoding = rec.dib.length_encoding
+
+        if encoding == TelegramEncoding.ENCODING_VARIABLE_LENGTH:
+            length = self.body.field_parts[lowerBoundary]
             lowerBoundary += 1
 
-        upperBoundary = lowerBoundary + dif.data_field_length
+        upperBoundary = lowerBoundary + length
 
-        if dif.data_field_length == 0:
+        if length == 0:
             return upperBoundary
 
-        if len(self.body_field.field_parts) >= upperBoundary:
+        # Load Remaining data as DataFields
+        if len(self.body.field_parts) >= upperBoundary:
             dataField = TelegramDataField(rec)
             dataField.field_parts += \
-                self.body_field.field_parts[lowerBoundary:upperBoundary]
+                self.body.field_parts[lowerBoundary:upperBoundary]
             dataField.parse()
             rec.dataField = dataField
 
         self.records.append(rec)
 
+        # self.body.debug_fields(upperBoundary, 1)
+
         return upperBoundary
 
-    def _parseDIFEFields(self, pos):
-        difeList = []
-        extension_bit_set = True
-        dife = None
 
-        while extension_bit_set:
-            if len(self.body_field.field_parts) < pos:
-                # TODO: Throw Exception
-                pass
+        # if dif.data_field_encoding == TelegramEncoding.ENCODING_VARIABLE_LENGTH:
+        #     dif.data_field_length = self.body.field_parts[lowerBoundary]
+        #     lowerBoundary += 1
 
-            dife = DIFETelegramField()
-            dife.field_parts.append(self.body_field.field_parts[pos])
+        # upperBoundary = lowerBoundary + dif.data_field_length
 
-            difeList.append(dife)
-            extension_bit_set = dife.is_extension_bit
-            pos += 1
+        # if dif.data_field_length == 0:
+        #     return upperBoundary
 
-        return difeList
+        # if len(self.body.field_parts) >= upperBoundary:
+        #     dataField = TelegramDataField(rec)
+        #     dataField.field_parts += \
+        #         self.body.field_parts[lowerBoundary:upperBoundary]
+        #     dataField.parse()
+        #     rec.dataField = dataField
 
-    def _parseVIFEFields(self, position, parent):
-        vifeList = []
-        extension_bit_set = True
-        vife = None
+        # self.records.append(rec)
 
-        while extension_bit_set:
-            if len(self.body_field.field_parts) < position:
-                # TODO: throw exception
-                pass
+        # self.body.debug_fields(upperBoundary, 1)
 
-            vife = self._processSingleVIFEField(
-                self.body_field.field_parts[position], parent)
-            vifeList.append(vife)
-            extension_bit_set = vife.is_extension_bit
-            position += 1
+        # return upperBoundary
 
-        return vifeList
+    # def _parseDIFEFields(self, pos):
+    #     difeList = []
+    #     extension_bit_set = True
+    #     dife = None
 
-    def _processSingleDIFEField(self, field_value):
-        dife = DIFETelegramField()
-        dife.field_parts.append(field_value)
-        return dife
+    #     while extension_bit_set:
+    #         if len(self.body.field_parts) < pos:
+    #             # TODO: Throw Exception
+    #             pass
 
-    def _processSingleVIFEField(self, field_value, parent):
-        vife = VIFETelegramField()
-        vife.field_parts.append(field_value)
-        vife.parent = parent
-        vife.parse()
-        return vife
+    #         dife = DIFETelegramField()
+    #         dife.field_parts.append(self.body.field_parts[pos])
+
+    #         difeList.append(dife)
+    #         extension_bit_set = dife.is_extension_bit
+    #         pos += 1
+
+    #     return difeList
+
+    # def _parseVIFEFields(self, position, parent):
+    #     vifeList = []
+    #     extension_bit_set = True
+    #     vife = None
+
+    #     while extension_bit_set:
+    #         if len(self.body.field_parts) < position:
+    #             # TODO: throw exception
+    #             pass
+
+    #         vife = self._processSingleVIFEField(
+    #             self.body.field_parts[position], parent)
+    #         vifeList.append(vife)
+    #         extension_bit_set = vife.is_extension_bit
+    #         position += 1
+
+    #     return vifeList
+
+    # def _processSingleDIFEField(self, field_value):
+    #     dife = DIFETelegramField()
+    #     dife.field_parts.append(field_value)
+    #     return dife
+
+    # def _processSingleVIFEField(self, field_value, parent):
+    #     vife = VIFETelegramField()
+    #     vife.field_parts.append(field_value)
+    #     vife.parent = parent
+    #     vife.parse()
+    #     return vife
 
     def debug(self):
         print "-------------------------------------------------------------"
@@ -285,7 +372,8 @@ class TelegramBodyHeader(object):
         print "Manufacturer:".ljust(30), \
             self.manufacturer_field.decodeManufacturer
         print "Version:".ljust(30), hex(self.version_field.field_parts[0])
-        print "Medium:".ljust(30), hex(self.measure_medium_field.field_parts[0])
+        print "Medium:".ljust(30), hex(
+            self.measure_medium_field.field_parts[0])
         print "AccessNo:".ljust(30), self.acc_nr_field.field_parts[0]
         print "StatusField:".ljust(30), hex(self.status_field.field_parts[0])
         print "Sig-Fields:".ljust(30), ", ".join(

@@ -1,62 +1,122 @@
-import json
+import decimal
+import simplejson as json
 from dif_telegram_field import DIFTelegramField
 from vif_telegram_field import VIFTelegramField
 from telegram_data_field import TelegramDataField
 
+from value_information_block import ValueInformationBlock
+from data_information_block import DataInformationBlock
+
+import vif_table
+
+from mbus_protocol import TelegramEncoding, VIFUnitMultiplierMasks
+
 
 class TelegramVariableDataRecord(object):
-    def __init__(self):
-        self._dif = DIFTelegramField()
-        self._difes = []
+    UNIT_MULTIPLIER_MASK = 0x7F
 
-        self._vif = VIFTelegramField()
-        self._vif.parent = self
-        self._vifes = []
+    def __init__(self):
+        # self._dif = DIFTelegramField()
+        # self._difes = []
+
+        # self._vif = VIFTelegramField()
+        # self._vif.parent = self
+        # self._vifes = []
+
+        self.dib = DataInformationBlock()
+        self.vib = ValueInformationBlock()
+
 
         self._dataField = TelegramDataField()
         self._dataField.parent = self
 
-    def parse(self):
-        self.dif = DIFTelegramField()
-        self.dif.parse()
-        self.vif = VIFTelegramField()
-        self.vif.parent = self
+    # def parse(self):
+    #     self.difes = []
+    #     self.vifes = []
 
-        self.dataField = TelegramDataField()
-        self.dataField.parent = self
-        self.dataField.parse()
+    #     self.dif = DIFTelegramField()
+    #     self.dif.parse()
+    #     self.vif = VIFTelegramField()
+    #     self.vif.parent = self
 
-    @property
-    def dif(self):
-        return self._dif
+    #     self.dataField = TelegramDataField()
+    #     self.dataField.parent = self
+    #     self.dataField.parse()
 
-    @dif.setter
-    def dif(self, value):
-        self._dif = value
+    def _parse_vifx(self):
+        vif = self.vib.field_parts[0]
+        vife = self.vib.field_parts[1:]
+        vmm = VIFUnitMultiplierMasks
+        vtf_ebm = VIFTelegramField.EXTENSION_BIT_MASK
 
-    @property
-    def vif(self):
-        return self._vif
+        if vif == vmm.FIRST_EXT_VIF_CODES.value:
+            code = (vife[0] & self.UNIT_MULTIPLIER_MASK) | 0x100
 
-    @vif.setter
-    def vif(self, value):
-        self._vif = value
+        elif vif == vmm.SECOND_EXT_VIF_CODES.value:
+            code = (vife[0] & self.UNIT_MULTIPLIER_MASK) | 0x200
 
-    @property
-    def difes(self):
-        return self._difes
+        else:
+            code = (vif & self.UNIT_MULTIPLIER_MASK)
 
-    @difes.setter
-    def difes(self, value):
-        self._difes = value
+        return vif_table.VIFTable.lut[code]
 
     @property
-    def vifes(self):
-        return self._vifes
+    def parsed_value(self):
+        mult, unit, typ = self._parse_vifx()
 
-    @vifes.setter
-    def vifes(self, value):
-        self._vifes = value
+        length, enc = self.dib.length_encoding
+
+        # enc = self.dif.data_field_encoding
+        # length = self.dif.data_field_length
+
+        te = TelegramEncoding
+        tdf = self._dataField
+
+        if length != len(tdf.field_parts):
+            return None
+
+        return {
+            te.ENCODING_INTEGER: lambda: int(
+                tdf.decodeInt * mult),
+            te.ENCODING_BCD: lambda: decimal.Decimal(
+                tdf.decodeBCD * mult),
+            te.ENCODING_REAL: lambda: decimal.Decimal(
+                tdf.decodeReal * mult),
+            te.ENCODING_VARIABLE_LENGTH: lambda: tdf.decodeASCII,
+            te.ENCODING_NULL: None
+        }.get(enc, lambda: None)()
+
+    # @property
+    # def dif(self):
+    #     return self._dif
+
+    # @dif.setter
+    # def dif(self, value):
+    #     self._dif = value
+
+    # @property
+    # def vif(self):
+    #     return self._vif
+
+    # @vif.setter
+    # def vif(self, value):
+    #     self._vif = value
+
+    # @property
+    # def difes(self):
+    #     return self._difes
+
+    # @difes.setter
+    # def difes(self, value):
+    #     self._difes = value
+
+    # @property
+    # def vifes(self):
+    #     return self._vifes
+
+    # @vifes.setter
+    # def vifes(self, value):
+    #     self._vifes = value
 
     @property
     def dataField(self):
@@ -84,8 +144,10 @@ class TelegramVariableDataRecord(object):
         print "======================="
 
     def to_JSON(self):
+        mult, unit, typ = self._parse_vifx()
         return json.dumps({
-            'value': self.dataField.parsed_value,
-            'unit': self.dataField.parent.vif.m_unit.name,
-            'type': str(self.dataField.parent.vif.type)
-        })
+            'value': self.parsed_value,
+            'unit': str(unit),
+            'type': str(typ),
+            'function': str(self.dib.function_type)
+        }, use_decimal=True)

@@ -1,6 +1,7 @@
 from telegram_field import TelegramField
 from mbus_support import switch
 from mbus_protocol import *
+import vif_table
 
 
 class VIFTelegramField(TelegramField):
@@ -68,52 +69,63 @@ class VIFTelegramField(TelegramField):
     #
 
     def parse(self):
-        ivif_field = self.field_parts[0]
+        vif = self.field_parts[0]
         vmm = VIFUnitMultiplierMasks
+        vtf_ebm = VIFTelegramField.EXTENSION_BIT_MASK
 
-        self.extension_bit = \
-            (ivif_field & VIFTelegramField.EXTENSION_BIT_MASK ==
-                VIFTelegramField.EXTENSION_BIT_MASK)
+        self.extension_bit = (vif & vtf_ebm == vtf_ebm)
 
-        if ivif_field == VIFUnitMultiplierMasks.FIRST_EXT_VIF_CODES.value:
+        if vif == vmm.FIRST_EXT_VIF_CODES.value:
             # load from next VIFE according to table 29 from DIN_EN_13757_3
-            self.type = VIFUnitMultiplierMasks.FIRST_EXT_VIF_CODES
+            self.type = vmm.FIRST_EXT_VIF_CODES
+            # code = (vif & self.UNIT_MULTIPLIER_MASK) | 0x100
 
-        elif ivif_field == \
-                VIFUnitMultiplierMasks.SECOND_EXT_VIF_CODES.value:
-            # TODO: load from next VIFE according to table 28 from
-            # DIN_EN_13757_3
-            self.type = VIFUnitMultiplierMasks.SECOND_EXT_VIF_CODES
+            # print len(self.field_parts)
+            # print "{0:b} {0}".format(code ^ 0x100), vif_table.VIFTable.lut[code]
+
+        elif vif == vmm.SECOND_EXT_VIF_CODES.value:
+            # load from next VIFE according to table 28 from DIN_EN_13757_3
+            self.type = vmm.SECOND_EXT_VIF_CODES
+            # code = (vif & self.UNIT_MULTIPLIER_MASK) | 0x200
+
+            # Can't do anything more here VIFE:s are not loaded yet...
+
+            # print self.parent.vifes
+            # print "{0:b} {0}".format(code ^ 0x200), vif_table.VIFTable.lut[code]
 
         else:
             # Get rid of the first (extension) bit
-            ivif_field_noext = ivif_field & \
-                VIFTelegramField.UNIT_MULTIPLIER_MASK
+            ivif_field_noext = vif & self.UNIT_MULTIPLIER_MASK
 
-            try:
-                self.type = VIFUnitMultiplierMasks(ivif_field_noext)
+            mult, unit, typ = vif_table.VIFTable.lut[ivif_field_noext]
+            self.multiplier = mult
+            self.m_unit = unit
+            self.type = typ
 
-                if self.type in [vmm.DATE, vmm.DATE_TIME_GENERAL]:
-                    self.parse_date(
-                        self.parent.dif.data_field_length_and_encoding)
+            # try:
+            #     self.type = vmm(ivif_field_noext)
 
-            except ValueError:
-                if self.parseLastTwoBitsSet(ivif_field_noext):
-                    pass
-                elif self.parseLastThreeBitsSet(ivif_field_noext):
-                    pass
-                else:
-                    # print "EEEEERROORRRR", ivif_field_noext
-                    # self.debug()
-                    # exit(0)
-                    pass  # TODO Handle Error
+            #     if self.type in [vmm.DATE, vmm.DATE_TIME_GENERAL]:
+            #         self.parse_date(
+            #             self.parent.dif.data_field_length_and_encoding)
+
+            # except ValueError:
+            #     if self.parseLastTwoBitsSet(ivif_field_noext):
+            #         pass
+            #     elif self.parseLastThreeBitsSet(ivif_field_noext):
+            #         pass
+            #     else:
+            #         # print "EEEEERROORRRR", ivif_field_noext
+            #         # self.debug()
+            #         # exit(0)
+            #         pass  # TODO Handle Error
 
     def parseLastTwoBitsSet(self, ivif_field_noext):
         bits = ivif_field_noext & VIFTelegramField.LAST_TWO_BIT_OR_MASK
         vmm = VIFUnitMultiplierMasks
 
         try:
-            self.type = VIFUnitMultiplierMasks(
+            self.type = vmm(
                 ivif_field_noext | VIFTelegramField.LAST_TWO_BIT_OR_MASK)
 
             self.multiplier, self.m_unit = {
@@ -134,7 +146,7 @@ class VIFTelegramField(TelegramField):
             return False
 
         try:
-            if self.type == VIFUnitMultiplierMasks.ON_TIME:
+            if self.type == vmm.ON_TIME:
                 self.m_unit = {
                     0: MeasureUnit.SECONDS,
                     1: MeasureUnit.MINUTES,
@@ -153,12 +165,12 @@ class VIFTelegramField(TelegramField):
 
         threeBits = ivif_field_noext & VIFTelegramField.LAST_THREE_BIT_OR_MASK
 
+        vmm = VIFUnitMultiplierMasks
+
         try:
-            self.type = VIFUnitMultiplierMasks(ivif_field_noextLastThree)
+            self.type = vmm(ivif_field_noextLastThree)
         except ValueError:
             return False
-
-        vmm = VIFUnitMultiplierMasks
 
         try:
             self.multiplier, self.m_unit = {
@@ -179,19 +191,21 @@ class VIFTelegramField(TelegramField):
         return True
 
     def parse_date(self, dateType):
+        vmm = VIFUnitMultiplierMasks
+
         if dateType == TelegramDateMasks.DATE.value:
             self.m_unit = MeasureUnit.DATE
 
         elif dateType == TelegramDateMasks.DATE_TIME.value:
-            self.type = VIFUnitMultiplierMasks.DATE_TIME
+            self.type = vmm.DATE_TIME
             self.m_unit = MeasureUnit.DATE_TIME
 
         elif dateType == TelegramDateMasks.EXT_TIME.value:
-            self.type = VIFUnitMultiplierMasks.EXTENTED_TIME
+            self.type = vmm.EXTENTED_TIME
             self.m_unit = MeasureUnit.DATE_TIME
 
         elif dateType == TelegramDateMasks.EXT_DATE_TIME.value:
-            self.type = VIFUnitMultiplierMasks.EXTENTED_DATE_TIME
+            self.type = vmm.EXTENTED_DATE_TIME
             self.m_unit = MeasureUnit.DATE_TIME_S
 
         else:
@@ -285,13 +299,28 @@ class VIFETelegramField(TelegramField):
         self._parent = value
 
     def parse(self):
-        vifeField = self.field_parts[0]
-        iVifeField = vifeField
+        p_vif = self.parent.vif.field_parts[0]
+        vife = self.field_parts[0]
+        vmm = VIFUnitMultiplierMasks
+
+        code = None
+
+        if p_vif == vmm.FIRST_EXT_VIF_CODES.value:
+            code = (vife & self.UNIT_MULTIPLIER_MASK) | 0x100
+
+        elif p_vif == vmm.SECOND_EXT_VIF_CODES.value:
+            code = (vife & self.UNIT_MULTIPLIER_MASK) | 0x200
+
+        if code is not None:
+            multiplier, unit, typ = vif_table.VIFTable.lut[code]
+            self.parent.vif.multiplier = multiplier
+            self.parent.vif.type = typ
+            self.parent.vif.unit = unit
 
         # Get rid of the first (extension) bit
-        iVifeFieldNoExt = (iVifeField & self.UNIT_MULTIPLIER_MASK)
+        iVifeFieldNoExt = (vife & self.UNIT_MULTIPLIER_MASK)
 
-        if iVifeField & self.EXTENSION_BIT_MASK == self.EXTENSION_BIT_MASK:
+        if vife & self.EXTENSION_BIT_MASK == self.EXTENSION_BIT_MASK:
             self.extension_bit = True
 
         try:
@@ -303,6 +332,8 @@ class VIFETelegramField(TelegramField):
                     TelegramEncoding.ENCODING_VARIABLE_LENGTH
         except ValueError:
             return
+
+        # print self.type
 
         # TODO: Error handling and impl. of the other code + multipliers
 

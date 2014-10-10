@@ -19,7 +19,7 @@ class TelegramEncoding(Enum):
 
 
 class VIFUnitMultiplierMasks(Enum):
-    ENERGY_WH = 0x70                # E000 0xxx
+    ENERGY_WH = 0x07                # E000 0xxx
     ENERGY_J = 0x0F                 # E000 1xxx
     VOLUME = 0x17                   # E001 0xxx
     MASS = 0x1F                     # E001 1xxx
@@ -129,6 +129,52 @@ class VIFExtensionFDMask(Enum):
     OPERATING_TIME_BATTERY = 0x6F           # E110 11pp Operating time battery
     DATEAND_TIME_OF_BATTERY_CHANGE = 0x70   # E111 0000 Date and time of bat...
     # E111 0001 to E111 1111 Reserved
+
+# WMBus extensions
+#    E111 0001   RF level units: dBm d
+#    E111 0010   Day light saving (beginning, ending, deviation) data type K
+#    E111 0011   Listening window management data type L
+#    E111 0100   Remaining battery life time (days)
+#    E111 0101   Number times the meter was stopped
+#    E111 0110   Data container for manufacture specific protocol
+
+
+class VIFExtFBMask(Enum):
+    ENERGY_MWH = 0x00       # E000 000n Energy 10(n-1) MWh 0.1MWh to 1MWh
+    # E000 001n Reserved
+    # E000 01nn Reserved
+# E000 100n Energy 10(n-1) GJ 0.1GJ to 1GJ
+# E000 101n Reserved
+# E000 11nn Reserved
+# E001 000n Volume 10(n+2) m3 100m3 to 1000m3
+# E001 001n Reserved
+# E001 01nn Reserved
+# E001 100n Mass 10(n+2) t 100t to 1000t
+# E001 1010 to
+# E010 0000
+# Reserved
+# E010 0001 Volume 0,1 feet^3
+# E010 0010 Volume 0,1 american gallon
+# E010 0011 Volume 1 american gallon
+# E010 0100 Volume flow 0,001 american gallon/min
+# E010 0101 Volume flow 1 american gallon/min
+# E010 0110 Volume flow 1 american gallon/h
+# E010 0111 Reserved
+# E010 100n Power 10(n-1) MW 0.1MW to 1MW
+# E010 101n Reserved
+# E010 11nn Reserved
+# E011 000n Power 10(n-1) GJ/h 0.1GJ/h to 1GJ/h
+# E011 0010 to
+# E101 0111
+# Reserved
+# E101 10nn Flow Temperature 10(nn-3) degF 0.001degF to 1degF
+# E101 11nn Return Temperature 10(nn-3) degF 0.001degF to 1degF
+# E110 00nn Temperature Difference 10(nn-3) degF 0.001degF to 1degF
+# E110 01nn External Temperature 10(nn-3) degF 0.001degF to 1degF
+# E110 1nnn Reserved
+# E111 00nn Cold / Warm Temperature Limit 10(nn-3) degF 0.001degF to 1degF
+# E111 01nn Cold / Warm Temperature Limit 10(nn-3) degC 0.001degC to 1degC
+# E111 1nnn cumul. count max power 10(nnn-3) W 0.001W to 10000W
 
 
 class MeasureUnit(Enum):

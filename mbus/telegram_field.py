@@ -5,7 +5,7 @@ from mbus_protocol import DateCalculator
 class TelegramField(object):
     def __init__(self, parts=None):
         self._field_parts = []
-        self._parsed_value = None
+        # self._parsed_value = None
 
         if parts is not None:
             if isinstance(parts, basestring):
@@ -109,13 +109,24 @@ class TelegramField(object):
         return map(ord, self._field_parts)
         # FIXME: ord? chr?
 
-    @property
-    def parsed_value(self):
-        return self._parsed_value
+    def debug_fields(self, highlight, cval=0):
+        color = ['\033[92m',
+                 '\033[94m',
+                 '\033[93m']
 
-    @parsed_value.setter
-    def parsed_value(self, value):
-        self._parsed_value = value
+        ENDC = '\033[0m'
+
+        if highlight >= len(self.field_parts):
+            return
+
+        d = []
+        for c, item in enumerate(self.field_parts):
+            if c == highlight:
+                d.append(color[cval] + "{0:02X}".format(item) + ENDC)
+            else:
+                d.append("{0:02X}".format(item))
+
+        print " ".join(d)
 
     def __str__(self):
         return " ".join(self.field_parts)

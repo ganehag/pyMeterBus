@@ -1,3 +1,5 @@
+import decimal
+
 from mbus_support import *
 from mbus_protocol import *
 from telegram_field import TelegramField
@@ -12,6 +14,15 @@ class TelegramDataField(TelegramField):
     def __init__(self, parent=None):
         super(TelegramDataField, self).__init__()
         self._parent = parent
+        self._parsed_value = None
+
+    @property
+    def parsed_value(self):
+        return self._parsed_value
+
+    @parsed_value.setter
+    def parsed_value(self, value):
+        self._parsed_value = value
 
     @property
     def parent(self):
@@ -22,38 +33,43 @@ class TelegramDataField(TelegramField):
         self._parent = value
 
     def parse(self):
-        enc = self.parent.dif.data_field_encoding
-        unit = self.parent.vif.m_unit
-        length = self.parent.dif.data_field_length
-        multiplier = self.parent.vif.multiplier
+        return
 
-        if length != len(self.field_parts):
-            # TODO: Throw exception
-            return
+        # enc = self.parent.dif.data_field_encoding
+        # unit = self.parent.vif.m_unit
+        # length = self.parent.dif.data_field_length
+        # multiplier = self.parent.vif.multiplier
 
-        if self.__parse_date(unit):
-            # value is parsed, we are done here
-            return
+        # # print "ENCODING", enc, self.decodeBCD, multiplier
 
-        for case in switch(enc):
-            if case(TelegramEncoding.ENCODING_INTEGER):
-                self.parsed_value = self.decodeInt * pow(10, multiplier)
-                break
-            if case(TelegramEncoding.ENCODING_BCD):
-                self.parsed_value = self.decodeBCD * pow(10, multiplier)
-                # print self.
-                break
-            if case(TelegramEncoding.ENCODING_REAL):
-                self.parsed_value = self.decodeReal * pow(10, multiplier)
-                break
-            if case(TelegramEncoding.ENCODING_VARIABLE_LENGTH):
-                self.parsed_value = self.decodeASCII
-                break
-            if case(TelegramEncoding.ENCODING_NULL):
-                pass
-            if case():
-                # TODO: Exception
-                break
+        # if length != len(self.field_parts):
+        #     # TODO: Throw exception
+        #     return
+
+        # if self.__parse_date(unit):
+        #     # value is parsed, we are done here
+        #     return
+
+        # for case in switch(enc):
+        #     if case(TelegramEncoding.ENCODING_INTEGER):
+        #         self.parsed_value = int(self.decodeInt * multiplier)
+        #         break
+        #     if case(TelegramEncoding.ENCODING_BCD):
+        #         self.parsed_value = decimal.Decimal(
+        #             self.decodeBCD * multiplier)
+        #         break
+        #     if case(TelegramEncoding.ENCODING_REAL):
+        #         self.parsed_value = decimal.Decimal(
+        #             self.decodeReal * multiplier)
+        #         break
+        #     if case(TelegramEncoding.ENCODING_VARIABLE_LENGTH):
+        #         self.parsed_value = self.decodeASCII
+        #         break
+        #     if case(TelegramEncoding.ENCODING_NULL):
+        #         pass
+        #     if case():
+        #         # TODO: Exception
+        #         break
 
     def __parse_date(self, dateType):
         for case in switch(dateType):
