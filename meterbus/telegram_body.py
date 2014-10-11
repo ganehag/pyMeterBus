@@ -1,12 +1,11 @@
 import json
 
-from telegram_field import TelegramField
-from telegram_data_field import TelegramDataField
-from telegram_variable_data_record import TelegramVariableDataRecord
+from .telegram_field import TelegramField
+from .telegram_variable_data_record import TelegramVariableDataRecord
 
-from value_information_block import ValueInformationBlock
+from .value_information_block import ValueInformationBlock
 
-from mbus_protocol import TelegramFunctionType, TelegramEncoding
+from .core_objects import DataEncoding, FunctionType
 
 
 class TelegramBodyPayload(object):
@@ -66,7 +65,7 @@ class TelegramBodyPayload(object):
             return len(self.body.field_parts)
 
         elif rec.dib.function_type == \
-                TelegramFunctionType.SPECIAL_FUNCTION_FILL_BYTE:
+                FunctionType.SPECIAL_FUNCTION_FILL_BYTE:
             return startPos + 1
 
         if rec.dib.has_extension_bit:
@@ -95,7 +94,7 @@ class TelegramBodyPayload(object):
 
         # if there exist a LVAR Byte at the beginning of the data field,
         # change the data field length
-        if encoding == TelegramEncoding.ENCODING_VARIABLE_LENGTH:
+        if encoding == DataEncoding.ENCODING_VARIABLE_LENGTH:
             length = self.body.field_parts[lowerBoundary]
             lowerBoundary += 1
 
@@ -106,32 +105,18 @@ class TelegramBodyPayload(object):
 
         # Data Block
         if len(self.body.field_parts) >= upperBoundary:
-            dataField = TelegramDataField(rec)
+            dataField = TelegramField()
             dataField.field_parts += \
                 self.body.field_parts[lowerBoundary:upperBoundary]
-            dataField.parse()
             rec.dataField = dataField
 
         self.records.append(rec)
 
         return upperBoundary
 
-    def debug(self):
-        print "-------------------------------------------------------------"
-        print "-------------------- BEGIN BODY PAYLOAD ---------------------"
-        print "-------------------------------------------------------------"
-
-        if self.records:
-            for index, record in enumerate(self.records):
-                print "RECORD:", index
-                record.debug()
-        print "-------------------------------------------------------------"
-        print "--------------------- END BODY PAYLOAD ----------------------"
-        print "-------------------------------------------------------------"
-
     def to_JSON(self):
-        return json.dumps([json.loads(r.to_JSON()) for r in self.records],
-                          sort_keys=False, indent=4)
+        d = [json.loads(r.to_JSON()) for r in self.records]
+        return json.dumps(d, sort_keys=False, indent=4)
 
 
 class TelegramBodyHeader(object):
@@ -223,20 +208,6 @@ class TelegramBodyHeader(object):
     @sig_field.setter
     def sig_field(self, value):
         self._sig_field = TelegramField(value)
-
-    def debug(self):
-        print "Type of TelegramBodyHeader:".ljust(30), hex(
-            self.ci_field.field_parts[0])
-        print "Identification#:".ljust(30), ", ".join(map(hex, self.id_nr))
-        print "Manufacturer:".ljust(30), \
-            self.manufacturer_field.decodeManufacturer
-        print "Version:".ljust(30), hex(self.version_field.field_parts[0])
-        print "Medium:".ljust(30), hex(
-            self.measure_medium_field.field_parts[0])
-        print "AccessNo:".ljust(30), self.acc_nr_field.field_parts[0]
-        print "StatusField:".ljust(30), hex(self.status_field.field_parts[0])
-        print "Sig-Fields:".ljust(30), ", ".join(
-            map(hex, self.sig_field.field_parts))  # FIX PARSE
 
     def to_JSON(self):
         return json.dumps({

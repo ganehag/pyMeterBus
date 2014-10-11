@@ -1,7 +1,7 @@
 import json
 
-from telegram_header import TelegramHeader
-from telegram_body import TelegramBody
+from .telegram_header import TelegramHeader
+from .telegram_body import TelegramBody
 
 
 class Telegram(object):

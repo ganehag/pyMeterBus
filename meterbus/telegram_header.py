@@ -1,5 +1,5 @@
 import json
-from telegram_field import TelegramField
+from .telegram_field import TelegramField
 
 
 class TelegramHeader(object):

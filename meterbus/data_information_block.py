@@ -1,6 +1,5 @@
-from telegram_field import TelegramField
-from mbus_protocol import *
-import vif_table
+from .core_objects import DataEncoding, FunctionType
+from .telegram_field import TelegramField
 
 
 class DataInformationBlock(TelegramField):
@@ -42,12 +41,12 @@ class DataInformationBlock(TelegramField):
     @property
     def function_type(self):
         if self.field_parts[0] == 0x0F:
-            return TelegramFunctionType.SPECIAL_FUNCTION
+            return FunctionType.SPECIAL_FUNCTION
 
         elif self.field_parts[0] == 0x2F:
-            return TelegramFunctionType.SPECIAL_FUNCTION_FILL_BYTE
+            return FunctionType.SPECIAL_FUNCTION_FILL_BYTE
 
-        return TelegramFunctionType(
+        return FunctionType(
             (self.field_parts[0] & self.FUNCTION_MASK) >> 4)
 
     @property
@@ -55,20 +54,20 @@ class DataInformationBlock(TelegramField):
         len_enc = self.field_parts[0] & self.DATA_FIELD_MASK
 
         return {
-            0: (0, TelegramEncoding.ENCODING_NULL),
-            1: (len_enc, TelegramEncoding.ENCODING_INTEGER),
-            2: (len_enc, TelegramEncoding.ENCODING_INTEGER),
-            3: (len_enc, TelegramEncoding.ENCODING_INTEGER),
-            4: (len_enc, TelegramEncoding.ENCODING_INTEGER),
-            5: (4, TelegramEncoding.ENCODING_REAL),
-            6: (6, TelegramEncoding.ENCODING_INTEGER),
-            7: (8, TelegramEncoding.ENCODING_INTEGER),
-            8: (0, TelegramEncoding.ENCODING_NULL),
-            9: (len_enc - 8, TelegramEncoding.ENCODING_BCD),
-            10: (len_enc - 8, TelegramEncoding.ENCODING_BCD),
-            11: (len_enc - 8, TelegramEncoding.ENCODING_BCD),
-            12: (len_enc - 8, TelegramEncoding.ENCODING_BCD),
-            13: (6, TelegramEncoding.ENCODING_VARIABLE_LENGTH),
-            14: (6, TelegramEncoding.ENCODING_BCD),
-            15: (0, TelegramEncoding.ENCODING_NULL)  # Not right FIXME
+            0: (0, DataEncoding.ENCODING_NULL),
+            1: (len_enc, DataEncoding.ENCODING_INTEGER),
+            2: (len_enc, DataEncoding.ENCODING_INTEGER),
+            3: (len_enc, DataEncoding.ENCODING_INTEGER),
+            4: (len_enc, DataEncoding.ENCODING_INTEGER),
+            5: (4, DataEncoding.ENCODING_REAL),
+            6: (6, DataEncoding.ENCODING_INTEGER),
+            7: (8, DataEncoding.ENCODING_INTEGER),
+            8: (0, DataEncoding.ENCODING_NULL),
+            9: (len_enc - 8, DataEncoding.ENCODING_BCD),
+            10: (len_enc - 8, DataEncoding.ENCODING_BCD),
+            11: (len_enc - 8, DataEncoding.ENCODING_BCD),
+            12: (len_enc - 8, DataEncoding.ENCODING_BCD),
+            13: (6, DataEncoding.ENCODING_VARIABLE_LENGTH),
+            14: (6, DataEncoding.ENCODING_BCD),
+            15: (0, DataEncoding.ENCODING_NULL)  # Not right FIXME
         }[len_enc]

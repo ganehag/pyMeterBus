@@ -1,6 +1,23 @@
 from enum import Enum
 
 
+class FunctionType(Enum):
+    INSTANTANEOUS_VALUE = 0
+    MAXIMUM_VALUE = 1
+    MINIMUM_VALUE = 2
+    ERROR_STATE_VALUE = 3
+    SPECIAL_FUNCTION = 4
+    SPECIAL_FUNCTION_FILL_BYTE = 5
+
+
+class DataEncoding(Enum):
+    ENCODING_NULL = 0
+    ENCODING_INTEGER = 1
+    ENCODING_REAL = 2
+    ENCODING_BCD = 3
+    ENCODING_VARIABLE_LENGTH = 4
+
+
 class VIFUnit(Enum):
     ENERGY_WH = 0x07                # E000 0xxx
     ENERGY_J = 0x0F                 # E000 1xxx
@@ -144,6 +161,7 @@ class MeasureUnit(Enum):
     HCA = "H.C.A"
     CURRENCY = "Currency unit"
     BAUD = "Baud"
+    BIT_TIMES = "Bittimes"
 
 
 class VIFTable(object):
@@ -416,7 +434,7 @@ class VIFTable(object):
         0x11C: (1.0e0,  MeasureUnit.BAUD, VIFUnitExt.BAUDRATE),
 
         # E001 1101 Response delay time [bittimes] */
-        0x11D: (1.0e0,  "Bittimes", VIFUnitExt.RESPONSE_DELAY),
+        0x11D: (1.0e0,  MeasureUnit.BIT_TIMES, VIFUnitExt.RESPONSE_DELAY),
 
         # E001 1110 Retry */
         0x11E: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RETRY),
@@ -771,7 +789,117 @@ class VIFTable(object):
         0x27F: (1.0e4,  MeasureUnit.W, "Cumul count max power")
     }
 
-    @classmethod
-    def favorite_mood(cls):
-        # cls here is the enumeration
-        return cls.happy
+
+class TelegramDateMasks(Enum):
+    DATE = 0x02             # "Auctual Date",            0010 Type G
+    DATE_TIME = 0x04        # "Actual Date and Time",    0100 Type F
+    EXT_TIME = 0x03         # "Extented Date",           0011 Type J
+    EXT_DATE_TIME = 0x60    # "Extented Daten and Time", 0110 Type I
+
+
+class DateCalculator(object):
+    SECOND_MASK = 0x3F          # 0011 1111
+    MINUTE_MASK = 0x3F          # 0011 1111
+    HOUR_MASK = 0x1F            # 0001 1111
+    DAY_MASK = 0x1F             # 0001 1111
+    MONTH_MASK = 0x0F           # 0000 1111
+    YEAR_MASK = 0xE0            # 1110 0000
+    YEAR_MASK_2 = 0xF0          # 1111 0000
+    HUNDERT_YEAR_MASK = 0xC0    # 1100 0000
+    WEEK_DAY = 0xE0             # 1110 0000
+    WEEK = 0x3F                 # 0011 1111
+    TIME_INVALID = 0x80         # 1000 0000
+    SOMMERTIME = 0x40           # 0100 0000
+    LEAP_YEAR = 0x80            # 1000 0000
+    DIF_SOMMERTIME = 0xC0       # 1100 0000
+
+    @staticmethod
+    def getTimeWithSeconds(second, minute, hour):
+        return "{0}:{1}".format(
+            DateCalculator.getTime(minute, hour),
+            DateCalculator.getSeconds(second)
+        )
+
+    @staticmethod
+    def getTime(minute, hour):
+        return "{0}:{1}".format(
+            DateCalculator.getHour(hour),
+            DateCalculator.getMinutes(minute)
+        )
+
+    @staticmethod
+    def getDate(day, month, century):
+        return "{0}.{1}.{2}".format(
+            DateCalculator.getDay(day),
+            DateCalculator.getMonth(month),
+            DateCalculator.getYear(day, month, 0, False)
+        )
+
+    @staticmethod
+    def getDateTime(minute, hour, day, month, century):
+        return "{0} {1}".format(
+            DateCalculator.getDate(day, month, century),
+            DateCalculator.getTime(minute, hour)
+        )
+
+    @staticmethod
+    def getDateTimeWithSeconds(second, minute, hour, day, month, century):
+        return "{0} {1}".format(
+            DateCalculator.getDate(day, month, century),
+            DateCalculator.getTimeWithSeconds(second, minute, hour)
+        )
+
+    @staticmethod
+    def getSeconds(second):
+        return second & DateCalculator.SECOND_MASK
+
+    @staticmethod
+    def getMinutes(minute):
+        return minute & DateCalculator.MINUTE_MASK
+
+    @staticmethod
+    def getHour(hour):
+        return hour & DateCalculator.HOUR_MASK
+
+    @staticmethod
+    def getDay(day):
+        return day & DateCalculator.DAY_MASK
+
+    @staticmethod
+    def getMonth(month):
+        return month & DateCalculator.MONTH_MASK
+
+    @staticmethod
+    def getYear(yearValue1, yearValue2, hundertYearValue, calcHundertYear):
+        year1 = yearValue1 & DateCalculator.YEAR_MASK
+        year2 = yearValue2 & DateCalculator.YEAR_MASK_2
+        hundertYear = 1
+
+        # we move the bits of year1 value 4 bits to the right
+        # and concat (or) them with year2. Afterwards we have
+        # to move the result one bit to the right so that it
+        # is at the right position (0xxx xxxx).
+        year = (year2 | (year1 >> 4)) >> 1
+
+        # to be compatible with older meters it is recommended to interpret the
+        # years 0 to 80 as 2000 to 2080. Only year values in between 0 and 99
+        # should be used
+
+        # another option is to calculate the hundert year value (in new meters)
+        # from a third value the hundert year is generated and calculated
+        # the year is then calculated according to following formula:
+        # year = 1900 + 100 * hundertYear + year
+
+        if calcHundertYear:
+            # We have to load the hundert year format as well
+            hundertYear = \
+                (hundertYearValue & DateCalculator.HUNDERT_YEAR_MASK) >> 6
+            year = 1900 + (100 * hundertYear) + year
+
+        else:
+            if year < 81:
+                year = 2000 + year
+            else:
+                year = 1900 + year
+
+        return year

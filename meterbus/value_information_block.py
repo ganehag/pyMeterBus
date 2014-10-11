@@ -1,6 +1,4 @@
-from telegram_field import TelegramField
-from mbus_protocol import *
-import vif_table
+from .telegram_field import TelegramField
 
 
 class ValueInformationBlock(TelegramField):
