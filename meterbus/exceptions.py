@@ -3,6 +3,10 @@ class MBusError(Exception):
     pass
 
 
+class FrameMismatch(MBusError):
+    def __init__(self):
+        pass
+
 class MBusFrameDecodeError(MBusError):
     def __init__(self, msg):
         self.msg = msg

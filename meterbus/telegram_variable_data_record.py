@@ -91,7 +91,7 @@ class TelegramVariableDataRecord(object):
         mult, unit, typ = self._parse_vifx()
         return json.dumps({
             'value': self.parsed_value,
-            'unit': str(unit.name),
+            'unit': str(unit),
             'type': str(typ),
             'function': str(self.dib.function_type)
         }, use_decimal=True)

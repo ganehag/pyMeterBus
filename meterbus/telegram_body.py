@@ -130,14 +130,17 @@ class TelegramBodyHeader(object):
         self._sig_field = TelegramField()              # signature field
 
     def load(self, bodyHeader):
-        self.ci_field = bodyHeader[0]
-        self.id_nr_field = bodyHeader[1:5]
-        self.manufacturer_field = bodyHeader[5:7]
-        self.version_field = bodyHeader[7]
-        self.measure_medium_field = bodyHeader[8]
-        self.acc_nr_field = bodyHeader[9]
-        self.status_field = bodyHeader[10]
-        self.sig_field = bodyHeader[11:13]
+        if len(bodyHeader) == 1:
+            self.ci_field = bodyHeader[0]
+        else:
+            self.ci_field = bodyHeader[0]
+            self.id_nr_field = bodyHeader[1:5]
+            self.manufacturer_field = bodyHeader[5:7]
+            self.version_field = bodyHeader[7]
+            self.measure_medium_field = bodyHeader[8]
+            self.acc_nr_field = bodyHeader[9]
+            self.status_field = bodyHeader[10]
+            self.sig_field = bodyHeader[11:13]
 
     @property
     def id_nr(self):

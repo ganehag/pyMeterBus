@@ -13,7 +13,6 @@ This implementation is currently under heavy development. It is targeted at a ve
 
 Known Issues
 ------------
-* Missing: Single Character frame, Short frame, Control frame.
 * Missing: Fixed data structure parsing.
 * Missing: Encoding to M-Bus frames.
 * Missing: Slave configuration.
@@ -45,8 +44,7 @@ data = "\x68\x6A\x6A\x68\x08\x01\x72\x43\x53\x93\x07\x65" \
        "\x00\x00\x00\x00\x00\x00\x02\x7A\x25\x00\x02\x78" \
        "\x25\x00\x3A\x16"
 
-telegram = meterbus.Telegram()
-telegram.load(data)
+telegram = meterbus.load(data)
 print telegram.records
 
 ~$ 19.2.2014 11:18

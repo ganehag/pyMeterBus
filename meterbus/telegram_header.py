@@ -73,16 +73,23 @@ class TelegramHeader(object):
     def load(self, hat):
         header = hat
         if isinstance(hat, basestring):
-            header = hat.split(" ")
+            header = map(ord, hat)
 
-        self.startField = header[0]
-        self.lField = header[1]
-        self.lField = header[2]      # Re-set
-        self.startField = header[3]  # Re-set
-        self.cField = header[4]
-        self.aField = header[5]
-        self.crcField = header[-2]
-        self.stopField = header[-1]
+        if len(hat) == 8:
+            self.startField = header[0]
+            self.lField = header[1]
+            self.lField = header[2]      # Re-set
+            self.startField = header[3]  # Re-set
+            self.cField = header[4]
+            self.aField = header[5]
+            self.crcField = header[-2]
+            self.stopField = header[-1]
+        elif len(hat) == 5:
+            self.startField = header[0]
+            self.cField = header[1]
+            self.aField = header[2]
+            self.crcField = header[-2]
+            self.stopField = header[-1]
 
     def to_JSON(self):
         return json.dumps({

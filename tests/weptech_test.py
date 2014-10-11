@@ -5,8 +5,8 @@ myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/../')
 
 import unittest
+import meterbus
 from meterbus.exceptions import *
-from meterbus.telegram import Telegram
 
 
 class TestSequenceFunctions(unittest.TestCase):
@@ -18,51 +18,43 @@ class TestSequenceFunctions(unittest.TestCase):
                      "\x2f\x2f\x2f\x2f\x2f\x2f\x2f\x2f\x2f\xdd\x16"
 
     def test_record_count(self):
-        tele = Telegram()
-        tele.load(self.frame)
+        tele = meterbus.load(self.frame)
         self.assertEquals(len(tele.body.bodyPayload.records), 6)
 
     def test_record1_value(self):
-        tele = Telegram()
-        tele.load(map(ord, self.frame))
+        tele = meterbus.load(map(ord, self.frame))
         records = tele.body.bodyPayload.records
         self.assertEquals(records[0].parsed_value, 64000449)
 
     def test_record2_value(self):
-        tele = Telegram()
-        tele.load(map(ord, self.frame))
+        tele = meterbus.load(map(ord, self.frame))
         records = tele.body.bodyPayload.records
         self.assertEquals(records[1].parsed_value, 600)
 
     # Ignore record 3
 
     def test_record4_value(self):
-        tele = Telegram()
-        tele.load(map(ord, self.frame))
+        tele = meterbus.load(map(ord, self.frame))
         records = tele.body.bodyPayload.records
         self.assertEquals(records[3].parsed_value, 22)
 
     def test_record5_value(self):
-        tele = Telegram()
-        tele.load(map(ord, self.frame))
+        tele = meterbus.load(map(ord, self.frame))
         records = tele.body.bodyPayload.records
         self.assertEquals(records[4].parsed_value, 531)
 
     def test_record6_value(self):
-        tele = Telegram()
-        tele.load(map(ord, self.frame))
+        tele = meterbus.load(map(ord, self.frame))
         records = tele.body.bodyPayload.records
         self.assertEquals(records[5].parsed_value, 0)
 
     def test_record1_unit(self):
-        tele = Telegram()
-        tele.load(map(ord, self.frame))
+        tele = meterbus.load(map(ord, self.frame))
         records = tele.body.bodyPayload.records
         self.assertEquals(records[0].unit.name, "NONE")
 
     def test_record4_unit(self):
-        tele = Telegram()
-        tele.load(map(ord, self.frame))
+        tele = meterbus.load(map(ord, self.frame))
         records = tele.body.bodyPayload.records
         self.assertEquals(records[3].unit.name, "C")
 

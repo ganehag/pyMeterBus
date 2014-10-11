@@ -12,6 +12,27 @@
 from .core_objects import DataEncoding, FunctionType, MeasureUnit, VIFUnit, \
     VIFUnitExt, VIFTable
 
-from .telegram import Telegram
+from .telegram_ack import TelegramACK
+from .telegram_short import TelegramShort
+from .telegram_control import TelegramControl
+from .telegram_long import TelegramLong
+
 from .telegram_body import TelegramBody, TelegramBodyHeader, \
     TelegramBodyPayload
+from .exceptions import MBusFrameDecodeError, FrameMismatch
+
+
+def load(data):
+    if not data:
+        raise MBusFrameDecodeError("empty frame")
+
+    if isinstance(data, basestring):
+        data = map(ord, data)
+
+    for Frame in [TelegramACK, TelegramShort, TelegramControl,
+                  TelegramLong]:
+        try:
+            return Frame.parse(data)
+
+        except FrameMismatch, e:
+            pass
