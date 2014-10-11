@@ -4,22 +4,22 @@ from .core_objects import DateCalculator
 
 class TelegramField(object):
     def __init__(self, parts=None):
-        self._field_parts = []
+        self._parts = []
         # self._parsed_value = None
 
         if parts is not None:
             if isinstance(parts, basestring):
-                self.field_parts += map(ord, parts)
+                self.parts += map(ord, parts)
 
             elif isinstance(parts, (list, tuple)):
-                self.field_parts += parts
+                self.parts += parts
 
             else:
-                self.field_parts += [parts]
+                self.parts += [parts]
 
     @property
     def decodeInt(self):
-        int_data = self.field_parts
+        int_data = self.parts
         value = 0
         neg = int_data[-1] & 0x80
 
@@ -39,7 +39,7 @@ class TelegramField(object):
 
     @property
     def decodeBCD(self):
-        bcd_data = self.field_parts
+        bcd_data = self.parts
         val = 0
         i = len(bcd_data)
         while i > 0:
@@ -52,7 +52,7 @@ class TelegramField(object):
 
     @property
     def decodeReal(self):
-        real_data = self.field_parts
+        real_data = self.parts
         return struct.unpack('f', "".join(map(chr, real_data)))[0]
 
     @property
@@ -65,48 +65,48 @@ class TelegramField(object):
 
     @property
     def decodeASCII(self):
-        return "".join(map(chr, self.field_parts))
+        return "".join(map(chr, self.parts))
 
     @property
     def decodeDate(self):
         return DateCalculator.getDate(
-            self.field_parts[0], self.field_parts[1], False)
+            self.parts[0], self.parts[1], False)
 
     @property
     def decodeDateTime(self):
         return DateCalculator.getDateTime(
-            self.field_parts[0], self.field_parts[1], self.field_parts[2],
-            self.field_parts[3], False)
+            self.parts[0], self.parts[1], self.parts[2],
+            self.parts[3], False)
 
     @property
     def decodeTimeWithSeconds(self):
         return DateCalculator.getTimeWithSeconds(
-            self.field_parts[0], self.field_parts[1], self.field_parts[2])
+            self.parts[0], self.parts[1], self.parts[2])
 
     @property
     def decodeDateTimeWithSeconds(self):
         return DateCalculator.getDateTimeWithSeconds(
-            self.field_parts[0], self.field_parts[1], self.field_parts[2],
-            self.field_parts[3], self.field_parts[4], False)
+            self.parts[0], self.parts[1], self.parts[2],
+            self.parts[3], self.parts[4], False)
 
     @property
-    def field_parts(self):
-        return self._field_parts
+    def parts(self):
+        return self._parts
 
-    @field_parts.setter
-    def field_parts(self, val):
+    @parts.setter
+    def parts(self, val):
         if isinstance(val, (list, tuple)):
-            self._field_parts = list(val)
+            self._parts = list(val)
         else:
-            self._field_parts = val
+            self._parts = val
 
-    @field_parts.deleter
-    def field_parts(self):
-        self._field_parts = []
+    @parts.deleter
+    def parts(self):
+        self._parts = []
 
     @property
-    def field_parts_bytes(self):
-        return map(ord, self._field_parts)
+    def parts_bytes(self):
+        return map(ord, self._parts)
         # FIXME: ord? chr?
 
     def debug_fields(self, highlight, cval=0):
@@ -116,11 +116,11 @@ class TelegramField(object):
 
         ENDC = '\033[0m'
 
-        if highlight >= len(self.field_parts):
+        if highlight >= len(self.parts):
             return
 
         d = []
-        for c, item in enumerate(self.field_parts):
+        for c, item in enumerate(self.parts):
             if c == highlight:
                 d.append(color[cval] + "{0:02X}".format(item) + ENDC)
             else:
@@ -129,7 +129,7 @@ class TelegramField(object):
         print " ".join(d)
 
     def __str__(self):
-        return " ".join(self.field_parts)
+        return " ".join(self.parts)
 
     def __getitem__(self, key):
-        return self.field_parts[key]
+        return self.parts[key]

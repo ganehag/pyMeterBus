@@ -1,11 +1,9 @@
 import json
 
+from .core_objects import DataEncoding, FunctionType
 from .telegram_field import TelegramField
 from .telegram_variable_data_record import TelegramVariableDataRecord
-
 from .value_information_block import ValueInformationBlock
-
-from .core_objects import DataEncoding, FunctionType
 
 
 class TelegramBodyPayload(object):
@@ -32,10 +30,11 @@ class TelegramBodyPayload(object):
     def body(self, value):
         self._body = TelegramField(value)
 
-    def createTelegramBodyPayload(self, payload):
+    def load(self, payload):
         self.body = payload
+        self.parse()
 
-    def setTelegramBodyPayload(self, payload):
+    def set_payload(self, payload):
         self.body = payload
 
     def parse(self):
@@ -44,12 +43,12 @@ class TelegramBodyPayload(object):
         recordPos = 0
 
         try:
-            while recordPos < len(self.body.field_parts):
-                recordPos = self._parseVariableDataRecord(recordPos)
+            while recordPos < len(self.body.parts):
+                recordPos = self._parse_variable_data_rec(recordPos)
         except IndexError:
             raise
 
-    def _parseVariableDataRecord(self, startPos):
+    def _parse_variable_data_rec(self, startPos):
         lowerBoundary = 0
         upperBoundary = 0
 
@@ -58,11 +57,11 @@ class TelegramBodyPayload(object):
         rec = TelegramVariableDataRecord()
 
         # Data Information Block
-        rec.dib.field_parts.append(self.body.field_parts[
+        rec.dib.parts.append(self.body.parts[
             startPos])
 
         if rec.dib.is_eoud:  # End of User Data
-            return len(self.body.field_parts)
+            return len(self.body.parts)
 
         elif rec.dib.function_type == \
                 FunctionType.SPECIAL_FUNCTION_FILL_BYTE:
@@ -70,32 +69,32 @@ class TelegramBodyPayload(object):
 
         if rec.dib.has_extension_bit:
             for count, part in enumerate(
-                    self.body.field_parts[startPos + 1:]):
-                rec.dib.field_parts.append(part)
+                    self.body.parts[startPos + 1:]):
+                rec.dib.parts.append(part)
 
                 if not rec.dib.has_extension_bit:
                     break
 
         # Value Information Block
-        rec.vib.field_parts.append(self.body.field_parts[
-            startPos + len(rec.dib.field_parts)])
+        rec.vib.parts.append(self.body.parts[
+            startPos + len(rec.dib.parts)])
 
         if rec.vib.has_extension_bit:
             for count, part in enumerate(
-                    self.body.field_parts[startPos + 1 + len(rec.dib.field_parts):]):
-                rec.vib.field_parts.append(part)
+                    self.body.parts[startPos + 1 + len(rec.dib.parts):]):
+                rec.vib.parts.append(part)
 
                 if not rec.vib.has_extension_bit:
                     break
 
-        lowerBoundary = startPos + len(rec.dib.field_parts) + len(rec.vib.field_parts)
+        lowerBoundary = startPos + len(rec.dib.parts) + len(rec.vib.parts)
 
         length, encoding = rec.dib.length_encoding
 
         # if there exist a LVAR Byte at the beginning of the data field,
         # change the data field length
         if encoding == DataEncoding.ENCODING_VARIABLE_LENGTH:
-            length = self.body.field_parts[lowerBoundary]
+            length = self.body.parts[lowerBoundary]
             lowerBoundary += 1
 
         upperBoundary = lowerBoundary + length
@@ -104,10 +103,10 @@ class TelegramBodyPayload(object):
             return upperBoundary
 
         # Data Block
-        if len(self.body.field_parts) >= upperBoundary:
+        if len(self.body.parts) >= upperBoundary:
             dataField = TelegramField()
-            dataField.field_parts += \
-                self.body.field_parts[lowerBoundary:upperBoundary]
+            dataField.parts += \
+                self.body.parts[lowerBoundary:upperBoundary]
             rec.dataField = dataField
 
         self.records.append(rec)
@@ -130,7 +129,7 @@ class TelegramBodyHeader(object):
         self._status_field = TelegramField()           # status
         self._sig_field = TelegramField()              # signature field
 
-    def createTelegramBodyHeader(self, bodyHeader):
+    def load(self, bodyHeader):
         self.ci_field = bodyHeader[0]
         self.id_nr_field = bodyHeader[1:5]
         self.manufacturer_field = bodyHeader[5:7]
@@ -211,14 +210,14 @@ class TelegramBodyHeader(object):
 
     def to_JSON(self):
         return json.dumps({
-            'type': hex(self.ci_field.field_parts[0]),
+            'type': hex(self.ci_field.parts[0]),
             'identification': ", ".join(map(hex, self.id_nr)),
             'manufactorer': self.manufacturer_field.decodeManufacturer,
-            'version': hex(self.version_field.field_parts[0]),
-            'medium': hex(self.measure_medium_field.field_parts[0]),
-            'access_no': self.acc_nr_field.field_parts[0],
-            'status': hex(self.status_field.field_parts[0]),
-            'sign': ", ".join(map(hex, self.sig_field.field_parts))
+            'version': hex(self.version_field.parts[0]),
+            'medium': hex(self.measure_medium_field.parts[0]),
+            'access_no': self.acc_nr_field.parts[0],
+            'status': hex(self.status_field.parts[0]),
+            'sign': ", ".join(map(hex, self.sig_field.parts))
         }, sort_keys=False, indent=4)
 
 
@@ -239,7 +238,7 @@ class TelegramBody(object):
     @bodyHeader.setter
     def bodyHeader(self, val):
         self._bodyHeader = TelegramBodyHeader()
-        self._bodyHeader.createTelegramBodyHeader(val[0:self.bodyHeaderLength])
+        self._bodyHeader.load(val[0:self.bodyHeaderLength])
 
     @property
     def bodyPayload(self):
@@ -249,10 +248,9 @@ class TelegramBody(object):
     def bodyPayload(self, val):
         self._bodyPayload = TelegramBodyPayload(val)
 
-    def createTelegramBody(self, body):
+    def load(self, body):
         self.bodyHeader = body[0:self.bodyHeaderLength]
-        self.bodyPayload.createTelegramBodyPayload(
-            body[self.bodyHeaderLength:])
+        self.bodyPayload.load(body[self.bodyHeaderLength:])
 
     def parse(self):
         self.bodyPayload.parse()  # Load from raw into records

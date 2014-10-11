@@ -14,7 +14,7 @@ class DataInformationBlock(TelegramField):
     def has_extension_bit(self):
         """Check for extension bit on last byte"""
         try:
-            return (self.field_parts[-1] & self.EXTENSION_BIT_MASK) > 0
+            return (self.parts[-1] & self.EXTENSION_BIT_MASK) > 0
         except IndexError:
             return False
 
@@ -22,7 +22,7 @@ class DataInformationBlock(TelegramField):
     def has_lvar_bit(self):
         """returns true if first VIFE has LVAR active"""
         try:
-            return (self.field_parts[1] & self.EXTENSION_BIT_MASK) > 0
+            return (self.parts[1] & self.EXTENSION_BIT_MASK) > 0
         except IndexError:
             return False
 
@@ -30,7 +30,7 @@ class DataInformationBlock(TelegramField):
     def is_eoud(self):
         """Check for end of user data bit VIF byte"""
         try:
-            dif = self.field_parts[0]
+            dif = self.parts[0]
             if dif in [0x0F, 0x1F]:
                 return True
         except IndexError:
@@ -40,18 +40,18 @@ class DataInformationBlock(TelegramField):
 
     @property
     def function_type(self):
-        if self.field_parts[0] == 0x0F:
+        if self.parts[0] == 0x0F:
             return FunctionType.SPECIAL_FUNCTION
 
-        elif self.field_parts[0] == 0x2F:
+        elif self.parts[0] == 0x2F:
             return FunctionType.SPECIAL_FUNCTION_FILL_BYTE
 
         return FunctionType(
-            (self.field_parts[0] & self.FUNCTION_MASK) >> 4)
+            (self.parts[0] & self.FUNCTION_MASK) >> 4)
 
     @property
     def length_encoding(self):
-        len_enc = self.field_parts[0] & self.DATA_FIELD_MASK
+        len_enc = self.parts[0] & self.DATA_FIELD_MASK
 
         return {
             0: (0, DataEncoding.ENCODING_NULL),

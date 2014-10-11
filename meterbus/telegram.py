@@ -22,7 +22,7 @@ class Telegram(object):
     @header.setter
     def header(self, value):
         self._header = TelegramHeader()
-        self._header.createTelegramHeader(value)
+        self._header.load(value)
 
     @property
     def body(self):
@@ -31,21 +31,27 @@ class Telegram(object):
     @body.setter
     def body(self, value):
         self._body = TelegramBody()
-        self._body.createTelegramBody(value)
+        self._body.load(value)
 
-    def createTelegram(self, tgr):
+    @property
+    def records(self):
+        """Alias property for easy access to records"""
+        return self.body.bodyPayload.records
+
+    def load(self, tgr):
         telegram = tgr
+
         if isinstance(tgr, basestring):
-            telegram = tgr.split(" ")
+            telegram = map(ord, tgr)
 
         headerLength = self.header.headerLength
         firstHeader = telegram[0:headerLength]
 
-        # ??? juggeling, copy CRC and stopByte into header... juck!
+        # Copy CRC and stopByte into header
         resultHeader = firstHeader + telegram[-2:]
 
-        self.header.createTelegramHeader(resultHeader)
-        self.body.createTelegramBody(telegram[headerLength:-2])
+        self.header.load(resultHeader)
+        self.body.load(telegram[headerLength:-2])
 
     def parse(self):
         self.body.parse()

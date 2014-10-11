@@ -13,4 +13,5 @@ from .core_objects import DataEncoding, FunctionType, MeasureUnit, VIFUnit, \
     VIFUnitExt, VIFTable
 
 from .telegram import Telegram
-from .telegram_body import TelegramBody, TelegramBodyPayload
+from .telegram_body import TelegramBody, TelegramBodyHeader, \
+    TelegramBodyPayload

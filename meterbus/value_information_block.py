@@ -10,7 +10,7 @@ class ValueInformationBlock(TelegramField):
     @property
     def has_extension_bit(self):
         try:
-            return (self.field_parts[-1] & self.EXTENSION_BIT_MASK) > 0
+            return (self.parts[-1] & self.EXTENSION_BIT_MASK) > 0
         except IndexError:
             return False
 
@@ -18,6 +18,6 @@ class ValueInformationBlock(TelegramField):
     def has_lvar_bit(self):
         """returns true if first VIFE has LVAR set"""
         try:
-            return (self.field_parts[1] & self.EXTENSION_BIT_MASK) > 0
+            return (self.parts[1] & self.EXTENSION_BIT_MASK) > 0
         except IndexError:
             return False
