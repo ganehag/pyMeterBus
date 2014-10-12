@@ -34,4 +34,4 @@ class TelegramShort(object):
                 self.header.aField.parts[0]) % 256
 
     def check_crc(self):
-        return self.compute_crc() == self.checksum
+        return self.compute_crc() == self.header.crcField.parts[0]

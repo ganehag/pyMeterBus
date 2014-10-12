@@ -47,13 +47,18 @@ class TelegramControl(object):
     def header(self, value):
         self._header = value
 
+    @property
+    def body(self):
+        return self._body
+
+    @body.setter
+    def body(self, value):
+        self._body = value
+
     def compute_crc(self):
         return (self.header.cField.parts[0] +
                 self.header.aField.parts[0] +
                 self.body.bodyHeader.ci_field.parts[0]) % 256
 
-    def compute_crc(self):
-        return (self.control + self.address + self.control_information) % 256
-
     def check_crc(self):
-        return self.compute_crc() == self.checksum
+        return self.compute_crc() == self.header.crcField.parts[0]
