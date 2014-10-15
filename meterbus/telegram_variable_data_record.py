@@ -31,11 +31,11 @@ class TelegramVariableDataRecord(object):
         vife = self.vib.parts[1:]
         vtf_ebm = self.EXTENSION_BIT_MASK
 
-        if vif == VIFUnit.FIRST_EXT_VIF_CODES.value:
-            code = (vife[0] & self.UNIT_MULTIPLIER_MASK) | 0x100
-
-        elif vif == VIFUnit.SECOND_EXT_VIF_CODES.value:
+        if vif == VIFUnit.FIRST_EXT_VIF_CODES.value:  # 0xFB
             code = (vife[0] & self.UNIT_MULTIPLIER_MASK) | 0x200
+
+        elif vif == VIFUnit.SECOND_EXT_VIF_CODES.value:  # 0xFD
+            code = (vife[0] & self.UNIT_MULTIPLIER_MASK) | 0x100
 
         else:
             code = (vif & self.UNIT_MULTIPLIER_MASK)
