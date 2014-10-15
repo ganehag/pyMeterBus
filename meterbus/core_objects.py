@@ -1,6 +1,40 @@
 from enum import Enum
 
 
+class MeasureUnit(Enum):
+    KWH = "kWh"
+    WH = "WH"
+    J = "J"
+    M3 = "m^3"
+    L = "l"
+    KG = "kg"
+    W = "W"
+    J_H = "J/h"
+    M3_H = "m^3/h"
+    M3_MIN = "m^3/min"
+    M3_S = "m^3/s"
+    KG_H = "kg/h"
+    C = "C"
+    K = "K"
+    BAR = "bar"
+    DATE = "date"
+    TIME = "time"
+    DATE_TIME = "date time"
+    DATE_TIME_S = "date time to second"
+    SECONDS = "seconds"
+    MINUTES = "minutes"
+    HOURS = "hours"
+    DAYS = "days"
+    NONE = "none"
+    V = "V"
+    A = "A"
+    HCA = "H.C.A"
+    CURRENCY = "Currency unit"
+    BAUD = "Baud"
+    BIT_TIMES = "Bittimes"
+    PERCENT = "%"
+
+
 class FunctionType(Enum):
     INSTANTANEOUS_VALUE = 0
     MAXIMUM_VALUE = 1
@@ -131,37 +165,8 @@ class VIFUnitExt(Enum):
     # E111 0001 to E111 1111 Reserved
 
 
-class MeasureUnit(Enum):
-    KWH = "kWh"
-    WH = "WH"
-    J = "J"
-    M3 = "m^3"
-    L = "l"
-    KG = "kg"
-    W = "W"
-    J_H = "J/h"
-    M3_H = "m^3/h"
-    M3_MIN = "m^3/min"
-    M3_S = "m^3/s"
-    KG_H = "kg/h"
-    C = "C"
-    K = "K"
-    BAR = "bar"
-    DATE = "date"
-    TIME = "time"
-    DATE_TIME = "date time"
-    DATE_TIME_S = "date time to second"
-    SECONDS = "seconds"
-    MINUTES = "minutes"
-    HOURS = "hours"
-    DAYS = "days"
-    NONE = "none"
-    V = "V"
-    A = "A"
-    HCA = "H.C.A"
-    CURRENCY = "Currency unit"
-    BAUD = "Baud"
-    BIT_TIMES = "Bittimes"
+class VIFUnitSecExt(Enum):
+    RELATIVE_HUMIDITY = 0x1A
 
 
 class VIFTable(object):
