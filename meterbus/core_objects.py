@@ -33,6 +33,7 @@ class MeasureUnit(Enum):
     BAUD = "Baud"
     BIT_TIMES = "Bittimes"
     PERCENT = "%"
+    DBM = "dBm"
 
 
 class FunctionType(Enum):
@@ -164,6 +165,7 @@ class VIFUnitExt(Enum):
     DATEAND_TIME_OF_BATTERY_CHANGE = 0x70   # E111 0000 Date and time of bat...
     # E111 0001 to E111 1111 Reserved
 
+    RSSI = 0x71                             # E111 0001 RSSI
 
 class VIFUnitSecExt(Enum):
     RELATIVE_HUMIDITY = 0x1A
@@ -584,7 +586,7 @@ class VIFTable(object):
         0x170: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.DATEAND_TIME_OF_BATTERY_CHANGE),
 
         # E111 0001-1111 Reserved */
-        0x171: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
+        0x171: (1.0e0,  MeasureUnit.DBM, VIFUnitExt.RSSI),
         0x172: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
         0x173: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
         0x174: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),

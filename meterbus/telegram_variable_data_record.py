@@ -71,7 +71,9 @@ class TelegramVariableDataRecord(object):
                 MeasureUnit.TIME: lambda: tdf.decodeTimeWithSeconds,
 
                 # Typ I: Day.Month.Year Hour:Minute:Second
-                MeasureUnit.DATE_TIME_S: lambda: tdf.decodeDateTimeWithSeconds
+                MeasureUnit.DATE_TIME_S: lambda: tdf.decodeDateTimeWithSeconds,
+
+                MeasureUnit.DBM: lambda: (int(tdf.decodeInt) * 2) - 130
             }[unit]()
         except KeyError:
             pass
