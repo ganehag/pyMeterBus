@@ -37,6 +37,9 @@ class TelegramVariableDataRecord(object):
         elif vif == VIFUnit.SECOND_EXT_VIF_CODES.value:  # 0xFD
             code = (vife[0] & self.UNIT_MULTIPLIER_MASK) | 0x100
 
+        elif vif == VIFUnit.VIF_FOLLOWING:
+            return (1, "FixMe", "FixMe")
+
         else:
             code = (vif & self.UNIT_MULTIPLIER_MASK)
 
