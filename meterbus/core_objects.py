@@ -423,7 +423,6 @@ class VIFTable(object):
         # E001 1001 Reserved */
         0x119: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.RESERVED),
 
-
         # E001 1010 Digital Output (binary) */
         0x11A: (1.0e0,  MeasureUnit.NONE, VIFUnitExt.DIGITAL_OUTPUT),
 
@@ -647,7 +646,7 @@ class VIFTable(object):
         0x219: (1.0e6,  MeasureUnit.KG, "Mass"),
 
         # E001 1010 to E010 0000 Reserved */
-        0x21A: (1.0e0,  "Reserved", "Reserved"),
+        0x21A: (1.0e-1,  MeasureUnit.PERCENT, VIFUnitSecExt.RELATIVE_HUMIDITY),
         0x21B: (1.0e0,  "Reserved", "Reserved"),
         0x21C: (1.0e0,  "Reserved", "Reserved"),
         0x21D: (1.0e0,  "Reserved", "Reserved"),
