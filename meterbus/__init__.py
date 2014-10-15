@@ -10,7 +10,7 @@
 """
 
 from .core_objects import DataEncoding, FunctionType, MeasureUnit, VIFUnit, \
-    VIFUnitExt, VIFTable
+    VIFUnitExt, VIFUnitSecExt, VIFTable
 
 from .telegram_ack import TelegramACK
 from .telegram_short import TelegramShort
