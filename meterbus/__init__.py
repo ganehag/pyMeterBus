@@ -36,3 +36,6 @@ def load(data):
 
         except FrameMismatch, e:
             pass
+
+    if not data:
+        raise MBusFrameDecodeError("unable to decode frame")
