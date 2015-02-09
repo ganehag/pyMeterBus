@@ -76,8 +76,11 @@ class TelegramBodyPayload(object):
                     break
 
         # Value Information Block
-        rec.vib.parts.append(self.body.parts[
-            startPos + len(rec.dib.parts)])
+        try:
+            rec.vib.parts.append(self.body.parts[
+                startPos + len(rec.dib.parts)])
+        except IndexError:
+            pass #Hmm
 
         if rec.vib.has_extension_bit:
             for count, part in enumerate(
