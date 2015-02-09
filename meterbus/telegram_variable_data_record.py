@@ -83,6 +83,7 @@ class TelegramVariableDataRecord(object):
 
         return {
             te.ENCODING_INTEGER: lambda: int(
+                tdf.decodeInt * mult) if mult > 1.0 else decimal.Decimal(
                 tdf.decodeInt * mult),
             te.ENCODING_BCD: lambda: decimal.Decimal(
                 tdf.decodeBCD * mult),
