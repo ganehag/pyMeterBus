@@ -167,6 +167,7 @@ class VIFUnitExt(Enum):
 
     RSSI = 0x71                             # E111 0001 RSSI
 
+
 class VIFUnitSecExt(Enum):
     RELATIVE_HUMIDITY = 0x1A
 

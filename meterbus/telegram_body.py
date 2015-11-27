@@ -80,17 +80,32 @@ class TelegramBodyPayload(object):
             rec.vib.parts.append(self.body.parts[
                 startPos + len(rec.dib.parts)])
         except IndexError:
-            pass #Hmm
+            pass  # Hmm
+
+        if rec.vib.without_extension_bit:
+            var_lvext_p = startPos + len(rec.dib.parts) + len(rec.vib.parts)
+            var_vife_len = self.body.parts[var_lvext_p]
+
+            rec.vib.customVIF.parts = self.body.parts[var_lvext_p + 1:
+                                                      var_lvext_p + 1 +
+                                                      var_vife_len]
 
         if rec.vib.has_extension_bit:
             for count, part in enumerate(
-                    self.body.parts[startPos + 1 + len(rec.dib.parts):]):
+                    self.body.parts[startPos + 1 +
+                                    rec.vib.without_extension_bit +
+                                    len(rec.dib.parts) +
+                                    len(rec.vib.customVIF):]):
                 rec.vib.parts.append(part)
 
                 if not rec.vib.has_extension_bit:
                     break
 
-        lowerBoundary = startPos + len(rec.dib.parts) + len(rec.vib.parts)
+        lowerBoundary = (startPos +
+                         rec.vib.without_extension_bit +
+                         len(rec.dib.parts) +
+                         len(rec.vib.customVIF) +
+                         len(rec.vib.parts))
 
         length, encoding = rec.dib.length_encoding
 

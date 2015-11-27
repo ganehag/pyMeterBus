@@ -65,7 +65,7 @@ class TelegramField(object):
 
     @property
     def decodeASCII(self):
-        return "".join(map(chr, self.parts))
+        return "".join(map(chr, reversed(self.parts)))
 
     @property
     def decodeDate(self):
@@ -129,7 +129,10 @@ class TelegramField(object):
         print " ".join(d)
 
     def __str__(self):
-        return " ".join(self.parts)
+        return " ".join(map(lambda x: hex(x).replace('0x', '').zfill(2), self.parts))
 
     def __getitem__(self, key):
         return self.parts[key]
+
+    def __len__(self):
+        return len(self.parts)
