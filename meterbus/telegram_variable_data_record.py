@@ -42,9 +42,9 @@ class TelegramVariableDataRecord(object):
                 code = vife[0] & self.UNIT_MULTIPLIER_MASK
                 factor = 1
 
-                if 0x70 >= code <= 0x77:
+                if 0x70 <= code <= 0x77:
                     factor = pow(10.0, (vife[0] & 0x07) - 6)
-                elif 0x78 >= code <= 0x7B:
+                elif 0x78 <= code <= 0x7B:
                     factor = pow(10.0, (vife[0] & 0x03) - 3)
                 elif code == 0x7D:
                     factor = 1
