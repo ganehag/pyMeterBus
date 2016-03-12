@@ -57,8 +57,7 @@ class TelegramBodyPayload(object):
         rec = TelegramVariableDataRecord()
 
         # Data Information Block
-        rec.dib.parts.append(self.body.parts[
-            startPos])
+        rec.dib.parts.append(self.body.parts[startPos])
 
         if rec.dib.is_eoud:  # End of User Data
             return len(self.body.parts)

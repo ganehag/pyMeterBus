@@ -27,6 +27,9 @@ class TelegramVariableDataRecord(object):
         self._dataField = value
 
     def _parse_vifx(self):
+        if len(self.vib.parts) == 0:
+            return None, None, None
+
         vif = self.vib.parts[0]
         vife = self.vib.parts[1:]
         vtf_ebm = self.EXTENSION_BIT_MASK
