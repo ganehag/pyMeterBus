@@ -19,6 +19,10 @@ from .telegram_long import TelegramLong
 
 from .telegram_body import TelegramBody, TelegramBodyHeader, \
     TelegramBodyPayload
+
+from .wtelegram_snd_nr import WTelegramSndNr
+from .wtelegram_header import WTelegramHeader
+
 from .exceptions import MBusFrameDecodeError, FrameMismatch
 
 
@@ -29,7 +33,7 @@ def load(data):
     if isinstance(data, basestring):
         data = map(ord, data)
 
-    for Frame in [TelegramACK, TelegramShort, TelegramControl,
+    for Frame in [WTelegramSndNr, TelegramACK, TelegramShort, TelegramControl,
                   TelegramLong]:
         try:
             return Frame.parse(data)

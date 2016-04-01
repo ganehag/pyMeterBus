@@ -7,12 +7,13 @@ from .value_information_block import ValueInformationBlock
 
 
 class TelegramBodyPayload(object):
-    def __init__(self, payload=None):
+    def __init__(self, payload=None, parent=None):
         self._body = TelegramField()
         if payload is not None:
             self._body = TelegramField(payload)
 
         self._records = []
+        self._parent = parent
 
     @property
     def records(self):
@@ -57,8 +58,7 @@ class TelegramBodyPayload(object):
         rec = TelegramVariableDataRecord()
 
         # Data Information Block
-        rec.dib.parts.append(self.body.parts[
-            startPos])
+        rec.dib.parts.append(self.body.parts[startPos])
 
         if rec.dib.is_eoud:  # End of User Data
             return len(self.body.parts)
@@ -125,6 +125,11 @@ class TelegramBodyPayload(object):
             dataField = TelegramField()
             dataField.parts += \
                 self.body.parts[lowerBoundary:upperBoundary]
+
+            # MSB Order
+            if not self._parent.bodyHeader.isLSBOrder:
+                dataField.parts.reverse()
+
             rec.dataField = dataField
 
         self.records.append(rec)
@@ -137,6 +142,8 @@ class TelegramBodyPayload(object):
 
 
 class TelegramBodyHeader(object):
+    BYTE_ORDER_MASK = 0x04    # 0000 0100
+
     def __init__(self):
         self._ci_field = TelegramField()        # control information field
         self._id_nr_field = TelegramField()     # identification number field
@@ -159,11 +166,19 @@ class TelegramBodyHeader(object):
             self.acc_nr_field = bodyHeader[9]
             self.status_field = bodyHeader[10]
             self.sig_field = bodyHeader[11:13]
+            if not self.isLSBOrder:
+                self.id_nr_field.parts.reverse()
+                self.manufacturer_field.parts.reverse()
+                self.sig_field.parts.reverse()
 
     @property
     def id_nr(self):
         """ID number of telegram in reverse byte order"""
         return self._id_nr_field[::-1]
+
+    @property
+    def isLSBOrder(self):
+        return not (self._ci_field.parts[0] & self.BYTE_ORDER_MASK)
 
     @property
     def ci_field(self):
@@ -245,7 +260,7 @@ class TelegramBodyHeader(object):
 class TelegramBody(object):
     def __init__(self):
         self._bodyHeader = TelegramBodyHeader()
-        self._bodyPayload = TelegramBodyPayload()
+        self._bodyPayload = TelegramBodyPayload(parent=self)
         self._bodyHeaderLength = 13
 
     @property
@@ -267,7 +282,7 @@ class TelegramBody(object):
 
     @bodyPayload.setter
     def bodyPayload(self, val):
-        self._bodyPayload = TelegramBodyPayload(val)
+        self._bodyPayload = TelegramBodyPayload(val, parent=self)
 
     def load(self, body):
         self.bodyHeader = body[0:self.bodyHeaderLength]
