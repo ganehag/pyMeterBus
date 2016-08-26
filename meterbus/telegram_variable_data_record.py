@@ -55,6 +55,8 @@ class TelegramVariableDataRecord(object):
                 return (factor, self.vib.customVIF.decodeASCII,
                         VIFUnit.VARIABLE_VIF)
 
+            return (1, "FixME", "FixMe")
+
         elif vif == VIFUnit.VIF_FOLLOWING:
             return (1, "FixMe", "FixMe")
 
