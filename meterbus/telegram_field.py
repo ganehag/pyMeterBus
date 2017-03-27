@@ -129,7 +129,8 @@ class TelegramField(object):
         print " ".join(d)
 
     def __str__(self):
-        return " ".join(map(lambda x: hex(x).replace('0x', '').zfill(2), self.parts))
+        return " ".join(
+            map(lambda x: hex(x).replace('0x', '').zfill(2), self.parts))
 
     def __getitem__(self, key):
         return self.parts[key]
