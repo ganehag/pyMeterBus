@@ -30,15 +30,15 @@ def load(data):
     if not data:
         raise MBusFrameDecodeError("empty frame")
 
-    if isinstance(data, basestring):
-        data = map(ord, data)
+    if isinstance(data, str):
+        data = list(map(ord, data))
 
     for Frame in [WTelegramSndNr, TelegramACK, TelegramShort, TelegramControl,
                   TelegramLong]:
         try:
             return Frame.parse(data)
 
-        except FrameMismatch, e:
+        except FrameMismatch as e:
             pass
 
     if not data:

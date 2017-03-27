@@ -8,8 +8,8 @@ class TelegramField(object):
         # self._parsed_value = None
 
         if parts is not None:
-            if isinstance(parts, basestring):
-                self.parts += map(ord, parts)
+            if isinstance(parts, str):
+                self.parts += list(map(ord, parts))
 
             elif isinstance(parts, (list, tuple)):
                 self.parts += parts
@@ -106,7 +106,7 @@ class TelegramField(object):
 
     @property
     def parts_bytes(self):
-        return map(ord, self._parts)
+        return list(map(ord, self._parts))
         # FIXME: ord? chr?
 
     def debug_fields(self, highlight, cval=0):
@@ -126,10 +126,11 @@ class TelegramField(object):
             else:
                 d.append("{0:02X}".format(item))
 
-        print " ".join(d)
+        print((" ".join(d)))
 
     def __str__(self):
-        return " ".join(map(lambda x: hex(x).replace('0x', '').zfill(2), self.parts))
+        return " ".join(
+            [hex(x).replace('0x', '').zfill(2) for x in self.parts])
 
     def __getitem__(self, key):
         return self.parts[key]
