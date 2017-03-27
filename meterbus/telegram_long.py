@@ -21,8 +21,8 @@ class TelegramLong(object):
         self._body = TelegramBody()
 
         tgr = dbuf
-        if isinstance(dbuf, basestring):
-            tgr = map(ord, dbuf)
+        if isinstance(dbuf, str):
+            tgr = list(map(ord, dbuf))
 
         headerLength = self.header.headerLength
         firstHeader = tgr[0:headerLength]
@@ -67,8 +67,8 @@ class TelegramLong(object):
     def load(self, tgr):
         telegram = tgr
 
-        if isinstance(tgr, basestring):
-            telegram = map(ord, tgr)
+        if isinstance(tgr, str):
+            telegram = list(map(ord, tgr))
 
         headerLength = self.header.headerLength
         firstHeader = telegram[0:headerLength]

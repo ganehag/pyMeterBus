@@ -63,8 +63,8 @@ class WTelegramHeader(object):
 
     def load(self, hat):
         header = hat
-        if isinstance(hat, basestring):
-            header = map(ord, hat)
+        if isinstance(hat, str):
+            header = list(map(ord, hat))
 
         # self.startField = header[0]
         self.lField = header[0]

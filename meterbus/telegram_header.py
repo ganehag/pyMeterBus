@@ -72,8 +72,8 @@ class TelegramHeader(object):
 
     def load(self, hat):
         header = hat
-        if isinstance(hat, basestring):
-            header = map(ord, hat)
+        if isinstance(hat, str):
+            header = list(map(ord, hat))
 
         if len(hat) == 8:
             self.startField = header[0]

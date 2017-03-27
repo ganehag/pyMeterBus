@@ -21,8 +21,8 @@ class WTelegramSndNr(object):
         self._body = WTelegramBody()
 
         tgr = dbuf
-        if isinstance(dbuf, basestring):
-            tgr = map(ord, dbuf)
+        if isinstance(dbuf, str):
+            tgr = list(map(ord, dbuf))
 
         self.header.load(tgr)
         headerLength = self.header.headerLength
