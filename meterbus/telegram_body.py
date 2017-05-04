@@ -248,7 +248,7 @@ class TelegramBodyHeader(object):
         return json.dumps({
             'type': hex(self.ci_field.parts[0]),
             'identification': ", ".join(map(hex, self.id_nr)),
-            'manufactorer': self.manufacturer_field.decodeManufacturer,
+            'manufacturer': self.manufacturer_field.decodeManufacturer,
             'version': hex(self.version_field.parts[0]),
             'medium': hex(self.measure_medium_field.parts[0]),
             'access_no': self.acc_nr_field.parts[0],
