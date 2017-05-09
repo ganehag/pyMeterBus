@@ -1,3 +1,4 @@
+from .core_objects import Globals as g
 from .telegram_header import TelegramHeader
 from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
 
@@ -8,18 +9,26 @@ class TelegramShort(object):
         if data and len(data) < 5:
             raise MBusFrameDecodeError("Invalid M-Bus length")
 
-        if data[0] != 0x10:
+        if data[0] != g.FRAME_SHORT_START.value:
             raise FrameMismatch()
 
         return TelegramShort(data)
 
     def __init__(self, dbuf=None):
         self._header = TelegramHeader()
-        self._header.load(dbuf)
+        if dbuf != None:
+            self._header.load(dbuf)
 
-        if not self.check_crc():
-            raise MBusFrameCRCError(self.compute_crc(),
-                                    self.header.crcField.parts[0])
+            if not self.check_crc():
+                raise MBusFrameCRCError(self.compute_crc(),
+                                        self.header.crcField.parts[0])
+        else:
+           self._header.startField.parts = [g.FRAME_SHORT_START.value]
+           self._header.lField.parts = [0x00]  # not used in short frame
+           self._header.cField.parts = [0x00]
+           self._header.aField.parts = [0x00]
+           self._header.crcField.parts = [0x00]
+           self._header.stopField.parts = [g.FRAME_STOP.value]
 
     @property
     def header(self):
@@ -35,3 +44,13 @@ class TelegramShort(object):
 
     def check_crc(self):
         return self.compute_crc() == self.header.crcField.parts[0]
+
+    def __len__(self):
+       return 0x05
+
+    def __iter__(self):
+        yield chr(self._header.startField.parts[0])
+        yield chr(self._header.cField.parts[0])
+        yield chr(self._header.aField.parts[0])
+        yield chr(self.compute_crc())
+        yield chr(self._header.stopField.parts[0])

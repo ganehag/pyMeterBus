@@ -5,12 +5,12 @@
 
     A library to decode M-Bus frames.
 
-    :copyright: (c) 2014 by Mikael Ganehag Brorsson.
+    :copyright: (c) 2017 by Mikael Ganehag Brorsson.
     :license: BSD, see LICENSE for more details.
 """
 
 from .core_objects import DataEncoding, FunctionType, MeasureUnit, VIFUnit, \
-    VIFUnitExt, VIFUnitSecExt, VIFTable
+    VIFUnitExt, VIFUnitSecExt, VIFTable, Globals
 
 from .telegram_ack import TelegramACK
 from .telegram_short import TelegramShort
@@ -24,6 +24,8 @@ from .wtelegram_snd_nr import WTelegramSndNr
 from .wtelegram_header import WTelegramHeader
 
 from .exceptions import MBusFrameDecodeError, FrameMismatch
+
+from .serial import *
 
 
 def load(data):
