@@ -50,6 +50,18 @@ print telegram.records[3].parsed_value
 ~$ 19.2.2014 11:18
 ```
 
+```python
+import serial
+import meterbus
+
+with serial.Serial('/dev/ttyUSB0', 2400, 8, 'E', 1, 1) as ser:
+  meterbus.send_ping_frame(ser, 254)
+  meterbus.recv_frame(ser, 1)
+  meterbus.send_request_frame(ser, 254)
+  frame = meterbus.load(meterbus.recv_frame(ser, 250))
+  print(frame.to_JSON())
+```
+
 
 License
 -------
