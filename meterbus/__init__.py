@@ -48,3 +48,6 @@ def load(data):
 
     if not data:
         raise MBusFrameDecodeError("unable to decode frame")
+
+def debug(state):
+  pass
