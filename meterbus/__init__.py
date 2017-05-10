@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
     python meterbus
@@ -9,8 +10,10 @@
     :license: BSD, see LICENSE for more details.
 """
 
+from .defines import *
+
 from .core_objects import DataEncoding, FunctionType, MeasureUnit, VIFUnit, \
-    VIFUnitExt, VIFUnitSecExt, VIFTable, Globals
+    VIFUnitExt, VIFUnitSecExt, VIFTable
 
 from .telegram_ack import TelegramACK
 from .telegram_short import TelegramShort

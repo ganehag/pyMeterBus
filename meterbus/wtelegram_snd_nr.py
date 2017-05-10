@@ -8,11 +8,11 @@ from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
 class WTelegramSndNr(object):
     @staticmethod
     def parse(data):
+        if len(data) < 2 and data[1] != 0x44:  # SND-NR
+            raise FrameMismatch()
+
         if data and len(data) < 11:
             raise MBusFrameDecodeError("Invalid M-Bus length")
-
-        if data[1] != 0x44:  # SND-NR
-            raise FrameMismatch()
 
         return WTelegramSndNr(data)
 

@@ -1,4 +1,4 @@
-from .core_objects import Globals as g
+from .defines import *
 from .telegram_header import TelegramHeader
 from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
 
@@ -9,7 +9,7 @@ class TelegramShort(object):
         if data and len(data) < 5:
             raise MBusFrameDecodeError("Invalid M-Bus length")
 
-        if data[0] != g.FRAME_SHORT_START.value:
+        if data[0] != FRAME_SHORT_START:
             raise FrameMismatch()
 
         return TelegramShort(data)
@@ -23,12 +23,12 @@ class TelegramShort(object):
                 raise MBusFrameCRCError(self.compute_crc(),
                                         self.header.crcField.parts[0])
         else:
-           self._header.startField.parts = [g.FRAME_SHORT_START.value]
+           self._header.startField.parts = [FRAME_SHORT_START]
            self._header.lField.parts = [0x00]  # not used in short frame
            self._header.cField.parts = [0x00]
            self._header.aField.parts = [0x00]
            self._header.crcField.parts = [0x00]
-           self._header.stopField.parts = [g.FRAME_STOP.value]
+           self._header.stopField.parts = [FRAME_STOP]
 
     @property
     def header(self):
