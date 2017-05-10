@@ -8,7 +8,10 @@ from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
 class WTelegramSndNr(object):
     @staticmethod
     def parse(data):
-        if len(data) < 2 and data[1] != 0x44:  # SND-NR
+        try:
+            if data[1] != 0x44:  # SND-NR
+                raise FrameMismatch()
+        except IndexError:
             raise FrameMismatch()
 
         if data and len(data) < 11:
@@ -24,13 +27,14 @@ class WTelegramSndNr(object):
         if isinstance(dbuf, str):
             tgr = list(map(ord, dbuf))
 
-        self.header.load(tgr)
-        headerLength = self.header.headerLength
-        self.body.load(tgr[headerLength:])
+        if tgr:
+            self.header.load(tgr)
+            headerLength = self.header.headerLength
+            self.body.load(tgr[headerLength:])
 
-        if not self.check_crc():
-            raise MBusFrameCRCError(self.compute_crc(),
-                                    self.header.crcField.parts[0])
+            if not self.check_crc():
+                raise MBusFrameCRCError(self.compute_crc(),
+                                        self.header.crcField.parts[0])
 
     @property
     def header(self):
