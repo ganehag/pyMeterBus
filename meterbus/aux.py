@@ -15,3 +15,27 @@ def is_secondary_address(value):
     return False
 
   return True
+
+def manufacturer_id(manufacturer):
+  if len(manufacturer) != 3:
+    return False
+
+  if not manufacturer.isalpha():
+    return False
+
+  manufacturer = manufacturer.upper()
+  id = ((ord(manufacturer[0]) - 64) * 32 * 32 +
+        (ord(manufacturer[1]) - 64) * 32 +
+        (ord(manufacturer[2]) - 64))
+
+  if 0x0421 <= id <= 0x6b5a:
+    return id
+
+  return False
+
+def manufacturer_encode(value, size):
+  data = []
+  for i in range(0, size):
+    data.append((value>>(i*8)) & 0xFF)
+
+  return data
