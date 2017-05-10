@@ -20,26 +20,27 @@ class TelegramLong(object):
         self._header = TelegramHeader()
         self._body = TelegramBody()
 
-        tgr = dbuf
-        if isinstance(dbuf, str):
-            tgr = list(map(ord, dbuf))
+        if dbuf != None:
+            tgr = dbuf
+            if isinstance(dbuf, str):
+                tgr = list(map(ord, dbuf))
 
-        headerLength = self.header.headerLength
-        firstHeader = tgr[0:headerLength]
+            headerLength = self.header.headerLength
+            firstHeader = tgr[0:headerLength]
 
-        # Copy CRC and stopByte into header
-        resultHeader = firstHeader + tgr[-2:]
+            # Copy CRC and stopByte into header
+            resultHeader = firstHeader + tgr[-2:]
 
-        self.header.load(resultHeader)
+            self.header.load(resultHeader)
 
-        if self.header.lField.parts[0] < 3:
-            raise MBusFrameDecodeError("Invalid M-Bus length value")
+            if self.header.lField.parts[0] < 3:
+                raise MBusFrameDecodeError("Invalid M-Bus length value")
 
-        self.body.load(tgr[headerLength:-2])
+            self.body.load(tgr[headerLength:-2])
 
-        if not self.check_crc():
-            raise MBusFrameCRCError(self.compute_crc(),
-                                    self.header.crcField.parts[0])
+            if not self.check_crc():
+                raise MBusFrameCRCError(self.compute_crc(),
+                                        self.header.crcField.parts[0])
 
     @property
     def header(self):
@@ -103,3 +104,68 @@ class TelegramLong(object):
             'head': json.loads(self.header.to_JSON()),
             'body': json.loads(self.body.to_JSON())
         }, sort_keys=False, indent=4)
+
+    def __len__(self):
+       return (
+         len(self.header.startField.parts) * 2 +
+         len(self.header.lField.parts) * 2 +
+         len(self.header.cField.parts) +
+         len(self.header.aField.parts) +
+         len(self.body.bodyHeader.ci_field.parts) +
+         len(self.body.bodyHeader.id_nr_field.parts) +
+         len(self.body.bodyHeader.manufacturer_field.parts) +
+         len(self.body.bodyHeader.version_field.parts) +
+         len(self.body.bodyHeader.measure_medium_field.parts) +
+         len(self.body.bodyHeader.acc_nr_field.parts) +
+         len(self.body.bodyHeader.status_field.parts) +
+         len(self.body.bodyHeader.sig_field.parts) +
+         1 +
+         len(self.header.stopField.parts)
+       )
+
+    def __iter__(self):
+        self.header.lField = [
+          len(self.header.cField.parts) +
+          len(self.header.aField.parts) +
+          len(self.body.bodyHeader.ci_field.parts) +
+          len(self.body.bodyHeader.id_nr_field) +
+          len(self.body.bodyHeader.manufacturer_field.parts) +
+          len(self.body.bodyHeader.version_field.parts) +
+          len(self.body.bodyHeader.measure_medium_field.parts) +
+          len(self.body.bodyHeader.acc_nr_field.parts) +
+          len(self.body.bodyHeader.status_field.parts) +
+          len(self.body.bodyHeader.sig_field.parts)
+        ]
+
+        yield chr(self.header.startField.parts[0])
+        yield chr(self.header.lField.parts[0])
+        yield chr(self.header.lField.parts[0])
+        yield chr(self.header.startField.parts[0])
+
+        yield chr(self.header.cField.parts[0])
+        yield chr(self.header.aField.parts[0])
+        yield chr(self.body.bodyHeader.ci_field.parts[0])
+
+        for part in self.body.bodyHeader.id_nr_field.parts:
+            yield chr(part)
+
+        for part in self.body.bodyHeader.manufacturer_field.parts:
+            yield chr(part)
+
+        for part in self.body.bodyHeader.version_field.parts:
+            yield chr(part)
+
+        for part in self.body.bodyHeader.measure_medium_field.parts:
+            yield chr(part)
+
+        for part in self.body.bodyHeader.acc_nr_field.parts:
+            yield chr(part)
+
+        for part in self.body.bodyHeader.status_field.parts:
+            yield chr(part)
+
+        for part in self.body.bodyHeader.sig_field.parts:
+            yield chr(part)
+
+        yield chr(self.compute_crc())
+        yield chr(self.header.stopField.parts[0])

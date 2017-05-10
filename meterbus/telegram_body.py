@@ -163,13 +163,14 @@ class TelegramBodyHeader(object):
             self.manufacturer_field = bodyHeader[5:7]
             self.version_field = bodyHeader[7]
             self.measure_medium_field = bodyHeader[8]
-            self.acc_nr_field = bodyHeader[9]
-            self.status_field = bodyHeader[10]
-            self.sig_field = bodyHeader[11:13]
-            if not self.isLSBOrder:
-                self.id_nr_field.parts.reverse()
-                self.manufacturer_field.parts.reverse()
-                self.sig_field.parts.reverse()
+            if len(bodyHeader) > 9:
+                self.acc_nr_field = bodyHeader[9]
+                self.status_field = bodyHeader[10]
+                self.sig_field = bodyHeader[11:13]
+                if not self.isLSBOrder:
+                    self.id_nr_field.parts.reverse()
+                    self.manufacturer_field.parts.reverse()
+                    self.sig_field.parts.reverse()
 
     @property
     def id_nr(self):
@@ -266,6 +267,10 @@ class TelegramBody(object):
     @property
     def bodyHeaderLength(self):
         return self._bodyHeaderLength
+
+    @bodyHeaderLength.setter
+    def bodyHeaderLength(self, val):
+        self._bodyHeaderLength = val
 
     @property
     def bodyHeader(self):

@@ -4,12 +4,12 @@ from .telegram_field import TelegramField
 
 class TelegramHeader(object):
     def __init__(self):
-        self._startField = TelegramField()
-        self._lField = TelegramField()
+        self._startField = TelegramField([0x68])
+        self._lField = TelegramField([0x00])
         self._cField = TelegramField()
         self._aField = TelegramField()
         self._crcField = TelegramField()
-        self._stopField = TelegramField()
+        self._stopField = TelegramField([0x16])
 
         self._headerLength = 6
         self._headerLengthCRCStop = 8
