@@ -152,11 +152,17 @@ print telegram.records[3].parsed_value
 import serial
 import meterbus
 
-with serial.Serial('/dev/ttyUSB0', 2400, 8, 'E', 1, 1) as ser:
-  meterbus.send_ping_frame(ser, 254)
-  meterbus.recv_frame(ser, 1)
-  meterbus.send_request_frame(ser, 254)
-  frame = meterbus.load(meterbus.recv_frame(ser, 250))
+address = 254
+
+with serial.Serial('/dev/ttyACM0', 2400, 8, 'E', 1, 0.5) as ser:
+  meterbus.send_ping_frame(ser, address)
+  frame = meterbus.load(meterbus.recv_frame(ser, 1))
+  assert isinstance(frame, meterbus.TelegramACK)
+
+  meterbus.send_request_frame(ser, address)
+  frame = meterbus.load(meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+  assert isinstance(frame, meterbus.TelegramLong)
+
   print(frame.to_JSON())
 ```
 
