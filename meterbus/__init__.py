@@ -10,6 +10,7 @@
     :license: BSD, see LICENSE for more details.
 """
 
+from .globals import g
 from .defines import *
 
 from .core_objects import DataEncoding, FunctionType, MeasureUnit, VIFUnit, \
@@ -51,4 +52,4 @@ def load(data):
         raise MBusFrameDecodeError("unable to decode frame")
 
 def debug(state):
-  pass
+  g.debug = state
