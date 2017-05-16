@@ -1,10 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from .globals import g
 from .telegram_short import TelegramShort
 from .telegram_long import TelegramLong
 from .aux import is_primary_address, is_secondary_address
 from .defines import *
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def serial_send(ser, data):
+  if g.debug:
+    logger.info('SEND ({0:03d}) {1}'.format(
+       len(data),
+       " ".join(["{:02x}".format(ord(x)).upper() for x in data])
+    ))
+
+  ser.write(data)
 
 def send_ping_frame(ser, address):
   if is_primary_address(address) == False:
@@ -16,7 +30,7 @@ def send_ping_frame(ser, address):
   ]
   frame.header.aField.parts = [address]
 
-  ser.write(frame)
+  serial_send(ser, frame)
 
 def send_request_frame(ser, address):
   if is_primary_address(address) == False:
@@ -28,7 +42,19 @@ def send_request_frame(ser, address):
   ]
   frame.header.aField.parts = [address]
 
-  ser.write(frame)
+  serial_send(ser, frame)
+
+def send_request_frame_multi(ser, address):
+  if is_primary_address(address) == False:
+    return False
+
+  frame = TelegramShort()
+  frame.header.cField.parts = [
+    CONTROL_MASK_REQ_UD2 | CONTROL_MASK_DIR_M2S | CONTROL_MASK_FCV | CONTROL_MASK_FCB
+  ]
+  frame.header.aField.parts = [address]
+
+  serial_send(ser, frame)
 
 def send_select_frame(ser, secondary_address):
   frame = TelegramLong()
@@ -61,8 +87,16 @@ def send_select_frame(ser, secondary_address):
 
   frame.body.bodyHeader = frame_data
 
-  ser.write(frame)
+  serial_send(ser, frame)
 
 
 def recv_frame(ser, length=1):
-  return ser.read(length)
+  data = ser.read(length)
+  if g.debug and data:
+    logger.info('RECV ({0:03d}) {1}'.format(
+       len(data),
+       " ".join(["{:02x}".format(ord(x)).upper() for x in data])
+    ))
+
+  return data
+
