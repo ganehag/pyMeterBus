@@ -11,6 +11,7 @@ except ImportError:
     sys.path.append('../')
     import meterbus
 
+
 def ping_address(address, retries=5):
     for i in range(0, retries + 1):
         meterbus.send_ping_frame(ser, address)
@@ -41,9 +42,12 @@ if __name__ == '__main__':
     meterbus.debug(args.d)
 
     try:
-        with serial.Serial(args.device, args.baudrate, 8, 'E', 1, 0.3) as ser:
+        with serial.Serial(args.device,
+                           args.baudrate, 8, 'E', 1, timeout=1) as ser:
             for address in range(1, meterbus.MAX_PRIMARY_SLAVES + 1):
                 if ping_address(address, args.retries):
-                    print("Found a M-Bus device at address {0}".format(address))
+                    print(
+                        "Found a M-Bus device at address {0}".format(address)
+                    )
     except serial.serialutil.SerialException as e:
         print(e)
