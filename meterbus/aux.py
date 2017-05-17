@@ -3,7 +3,7 @@ def is_primary_address(value):
     if type(value) == str:
       value = int(value)
   except ValueError:
-    pass
+    return False
   return 0x00 <= value <= 0xFF
 
 def is_secondary_address(value):
