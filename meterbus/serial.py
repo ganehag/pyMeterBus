@@ -5,6 +5,15 @@ from .globals import g
 from .telegram_short import TelegramShort
 from .telegram_long import TelegramLong
 from .aux import is_primary_address, is_secondary_address
+
+from .telegram_ack import TelegramACK
+from .telegram_short import TelegramShort
+from .telegram_control import TelegramControl
+from .telegram_long import TelegramLong
+from .wtelegram_snd_nr import WTelegramSndNr
+
+from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
+
 from .defines import *
 import logging
 
@@ -13,12 +22,13 @@ logger = logging.getLogger(__name__)
 
 def serial_send(ser, data):
   if g.debug:
+    frame_data = bytearray(data)
     logger.info('SEND ({0:03d}) {1}'.format(
        len(data),
-       " ".join(["{:02x}".format(ord(x)).upper() for x in data])
+       " ".join(["{:02x}".format(x).upper() for x in frame_data])
     ))
 
-  ser.write(data)
+  ser.write(bytearray(data))
 
 def send_ping_frame(ser, address):
   if is_primary_address(address) == False:
@@ -32,29 +42,39 @@ def send_ping_frame(ser, address):
 
   serial_send(ser, frame)
 
-def send_request_frame(ser, address):
+def send_request_frame(ser, address, req=None):
   if is_primary_address(address) == False:
     return False
 
-  frame = TelegramShort()
-  frame.header.cField.parts = [
-    CONTROL_MASK_REQ_UD2 | CONTROL_MASK_DIR_M2S
-  ]
-  frame.header.aField.parts = [address]
+  if req is not None:
+    frame = TelegramShort()
+    frame.header.cField.parts = [
+      CONTROL_MASK_REQ_UD2 | CONTROL_MASK_DIR_M2S
+    ]
+    frame.header.aField.parts = [address]
+  else:
+    frame = req
 
   serial_send(ser, frame)
 
-def send_request_frame_multi(ser, address):
+  return frame
+
+def send_request_frame_multi(ser, address, req=None):
   if is_primary_address(address) == False:
     return False
 
-  frame = TelegramShort()
-  frame.header.cField.parts = [
-    CONTROL_MASK_REQ_UD2 | CONTROL_MASK_DIR_M2S | CONTROL_MASK_FCV | CONTROL_MASK_FCB
-  ]
-  frame.header.aField.parts = [address]
+  if req is None:
+    frame = TelegramShort()
+    frame.header.cField.parts = [
+      CONTROL_MASK_REQ_UD2 | CONTROL_MASK_DIR_M2S | CONTROL_MASK_FCV | CONTROL_MASK_FCB
+    ]
+    frame.header.aField.parts = [address]
+  else:
+    frame = req
 
   serial_send(ser, frame)
+
+  return frame
 
 def send_select_frame(ser, secondary_address):
   frame = TelegramLong()
@@ -91,12 +111,39 @@ def send_select_frame(ser, secondary_address):
 
 
 def recv_frame(ser, length=1):
-  data = ser.read(length)
-  if g.debug and data:
-    logger.info('RECV ({0:03d}) {1}'.format(
-       len(data),
-       " ".join(["{:02x}".format(ord(x)).upper() for x in data])
-    ))
+  data = b""
+  frame = None
+
+  while frame is None:
+    characters = ser.read(length)
+
+    if isinstance(characters, str):
+      characters = bytearray(characters)
+
+    if len(characters) == 0:
+      break
+
+    data += characters
+
+    if g.debug and characters:
+      logger.info('RECV ({0:03d}) {1}'.format(
+         len(characters),
+         " ".join(["{:02x}".format(x).upper() for x in characters])
+      ))
+
+    for Frame in [WTelegramSndNr, TelegramACK, TelegramShort, TelegramControl,
+                  TelegramLong]:
+        try:
+            frame = Frame.parse(list(data))
+            return data
+
+        except MBusFrameCRCError as e:
+            pass
+
+        except FrameMismatch as e:
+            pass
+
+        except MBusFrameDecodeError as e:
+            pass
 
   return data
-

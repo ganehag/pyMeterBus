@@ -49,8 +49,8 @@ class TelegramShort(object):
        return 0x05
 
     def __iter__(self):
-        yield chr(self._header.startField.parts[0])
-        yield chr(self._header.cField.parts[0])
-        yield chr(self._header.aField.parts[0])
-        yield chr(self.compute_crc())
-        yield chr(self._header.stopField.parts[0])
+        yield self._header.startField.parts[0]
+        yield self._header.cField.parts[0]
+        yield self._header.aField.parts[0]
+        yield self.compute_crc()
+        yield self._header.stopField.parts[0]

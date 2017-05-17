@@ -1,3 +1,4 @@
+
 import json
 
 from .telegram_body import TelegramBody
@@ -145,35 +146,44 @@ class TelegramLong(object):
           len(self.body.bodyHeader.sig_field.parts)
         ]
 
-        yield chr(self.header.startField.parts[0])
-        yield chr(self.header.lField.parts[0])
-        yield chr(self.header.lField.parts[0])
-        yield chr(self.header.startField.parts[0])
+        yield self.header.startField.parts[0]
+        yield self.header.lField.parts[0]
+        yield self.header.lField.parts[0]
+        yield self.header.startField.parts[0]
 
-        yield chr(self.header.cField.parts[0])
-        yield chr(self.header.aField.parts[0])
-        yield chr(self.body.bodyHeader.ci_field.parts[0])
+        yield self.header.cField.parts[0]
+        yield self.header.aField.parts[0]
+        yield self.body.bodyHeader.ci_field.parts[0]
 
         for part in self.body.bodyHeader.id_nr_field.parts:
-            yield chr(part)
+            yield part
 
         for part in self.body.bodyHeader.manufacturer_field.parts:
-            yield chr(part)
+            yield part
 
         for part in self.body.bodyHeader.version_field.parts:
-            yield chr(part)
+            yield part
 
         for part in self.body.bodyHeader.measure_medium_field.parts:
-            yield chr(part)
+            yield part
 
         for part in self.body.bodyHeader.acc_nr_field.parts:
-            yield chr(part)
+            yield part
 
         for part in self.body.bodyHeader.status_field.parts:
-            yield chr(part)
+            yield part
 
         for part in self.body.bodyHeader.sig_field.parts:
-            yield chr(part)
+            yield part
 
-        yield chr(self.compute_crc())
-        yield chr(self.header.stopField.parts[0])
+        yield self.compute_crc()
+        yield self.header.stopField.parts[0]
+
+    def __add__(self, frame):
+        import copy
+        dup = copy.deepcopy(self)
+        dup.body.bodyPayload._records = [
+            x for x in dup.body.bodyPayload._records if not x.more_records_follow
+        ]
+        dup.body.bodyPayload._records += frame.body.bodyPayload._records
+        return dup

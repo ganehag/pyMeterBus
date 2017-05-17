@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import decimal
 import simplejson as json
 
@@ -129,9 +131,15 @@ class TelegramVariableDataRecord(object):
 
     def to_JSON(self):
         mult, unit, typ = self._parse_vifx()
+
+        try:
+            unit = str(unit).decode('unicode_escape')
+        except AttributeError:
+            unit = str(unit)
+
         return json.dumps({
             'value': self.parsed_value,
-            'unit': str(unit),
+            'unit': unit,
             'type': str(typ),
             'function': str(self.dib.function_type)
         }, use_decimal=True)
