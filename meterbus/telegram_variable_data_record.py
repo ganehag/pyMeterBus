@@ -124,7 +124,7 @@ class TelegramVariableDataRecord(object):
             te.ENCODING_REAL: lambda: decimal.Decimal(
                 tdf.decodeReal * mult),
             te.ENCODING_VARIABLE_LENGTH: lambda: tdf.decodeASCII,
-            te.ENCODING_NULL: None
+            te.ENCODING_NULL: lambda: None
         }.get(enc, lambda: None)()
 
     def to_JSON(self):
