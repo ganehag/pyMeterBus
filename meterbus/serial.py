@@ -46,7 +46,7 @@ def send_request_frame(ser, address, req=None):
   if is_primary_address(address) == False:
     return False
 
-  if req is not None:
+  if req is None:
     frame = TelegramShort()
     frame.header.cField.parts = [
       CONTROL_MASK_REQ_UD2 | CONTROL_MASK_DIR_M2S
