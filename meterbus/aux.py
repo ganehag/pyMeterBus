@@ -1,6 +1,10 @@
 def is_primary_address(value):
+  try:
+    if type(value) == str:
+      value = int(value)
+  except ValueError:
+    pass
   return 0x00 <= value <= 0xFF
-
 
 def is_secondary_address(value):
   if value == None:

@@ -40,10 +40,13 @@ def load(data):
     if isinstance(data, str):
         data = list(map(ord, data))
 
+    if isinstance(data, bytes):
+        data = list(data)
+
     for Frame in [WTelegramSndNr, TelegramACK, TelegramShort, TelegramControl,
                   TelegramLong]:
         try:
-            return Frame.parse(data)
+            return Frame.parse(list(data))
 
         except FrameMismatch as e:
             pass
