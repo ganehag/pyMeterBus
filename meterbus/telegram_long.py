@@ -65,6 +65,14 @@ class TelegramLong(object):
         """Alias property for easy access to records"""
         return self.body.bodyPayload.records
 
+    @property
+    def more_records_follow(self):
+        for rec in self.body.bodyPayload.records:
+            if rec.more_records_follow:
+                return True
+
+        return False
+
     def load(self, tgr):
         telegram = tgr
 
