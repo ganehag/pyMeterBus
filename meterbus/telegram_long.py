@@ -112,7 +112,7 @@ class TelegramLong(object):
         return json.dumps({
             'head': json.loads(self.header.to_JSON()),
             'body': json.loads(self.body.to_JSON())
-        }, sort_keys=False, indent=4)
+        }, sort_keys=True, indent=4)
 
     def __len__(self):
        return (
