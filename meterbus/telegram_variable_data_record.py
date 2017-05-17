@@ -26,6 +26,10 @@ class TelegramVariableDataRecord(object):
     def dataField(self, value):
         self._dataField = value
 
+    @property
+    def more_records_follow(self):
+        return self.dib.more_records_follow and self.dib.is_eoud
+
     def _parse_vifx(self):
         if len(self.vib.parts) == 0:
             return None, None, None
@@ -40,7 +44,11 @@ class TelegramVariableDataRecord(object):
         elif vif == VIFUnit.SECOND_EXT_VIF_CODES.value:  # 0xFD
             code = (vife[0] & self.UNIT_MULTIPLIER_MASK) | 0x100
 
-        elif vif in [VIFUnit.VIF_FOLLOWING.value, 0xFC]:  # 0x7C || 0xFC
+        elif vif in [VIFUnit.VIF_FOLLOWING.value]:  # 0x7C
+            return (1, self.vib.customVIF.decodeASCII, VIFUnit.VARIABLE_VIF)
+
+        elif vif == 0xFC:
+            #  && (vib->vife[0] & 0x78) == 0x70
             if vif & vtf_ebm:
                 code = vife[0] & self.UNIT_MULTIPLIER_MASK
                 factor = 1
@@ -55,10 +63,15 @@ class TelegramVariableDataRecord(object):
                 return (factor, self.vib.customVIF.decodeASCII,
                         VIFUnit.VARIABLE_VIF)
 
+            # // custom VIF
+            # n = (vib->vife[0] & 0x07);
+            # snprintf(buff, sizeof(buff), "%s %s", mbus_unit_prefix(n-6), vib->custom_vif);
+            # return buff;
+
             return (1, "FixME", "FixMe")
 
         elif vif == VIFUnit.VIF_FOLLOWING:
-            return (1, "FixMe", "FixMe")
+            return (1, "FixMe (VIF_FOLLOWING)", "FixMe (VIF_FOLLOWING)")
 
         else:
             code = (vif & self.UNIT_MULTIPLIER_MASK)
@@ -79,8 +92,9 @@ class TelegramVariableDataRecord(object):
         te = DataEncoding
         tdf = self._dataField
 
+        # WHYE!!!!
         if length != len(tdf.parts):
-            return None
+            return None # "{0}, {1} {2}".format(length, len(tdf.parts), enc) # None
 
         try:
             return {

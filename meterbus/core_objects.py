@@ -43,6 +43,7 @@ class FunctionType(Enum):
     ERROR_STATE_VALUE = 3
     SPECIAL_FUNCTION = 4
     SPECIAL_FUNCTION_FILL_BYTE = 5
+    MORE_RECORDS_FOLLOW = 6
 
 
 class DataEncoding(Enum):

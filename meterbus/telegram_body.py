@@ -61,6 +61,9 @@ class TelegramBodyPayload(object):
         rec.dib.parts.append(self.body.parts[startPos])
 
         if rec.dib.is_eoud:  # End of User Data
+            if rec.dib.more_records_follow:
+                self.records.append(rec)
+
             return len(self.body.parts)
 
         elif rec.dib.function_type == \
@@ -135,6 +138,13 @@ class TelegramBodyPayload(object):
         self.records.append(rec)
 
         return upperBoundary
+
+    def more_records_follow(self):
+        for rec in self.records:
+            if rec.more_records_follow:
+                return True
+
+        return False
 
     def to_JSON(self):
         d = [json.loads(r.to_JSON()) for r in self.records]
@@ -288,6 +298,10 @@ class TelegramBody(object):
     @bodyPayload.setter
     def bodyPayload(self, val):
         self._bodyPayload = TelegramBodyPayload(val, parent=self)
+
+    @property
+    def more_records_follow(self):
+        return self._bodyPayload.more_records_follow
 
     def load(self, body):
         self.bodyHeader = body[0:self.bodyHeaderLength]

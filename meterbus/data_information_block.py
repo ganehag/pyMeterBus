@@ -6,6 +6,7 @@ class DataInformationBlock(TelegramField):
     EXTENSION_BIT_MASK = 0x80      # 1000 0000
     FUNCTION_MASK = 0x30           # 0011 0000
     DATA_FIELD_MASK = 0x0F         # 0000 1111
+    MORE_RECORDS_FOLLOW = 0x1F     # 0001 1111
 
     def __init__(self, parts=None):
         super(DataInformationBlock, self).__init__(parts)
@@ -39,8 +40,21 @@ class DataInformationBlock(TelegramField):
         return False
 
     @property
+    def more_records_follow(self):
+        try:
+            dif = self.parts[0]
+            return dif == self.MORE_RECORDS_FOLLOW
+        except IndexError:
+            pass
+
+        return False
+
+    @property
     def function_type(self):
-        if self.parts[0] == 0x0F:
+        if self.is_eoud and self.more_records_follow:
+            return FunctionType.MORE_RECORDS_FOLLOW
+
+        elif self.parts[0] == 0x0F:
             return FunctionType.SPECIAL_FUNCTION
 
         elif self.parts[0] == 0x2F:
