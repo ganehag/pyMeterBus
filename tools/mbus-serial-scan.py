@@ -44,7 +44,7 @@ if __name__ == '__main__':
     try:
         with serial.Serial(args.device,
                            args.baudrate, 8, 'E', 1, timeout=1) as ser:
-            for address in range(1, meterbus.MAX_PRIMARY_SLAVES + 1):
+            for address in range(0, meterbus.MAX_PRIMARY_SLAVES + 1):
                 if ping_address(address, args.retries):
                     print(
                         "Found a M-Bus device at address {0}".format(address)
