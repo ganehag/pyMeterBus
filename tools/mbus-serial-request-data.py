@@ -48,6 +48,8 @@ if __name__ == '__main__':
 
     try:
         address = int(args.address)
+        if not (0 <= address <= 254):
+            address = args.address
     except ValueError:
         address = args.address
 
@@ -69,10 +71,13 @@ if __name__ == '__main__':
                 assert isinstance(frame, meterbus.TelegramACK)
 
                 frame = None
-                ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
+                # ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
 
                 meterbus.send_request_frame(
                     ser, meterbus.ADDRESS_NETWORK_LAYER)
+
+                time.sleep(0.3)
+
                 frame = meterbus.load(
                     meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
 
