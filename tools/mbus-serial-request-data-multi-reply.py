@@ -48,6 +48,8 @@ if __name__ == '__main__':
 
     try:
         address = int(args.address)
+        if not (0 <= address <= 254):
+            address = args.address
     except ValueError:
         address = args.address
 
@@ -70,12 +72,29 @@ if __name__ == '__main__':
                 assert isinstance(frame, meterbus.TelegramACK)
 
                 frame = None
-                ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
+                # ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
 
-                meterbus.send_request_frame_multi(
-                    ser, meterbus.ADDRESS_NETWORK_LAYER)
+                req = meterbus.send_request_frame_multi(
+                          ser, meterbus.ADDRESS_NETWORK_LAYER)
+
+                time.sleep(0.3)
+
                 frame = meterbus.load(
                     meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+
+                while frame.more_records_follow:
+                    # print(frame.more_records_follow)
+                    # toogle FCB on and off
+                    req.header.cField.parts[0] ^= meterbus.CONTROL_MASK_FCB
+
+                    req = meterbus.send_request_frame_multi(
+                              ser, meterbus.ADDRESS_NETWORK_LAYER, req)
+
+                    time.sleep(0.3)
+
+                    another_frame = meterbus.load(
+                        meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+                    frame += another_frame
 
             if frame is not None:
                 print(frame.to_JSON())
