@@ -94,9 +94,8 @@ class TelegramVariableDataRecord(object):
         te = DataEncoding
         tdf = self._dataField
 
-        # WHYE!!!!
-        if length != len(tdf.parts):
-            return None # "{0}, {1} {2}".format(length, len(tdf.parts), enc) # None
+        if length != len(tdf.parts) and enc != te.ENCODING_VARIABLE_LENGTH:
+            return None
 
         try:
             return {

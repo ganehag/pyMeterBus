@@ -115,7 +115,19 @@ class TelegramBodyPayload(object):
         # if there exist a LVAR Byte at the beginning of the data field,
         # change the data field length
         if encoding == DataEncoding.ENCODING_VARIABLE_LENGTH:
-            length = self.body.parts[lowerBoundary]
+            lp = self.body.parts[lowerBoundary]
+
+            if lp <= 0xBF:
+                length = lp
+            elif 0xC0 <= lp <= 0xCF:
+                length = (lp - 0xC0) * 2
+            elif 0xD0 <= lp <= 0xDF:
+                length = (lp - 0xD0) * 2
+            elif 0xE0 <= lp <= 0xEF:
+                length = (lp - 0xE0)
+            elif 0xF0 <= lp <= 0xFA:
+                length = (lp - 0xF0)
+
             lowerBoundary += 1
 
         upperBoundary = lowerBoundary + length
