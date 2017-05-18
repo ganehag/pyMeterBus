@@ -43,3 +43,16 @@ def manufacturer_encode(value, size):
     data.append((value>>(i*8)) & 0xFF)
 
   return data
+
+
+def inter_byte_timeout(baudrate):
+  return {
+    300: 0.12,
+    600: 0.60,
+    1200: 0.4,
+    2400: 0.2,
+    4800: 0.2,
+    9600: 0.1,
+    19200: 0.1,
+    38400: 0.1,
+  }.get(baudrate, None)
