@@ -136,8 +136,15 @@ class TelegramVariableDataRecord(object):
         except AttributeError:
             unit = str(unit)
 
+        value = self.parsed_value
+        if type(value) == str:
+            try:
+                value = value.decode('unicode_escape')
+            except AttributeError:
+                pass
+
         return json.dumps({
-            'value': self.parsed_value,
+            'value': value,
             'unit': unit,
             'type': str(typ),
             'function': str(self.dib.function_type)
