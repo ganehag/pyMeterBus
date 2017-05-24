@@ -38,7 +38,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--retries',
                         type=int, default=5,
                         help='Number of ping retries for each address')
-    parser.add_argument('device', type=str, help='Serial device')
+    parser.add_argument('device', type=str, help='Serial device or URI')
 
     args = parser.parse_args()
 
@@ -54,8 +54,11 @@ if __name__ == '__main__':
         address = args.address
 
     try:
-        with serial.Serial(args.device,
-                           args.baudrate, 8, 'E', 1, timeout=1) as ser:
+        ibt = meterbus.inter_byte_timeout(args.baudrate)
+        with serial.serial_for_url(args.device,
+                           args.baudrate, 8, 'E', 1,
+                           inter_byte_timeout=ibt,
+                           timeout=1) as ser:
             frame = None
 
             if meterbus.is_primary_address(address):
@@ -83,7 +86,6 @@ if __name__ == '__main__':
                     meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
 
                 while frame.more_records_follow:
-                    # print(frame.more_records_follow)
                     # toogle FCB on and off
                     req.header.cField.parts[0] ^= meterbus.CONTROL_MASK_FCB
 

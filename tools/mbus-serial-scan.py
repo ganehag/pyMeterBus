@@ -35,14 +35,14 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--retries',
                         type=int, default=5,
                         help='Number of ping retries for each address')
-    parser.add_argument('device', type=str, help='Serial device')
+    parser.add_argument('device', type=str, help='Serial device or URI')
 
     args = parser.parse_args()
 
     meterbus.debug(args.d)
 
     try:
-        with serial.Serial(args.device,
+        with serial.serial_for_url(args.device,
                            args.baudrate, 8, 'E', 1, timeout=1) as ser:
             for address in range(0, meterbus.MAX_PRIMARY_SLAVES + 1):
                 if ping_address(address, args.retries):

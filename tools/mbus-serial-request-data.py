@@ -3,6 +3,8 @@
 import argparse
 import serial
 import time
+import os
+import stat
 
 try:
     import meterbus
@@ -24,26 +26,13 @@ def ping_address(ser, address, retries=5):
 
     return False
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Request data over serial M-Bus for devices.')
-    parser.add_argument('-d', action='store_true',
-                        help='Enable verbose debug')
-    parser.add_argument('-b', '--baudrate',
-                        type=int, default=2400,
-                        help='Serial bus baudrate')
-    parser.add_argument('-a', '--address',
-                        type=str, default=meterbus.ADDRESS_BROADCAST_REPLY,
-                        help='Primary or secondary address')
-    parser.add_argument('-r', '--retries',
-                        type=int, default=5,
-                        help='Number of ping retries for each address')
-    parser.add_argument('device', type=str, help='Serial device')
+def do_reg_file(args):
+    with open(args.device, 'rb') as f:
+        frame = meterbus.load(f.read())
+        if frame is not None:
+            print(frame.to_JSON())
 
-    args = parser.parse_args()
-
-    meterbus.debug(args.d)
-
+def do_char_dev(args):
     address = None
 
     try:
@@ -54,8 +43,11 @@ if __name__ == '__main__':
         address = args.address
 
     try:
-        with serial.Serial(args.device,
-                           args.baudrate, 8, 'E', 1, timeout=1) as ser:
+        ibt = meterbus.inter_byte_timeout(args.baudrate)
+        with serial.serial_for_url(args.device,
+                           args.baudrate, 8, 'E', 1,
+                           inter_byte_timeout=ibt,
+                           timeout=1) as ser:
             frame = None
 
             if meterbus.is_primary_address(address):
@@ -86,3 +78,31 @@ if __name__ == '__main__':
 
     except serial.serialutil.SerialException as e:
         print(e)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Request data over serial M-Bus for devices.')
+    parser.add_argument('-d', action='store_true',
+                        help='Enable verbose debug')
+    parser.add_argument('-b', '--baudrate',
+                        type=int, default=2400,
+                        help='Serial bus baudrate')
+    parser.add_argument('-a', '--address',
+                        type=str, default=meterbus.ADDRESS_BROADCAST_REPLY,
+                        help='Primary or secondary address')
+    parser.add_argument('-r', '--retries',
+                        type=int, default=5,
+                        help='Number of ping retries for each address')
+    parser.add_argument('device', type=str, help='Serial device, URI or binary file')
+
+    args = parser.parse_args()
+
+    meterbus.debug(args.d)
+
+    mode = os.stat(args.device).st_mode
+    if stat.S_ISREG(mode):
+        do_reg_file(args)
+    else:
+        do_char_dev(args)
+

@@ -31,6 +31,24 @@ What works
 * Generation of basic JSON structure from telegram/user-data/record.
 
 
+Tools
+-----
+
+You can find a set of utilities in the `tools` folder.
+
+* mbus-serial-request-data.py
+* mbus-serial-request-data-multi-reply.py
+* mbus-serial-scan.py
+
+These tools can communicate over a serial device `/dev/ttyX` or even over RFC2217 using the format `rfc2217://host:port`.
+
+If you are using `ser2net` as a RFC2217 server. You need to configure it the following way:
+
+```
+2000:telnet:0:/dev/ttySX:2400 remctl banner
+```
+
+
 M-Bus Packet Format
 -------------------
 
