@@ -13,6 +13,22 @@ Current State
 
 This implementation is currently under heavy development. It is targeted at a very specific solution. Thus only the *variable data structure* is implemented. However the missing pieces will be implemented in the future.
 
+Tools
+-----
+
+You can find a set of utilities in the `tools` folder.
+
+* mbus-serial-request-data.py
+* mbus-serial-request-data-multi-reply.py
+* mbus-serial-scan.py
+
+These tools can communicate over a serial device `/dev/ttyX` or even over RFC2217 using the format `rfc2217://host:port`.
+
+If you are using `ser2net` as a RFC2217 server. You need to configure it the following way:
+
+```
+2000:telnet:0:/dev/ttySX:2400 remctl banner
+```
 
 Known Issues
 ------------
@@ -31,116 +47,7 @@ What works
 * Generation of basic JSON structure from telegram/user-data/record.
 
 
-Tools
------
-
-You can find a set of utilities in the `tools` folder.
-
-* mbus-serial-request-data.py
-* mbus-serial-request-data-multi-reply.py
-* mbus-serial-scan.py
-
-These tools can communicate over a serial device `/dev/ttyX` or even over RFC2217 using the format `rfc2217://host:port`.
-
-If you are using `ser2net` as a RFC2217 server. You need to configure it the following way:
-
-```
-2000:telnet:0:/dev/ttySX:2400 remctl banner
-```
-
-
-M-Bus Packet Format
--------------------
-
-##### ACK Frame
-
-**size = 1 byte**
-
-| Byte  | Identifier | Value |
-|-------|------------|-------|
-| byte1 | ack        | 0xE5  |
-
-
-##### SHORT Frame
-
-**size = 5 byte**
-
-| Byte  | Identifier | Value |
-|-------|------------|-------|
-| byte1 | start      | 0x10  |
-| byte2 | control    | ...   |
-| byte3 | address    | ...   |
-| byte4 | chksum     | ...   |
-| byte5 | stop       | 0x16  |
-
-
-##### CONTROL Frame
-
-**size = 9 byte**
-
-| Byte  | Identifier | Value |
-|-------|------------|-------|
-| byte1 | start1     | 0x68  |
-| byte2 | length1    | ...   |
-| byte3 | length2    | ...   |
-| byte4 | start2     | 0x68  |
-| byte5 | control    | ...   |
-| byte6 | address    | ...   |
-| byte7 | ctl.info   | ...   |
-| byte8 | chksum     | ...   |
-| byte9 | stop       | 0x16  |
-
-
-##### LONG Frame
-
-**size = N >= 9 byte**
-
-| Byte    | Identifier | Value |
-|---------|------------|-------|
-| byte1   | start1     | 0x68  |
-| byte2   | length1    | ...   |
-| byte3   | length2    | ...   |
-| byte4   | start2     | 0x68  |
-| byte5   | control    | ...   |
-| byte6   | address    | ...   |
-| byte7   | ctl.info   | ...   |
-| byte8   | data       | ...   |
-| ...     | ...        | ...   |
-| byteN-1 | chksum     | ...   |
-| byteN   | stop       | 0x16  |
-
-
-Control Information field
--------------------------
-
-| Mode 1     | Mode 2 | Application                                 |  Definition in     |
-|------------|--------|---------------------------------------------|--------------------|
-| 51h        | 55h    | data send                                   | EN1434-3           |
-| 52h        | 56h    | selection of slaves                         | Usergroup July 93  |
-| 50h        |        | application reset                           | Usergroup March 94 |
-| 54h        |        | synronize action                            | suggestion         |
-| B8h        |        | set baudrate to 300 baud                    | Usergroup July 93  |
-| B9h        |        | set baudrate to 600 baud                    | Usergroup July 93  |
-| BAh        |        | set baudrate to 1200 baud                   | Usergroup July 93  |
-| BBh        |        | set baudrate to 2400 baud                   | Usergroup July 93  |
-| BCh        |        | set baudrate to 4800 baud                   | Usergroup July 93  |
-| BDh        |        | set baudrate to 9600 baud                   | Usergroup July 93  |
-| BEh        |        | set baudrate to 19200 baud                  | suggestion         |
-| BFh        |        | set baudrate to 38400 baud                  | suggestion         |
-| B1h        |        | request readout of complete RAM content     | Techem suggestion  |
-| B2h        |        | send user data (not standardized RAM write) | Techem suggestion  |
-| B3h        |        | initialize test calibration mode            | Usergroup July 93  |
-| B4h        |        | EEPROM read                                 | Techem suggestion  |
-| B6h        |        | start software test                         | Techem suggestion  |
-| 90h to 97h |        | codes used for hashing                      | longer recommended |
-| ...        | ...    | ...                                         | ...                |
-| 70h        |        | report of general application errors        | Usergroup March 94 |
-| 71h        |        | report of alarm status                      | Usergroup March 94 |
-| 72h        | 76h    | variable data respond                       | EN1434-3           |
-| 73h        | 77h    | fixed data respond                          | EN1434-3           |
-
-
-Examples
+Code examples
 -------
 ```python
 #!/usr/bin/python
@@ -184,9 +91,24 @@ with serial.Serial('/dev/ttyACM0', 2400, 8, 'E', 1, 0.5) as ser:
   print(frame.to_JSON())
 ```
 
+M-Bus Packet Format
+-------------------
+
+| Single Character | Short Frame | Control Frame | Long Frame             |
+|------------------|-------------|---------------|------------------------|
+| E5h              | Start 10h   | Start 68h     | Start 68h              |
+|                  | C Field     | L Field = 3   | L Field                |
+|                  | A Field     | L Field = 3   | L Field                |
+|                  | Check Sum   | Start 68h     | Start 68h              |
+|                  | Stop 16h    | C Field       | C Field                |
+|                  |             | A Field       | A Field                |
+|                  |             | CI Field      | CI Field               |
+|                  |             | Check Sum     | User Data (0-252 Byte) |
+|                  |             | Stop 16h      | Check Sum              |
+|                  |             |               | Stop 16h               |
+
+
 
 License
 -------
 Please see the [LICENSE](LICENSE) file
-
-
