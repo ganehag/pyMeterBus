@@ -44,7 +44,6 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', default="json",
                         help='Output format')
     parser.add_argument('device', type=str, help='Serial device or URI')
-
     args = parser.parse_args()
 
     meterbus.debug(args.d)
