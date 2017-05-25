@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
                 meterbus.send_request_frame_multi(ser, address)
                 frame = meterbus.load(
-                    meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+                    meterbus.recv_frame(ser))
 
             elif meterbus.is_secondary_address(address):
                 if False == ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0):
@@ -83,10 +83,7 @@ if __name__ == '__main__':
                 req = meterbus.send_request_frame_multi(
                           ser, meterbus.ADDRESS_NETWORK_LAYER)
 
-                time.sleep(0.3)
-
-                frame = meterbus.load(
-                    meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+                frame = meterbus.load(meterbus.recv_frame(ser))
 
                 while frame.more_records_follow:
                     # toogle FCB on and off
@@ -95,11 +92,8 @@ if __name__ == '__main__':
                     req = meterbus.send_request_frame_multi(
                               ser, meterbus.ADDRESS_NETWORK_LAYER, req)
 
-                    time.sleep(0.3)
-
-                    another_frame = meterbus.load(
-                        meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
-                    frame += another_frame
+                    next_frame = meterbus.load(meterbus.recv_frame(ser))
+                    frame += next_frame
 
             if frame is not None:
                 recs = []

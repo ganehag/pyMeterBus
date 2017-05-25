@@ -16,3 +16,7 @@ class MBusFrameCRCError(MBusError):
     def __init__(self, computed, expected):
         self.computed = computed
         self.expected = expected
+
+class MbusFrameLengthError(MBusError):
+    def __init__(self, length):
+        self.length = length

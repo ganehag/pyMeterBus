@@ -6,7 +6,7 @@ from .exceptions import MBusFrameCRCError, MBusFrameDecodeError, FrameMismatch
 class TelegramControl(object):
     @staticmethod
     def parse(data):
-        if data and len(data) < 9:
+        if data is not None and len(data) < 9:
             raise MBusFrameDecodeError("Invalid M-Bus length")
 
         if data[0] != 0x68:

@@ -3,13 +3,14 @@ import json
 
 from .telegram_body import TelegramBody
 from .telegram_header import TelegramHeader
-from .exceptions import MBusFrameCRCError, MBusFrameDecodeError, FrameMismatch
+from .exceptions import (MBusFrameCRCError, MBusFrameDecodeError, FrameMismatch,
+                         MbusFrameLengthError)
 
 
 class TelegramLong(object):
     @staticmethod
     def parse(data):
-        if data and len(data) < 9:
+        if data is not None and len(data) < 9:
             raise MBusFrameDecodeError("Invalid M-Bus length")
 
         if data[0] != 0x68:
@@ -33,6 +34,11 @@ class TelegramLong(object):
             resultHeader = firstHeader + tgr[-2:]
 
             self.header.load(resultHeader)
+
+            # start + length + length + start = 4 bytes
+            # crc + stop = 2 bytes
+            if len(dbuf) - 6 < self.header.lField.parts[0]:
+                raise MbusFrameLengthError(self.header.lField.parts[0] + 6)
 
             if self.header.lField.parts[0] < 3:
                 raise MBusFrameDecodeError("Invalid M-Bus length value")

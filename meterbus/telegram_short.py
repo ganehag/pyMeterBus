@@ -6,7 +6,7 @@ from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
 class TelegramShort(object):
     @staticmethod
     def parse(data):
-        if data and len(data) < 5:
+        if data is not None and len(data) < 5:
             raise MBusFrameDecodeError("Invalid M-Bus length")
 
         if data[0] != FRAME_SHORT_START:

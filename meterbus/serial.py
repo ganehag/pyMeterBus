@@ -12,7 +12,8 @@ from .telegram_control import TelegramControl
 from .telegram_long import TelegramLong
 from .wtelegram_snd_nr import WTelegramSndNr
 
-from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
+from .exceptions import (MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch,
+                         MbusFrameLengthError)
 
 from .defines import *
 import logging
@@ -145,5 +146,8 @@ def recv_frame(ser, length=1):
 
         except MBusFrameDecodeError as e:
             pass
+
+        except MbusFrameLengthError as e:
+            length = (e.length) - len(data)
 
   return data
