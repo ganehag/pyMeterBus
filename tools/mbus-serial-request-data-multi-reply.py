@@ -49,14 +49,12 @@ if __name__ == '__main__':
 
     meterbus.debug(args.d)
 
-    address = None
-
+    address = args.address
     try:
-        address = int(args.address)
-        if not (0 <= address <= 254):
-            address = args.address
+        if 0 <= int(args.address) <= 254:
+            address = int(args.address)
     except ValueError:
-        address = args.address
+        pass
 
     try:
         ibt = meterbus.inter_byte_timeout(args.baudrate)
