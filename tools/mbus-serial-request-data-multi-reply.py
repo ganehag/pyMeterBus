@@ -65,20 +65,20 @@ if __name__ == '__main__':
             frame = None
 
             if meterbus.is_primary_address(address):
-                ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
-                ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
+                if False == ping_address(ser, address, 0):
+                     sys.exit(1)
 
                 meterbus.send_request_frame_multi(ser, address)
                 frame = meterbus.load(
                     meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
 
             elif meterbus.is_secondary_address(address):
+                if False == ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0):
+                     sys.exit(1)
+
                 meterbus.send_select_frame(ser, address)
                 frame = meterbus.load(meterbus.recv_frame(ser, 1))
                 assert isinstance(frame, meterbus.TelegramACK)
-
-                frame = None
-                # ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
 
                 req = meterbus.send_request_frame_multi(
                           ser, meterbus.ADDRESS_NETWORK_LAYER)
