@@ -83,6 +83,8 @@ class TelegramVariableDataRecord(object):
     @property
     def unit(self):
         _, unit, _ = self._parse_vifx()
+        if isinstance(unit, MeasureUnit):
+            return unit.value
         return unit
 
     @property
