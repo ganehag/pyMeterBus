@@ -88,6 +88,12 @@ class TelegramVariableDataRecord(object):
         return unit
 
     @property
+    @property
+    def function(self):
+        func = self.dib.function_type
+        return func.value
+
+    @property
     def parsed_value(self):
         mult, unit, typ = self._parse_vifx()
 
