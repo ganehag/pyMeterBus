@@ -3,6 +3,9 @@
 import argparse
 import serial
 import time
+import simplejson as json
+import yaml
+import sys
 
 try:
     import meterbus
@@ -38,6 +41,8 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--retries',
                         type=int, default=5,
                         help='Number of ping retries for each address')
+    parser.add_argument('-o', '--output', default="json",
+                        help='Output format')
     parser.add_argument('device', type=str, help='Serial device or URI')
 
     args = parser.parse_args()
@@ -99,7 +104,36 @@ if __name__ == '__main__':
                     frame += another_frame
 
             if frame is not None:
-                print(frame.to_JSON())
+                recs = []
+                for rec in frame.records:
+                    recs.append({
+                        'value': rec.value,
+                        'unit': rec.unit
+                    })
+
+                ydata = {
+                    'manufacturer': frame.body.bodyHeader.manufacturer_field.decodeManufacturer,
+                    'identification': ''.join(map('{:02x}'.format, frame.body.bodyHeader.id_nr)),
+                    'access_no': frame.body.bodyHeader.acc_nr_field.parts[0],
+                    'medium':  frame.body.bodyHeader.measure_medium_field.parts[0],
+                    'records': recs
+                }
+
+                if args.output == 'json':
+                    print(json.dumps(ydata, indent=4, sort_keys=True))
+
+                elif args.output == 'yaml':
+                    def float_representer(dumper, value):
+                        if int(value) == value:
+                            text = '{0:.4f}'.format(value).rstrip('0').rstrip('.')
+                            return dumper.represent_scalar(u'tag:yaml.org,2002:int', text)
+                        else:
+                            text = '{0:.4f}'.format(value).rstrip('0').rstrip('.')
+                        return dumper.represent_scalar(u'tag:yaml.org,2002:float', text)
+
+                    yaml.add_representer(float, float_representer)
+
+                    print(yaml.dump(ydata, default_flow_style=False, allow_unicode=True, encoding=None))
 
     except serial.serialutil.SerialException as e:
         print(e)
