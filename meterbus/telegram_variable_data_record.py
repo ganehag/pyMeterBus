@@ -88,6 +88,22 @@ class TelegramVariableDataRecord(object):
         return unit
 
     @property
+    def value(self):
+        value = self.parsed_value
+        if type(value) == decimal.Decimal:
+            value = float(value)
+
+        elif type(value) == str and all(ord(c) < 128 for c in value):
+            value = str(value)
+
+        elif type(value) == str:
+            try:
+                value = value.decode('unicode_escape')
+            except AttributeError:
+                pass
+
+        return value
+
     @property
     def function(self):
         func = self.dib.function_type
