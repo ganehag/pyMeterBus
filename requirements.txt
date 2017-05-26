@@ -1,0 +1,11 @@
+appdirs==1.4.3
+enum34==1.1.6
+meterbus==0.1.dev0
+packaging==16.8
+pkg-resources==0.0.0
+pyaml==16.12.2
+pyserial==3.3
+PyYAML==3.12
+simplejson==3.10.0
+six==1.10.0
+
