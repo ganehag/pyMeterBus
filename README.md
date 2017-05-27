@@ -1,6 +1,6 @@
 Meter-Bus for Python
 ====================
-
+[![Build Status](https://travis-ci.org/ganehag/pyMeterBus.svg?branch=master)](https://travis-ci.org/ganehag/pyMeterBus)
 
 About
 -----
