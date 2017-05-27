@@ -5,10 +5,15 @@ python:
   - "3.4"
   - "3.5"
 install:
+  - pip install codecov
+  - pip install pytest-cov
   - pip install -r requirements.txt
   - python setup.py -q install
 script:
   - pytest
+after_success:
+  - pytest --cov=./meterbus
+  - codecov
 branches:
   only:
     - master
