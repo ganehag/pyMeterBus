@@ -2,5 +2,6 @@ enum34==1.1.6
 pyaml==16.12.2
 pyserial==3.3
 PyYAML==3.12
+pytest==3.1.0
 simplejson==3.10.0
 six==1.10.0
