@@ -150,4 +150,7 @@ def recv_frame(ser, length=1):
         except MbusFrameLengthError as e:
             length = (e.length) - len(data)
 
-  return data
+  if len(data):
+    return False
+
+  return None
