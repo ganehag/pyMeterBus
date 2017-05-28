@@ -50,6 +50,23 @@ class TelegramLong(object):
                                         self.header.crcField.parts[0])
 
     @property
+    def secondary_address(self):
+        layout = ("{0:02X}{1:02X}{2:02X}{3:02X}"
+                  "{ma1:02X}{ma2:02X}{ver:02X}{med:02X}")
+        sec = layout.format(
+            *self.body.bodyHeader.id_nr,
+            ma1=self.body.bodyHeader.manufacturer_field.parts[0],
+            ma2=self.body.bodyHeader.manufacturer_field.parts[1],
+            ver=self.body.bodyHeader.version_field.parts[0],
+            med=self.body.bodyHeader.measure_medium_field.parts[0]
+        )
+        return sec
+
+    @property
+    def manufacturer(self):
+       return self.body.bodyHeader.manufacturer_field.decodeManufacturer
+
+    @property
     def header(self):
         return self._header
 
