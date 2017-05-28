@@ -40,7 +40,7 @@ def do_char_dev(args):
         if not (0 <= address <= 254):
             address = args.address
     except ValueError:
-        address = args.address
+        address = args.address.upper()
 
     try:
         ibt = meterbus.inter_byte_timeout(args.baudrate)
