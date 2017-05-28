@@ -35,7 +35,7 @@ from .aux import *
 
 def load(data):
     if not data:
-        raise MBusFrameDecodeError("empty frame")
+        raise MBusFrameDecodeError("empty frame", data)
 
     if isinstance(data, str):
         data = list(map(ord, data))
