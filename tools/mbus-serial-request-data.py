@@ -104,9 +104,12 @@ if __name__ == '__main__':
 
     meterbus.debug(args.d)
 
-    mode = os.stat(args.device).st_mode
-    if stat.S_ISREG(mode):
-        do_reg_file(args)
-    else:
+    try:
+        mode = os.stat(args.device).st_mode
+        if stat.S_ISREG(mode):
+            do_reg_file(args)
+        else:
+            do_char_dev(args)
+    except OSError:
         do_char_dev(args)
 
