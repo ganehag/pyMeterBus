@@ -80,12 +80,6 @@ def main(args):
                            args.baudrate, 8, 'E', 1, timeout=1) as ser:
             mbus_scan_secondary_address_range(ser, 0, args.address)
 
-#            print(init_slaves(ser))
-#            for address in range(0, meterbus.MAX_PRIMARY_SLAVES + 1):
-#                if ping_address(ser, address, args.retries):
-#                    print(
-#                        "Found a M-Bus device at address {0}".format(address)
-#                    )
     except serial.serialutil.SerialException as e:
         print(e)
 
