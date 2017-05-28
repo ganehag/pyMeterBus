@@ -52,7 +52,7 @@ class TestSequenceFunctions(unittest.TestCase):
             19200: 0.1,
             38400: 0.1,
         }
-        for key, val in opts.iteritems():
+        for key, val in opts.items():
             self.assertEqual(
                 meterbus.aux.inter_byte_timeout(key), val)
 
