@@ -59,7 +59,11 @@ def do_char_dev(args):
 
             elif meterbus.is_secondary_address(address):
                 meterbus.send_select_frame(ser, address)
-                frame = meterbus.load(meterbus.recv_frame(ser, 1))
+                try:
+                    frame = meterbus.load(meterbus.recv_frame(ser, 1))
+                except meterbus.MBusFrameDecodeError as e:
+                    frame = e.value
+
                 assert isinstance(frame, meterbus.TelegramACK)
 
                 frame = None

@@ -8,9 +8,9 @@ class FrameMismatch(MBusError):
         pass
 
 class MBusFrameDecodeError(MBusError):
-    def __init__(self, msg):
+    def __init__(self, msg, value=None):
         self.msg = msg
-
+        self.value = value
 
 class MBusFrameCRCError(MBusError):
     def __init__(self, computed, expected):
