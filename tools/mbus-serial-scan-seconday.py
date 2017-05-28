@@ -78,6 +78,10 @@ def main(args):
     try:
         with serial.serial_for_url(args.device,
                            args.baudrate, 8, 'E', 1, timeout=1) as ser:
+
+            # Ensure we are at the beginning of the records
+            init_slaves(ser)
+
             mbus_scan_secondary_address_range(ser, 0, args.address)
 
     except serial.serialutil.SerialException as e:
