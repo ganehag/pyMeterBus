@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
             elif meterbus.is_secondary_address(address):
                 if False == ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0):
-                     sys.exit(1)
+                    ping_address(ser, meterbus.ADDRESS_BROADCAST_NOREPLY, 0)
 
                 meterbus.send_select_frame(ser, address)
                 frame = meterbus.load(meterbus.recv_frame(ser, 1))
