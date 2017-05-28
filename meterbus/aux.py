@@ -10,6 +10,9 @@ def is_secondary_address(value):
   if value == None:
     return False
 
+  if not isinstance(value, str):
+    return False
+
   if len(value) != 16:
     return False
 
@@ -38,6 +41,9 @@ def manufacturer_id(manufacturer):
   return False
 
 def manufacturer_encode(value, size):
+  if value is None or value == False:
+    return None
+
   data = []
   for i in range(0, size):
     data.append((value>>(i*8)) & 0xFF)
