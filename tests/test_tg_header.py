@@ -19,16 +19,11 @@ class TestSequenceFunctions(unittest.TestCase):
         hdr.load(self.frame)
         jd = json.loads(hdr.to_JSON())
 
-        with self.subTest():
-            self.assertEqual(jd['start'], "0x68")
-        with self.subTest():
-            self.assertEqual(jd['stop'], "0x16")
-        with self.subTest():
-            self.assertEqual(jd['length'], "0x3")
-        with self.subTest():
-            self.assertEqual(jd['a'], "0xb")
-        with self.subTest():
-            self.assertEqual(jd['crc'], "0xff")
+        self.assertEqual(jd['start'], "0x68")
+        self.assertEqual(jd['stop'], "0x16")
+        self.assertEqual(jd['length'], "0x3")
+        self.assertEqual(jd['a'], "0xb")
+        self.assertEqual(jd['crc'], "0xff")
 
 if __name__ == '__main__':
     unittest.main()
