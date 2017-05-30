@@ -14,6 +14,10 @@ class TestSequenceFunctions(unittest.TestCase):
     def setUp(self):
         self.frame = "\x68\x03\x03\x68\x08\x0b\xFF\x16"
 
+    def test_header_length(self):
+        hdr = meterbus.TelegramHeader()
+        self.assertEqual(hdr.headerLengthCRCStop, 8)
+
     def test_json(self):
         hdr = meterbus.TelegramHeader()
         hdr.load(self.frame)
