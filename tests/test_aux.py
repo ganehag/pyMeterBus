@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 
@@ -24,10 +26,14 @@ class TestSequenceFunctions(unittest.TestCase):
         falseVal = meterbus.manufacturer_encode(intval, 2)
         self.assertEqual(falseVal, None)
 
-    def test_invalud_manufacturer_string(self):
+    def test_invalid_manufacturer_string(self):
         intval = meterbus.aux.manufacturer_id("@@@")
         falseVal = meterbus.manufacturer_encode(intval, 2)
         self.assertEqual(falseVal, None)
+
+    def test_invalid_manufacturer_string_unicode(self):
+        intval = meterbus.aux.manufacturer_id(u"ÖÖÖ")
+        self.assertEqual(False, intval)
 
     def test_is_primary_true(self):
         self.assertEqual(True, meterbus.is_primary_address(1))
@@ -35,11 +41,27 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_is_primary_false(self):
         self.assertEqual(False, meterbus.is_primary_address(256))
 
+    def test_is_primary_false_str(self):
+        self.assertEqual(False, meterbus.is_primary_address("A"))
+
     def test_is_secondary_true(self):
-        self.assertEqual(True, meterbus.is_secondary_address("00000001B05CFF1B"))
+        self.assertEqual(True,
+            meterbus.is_secondary_address("00000001B05CFF1B"))
 
     def test_is_secondary_false(self):
         self.assertEqual(False, meterbus.is_secondary_address(0))
+
+    def test_is_secondary_hex_invalid(self):
+        self.assertEqual(False,
+            meterbus.is_secondary_address("HELLOWORLD000000"))
+
+    def test_is_secondary_length_invalid(self):
+        self.assertEqual(False,
+            meterbus.is_secondary_address("0000"))
+
+    def test_is_secondary_invalid_none(self):
+        self.assertEqual(False,
+            meterbus.is_secondary_address(None))
 
     def test_inter_char_timeout(self):
         opts = {
