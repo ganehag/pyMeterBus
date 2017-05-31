@@ -20,8 +20,57 @@ class TestSequenceFunctions(unittest.TestCase):
                      "\x70\x08\x12\x65\x23\x09\x01\x72\x18\x42\x65\xe4\x08\x82" \
                      "\x01\x65\xdd\x08\x0c\x78\x34\x08\x00\x54\x03\xfd\x0f\x00" \
                      "\x00\x04\x1f\x5d\x16"
+        self.frame2 = "\x68\xD8\xD8\x68\x08\x00\x72\x92\x03\x00\x64\x96\x15" \
+                      "\x14\x31\x04\x00\x00\x00\x0C\x78\x92\x03\x00\x64\x0D" \
+                      "\xFD\x0F\x05\x33\x2E\x36\x2E\x31\x0D\x7C\x03\x79\x65" \
+                      "\x6B\x10\x0A\xB3\xED\x14\xCD\x07\x58\xD7\xBA\xDE\x3B" \
+                      "\x38\xB2\xE6\x96\x0C\x01\x7C\x03\x6F\x6D\x77\x04\x01" \
+                      "\x7C\x03\x65\x73\x77\x00\x02\x7C\x03\x74\x69\x77\x3C" \
+                      "\x00\x02\x7C\x03\x73\x69\x77\x3C\x00\x01\x7C\x03\x6D" \
+                      "\x69\x77\x01\x02\x7C\x03\x65\x67\x61\xA0\x05\x04\x7C" \
+                      "\x03\x66\x69\x77\xFF\xFF\xFF\xFF\x01\x7C\x03\x69\x63" \
+                      "\x77\x01\x01\x7C\x03\x6F\x6D\x74\x00\x01\x7C\x03\x66" \
+                      "\x64\x74\x03\x01\x7C\x03\x64\x63\x6C\x00\x01\x7C\x03" \
+                      "\x6E\x61\x6C\x00\x01\x7C\x03\x65\x6C\x73\x05\x0A\xFD" \
+                      "\x16\x00\x00\x04\xFD\x0B\x00\x00\x00\x00\x02\x7C\x03" \
+                      "\x61\x66\x77\x00\x00\x01\x7C\x03\x66\x69\x61\x01\x04" \
+                      "\x7C\x03\x63\x72\x72\xB3\x02\x00\x00\x01\x7C\x03\x61" \
+                      "\x74\x73\x00\x01\x7C\x03\x6D\x61\x63\x00\x01\x7C\x03" \
+                      "\x6D\x61\x6D\x00\x01\x7C\x03\x66\x63\x69\x01\x1F\x3A" \
+                      "\x16"
 
         self.frame = meterbus.load(self.frame)
+        self.frame2 = meterbus.load(self.frame2)
+
+    def test_more_records_follow_true(self):
+        # Check the last record
+        self.assertEqual(
+            self.frame.records[-1].more_records_follow,
+            True)
+
+    def test_more_records_follow_false(self):
+        # Check the second to last record
+        self.assertEqual(
+            self.frame.records[-2].more_records_follow,
+            False)
+
+    def test_verify_function(self):
+        self.assertEqual(
+            self.frame.records[-1].function, 6)
+
+    def test_verify_float_value(self):
+        self.assertEqual(
+            self.frame.records[2].value, 45.52)
+
+    def test_verify_str_value(self):
+        self.assertEqual(
+            self.frame2.records[1].value, "1.6.3")
+
+    def test_verify_ustr_value(self):
+        self.assertEqual(
+            self.frame2.records[2].value,
+            u"\f\u0096\u00e6\u00b28;\u00de\u00ba\u00d7X" \
+            "\u0007\u00cd\u0014\u00ed\u00b3\n")
 
     def test_json_record0(self):
         dict_record = {
