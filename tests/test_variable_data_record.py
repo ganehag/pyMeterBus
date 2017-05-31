@@ -69,7 +69,7 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_verify_ustr_value(self):
         self.assertEqual(
             self.frame2.records[2].value,
-            u"\f\u0096\u00e6\u00b28;\u00de\u00ba\u00d7X" \
+            "\f\u0096\u00e6\u00b28;\u00de\u00ba\u00d7X" \
             "\u0007\u00cd\u0014\u00ed\u00b3\n")
 
     def test_json_record0(self):
