@@ -22,6 +22,7 @@ from .telegram_control import TelegramControl
 from .telegram_long import TelegramLong
 
 from .data_information_block import DataInformationBlock
+from .value_information_block import ValueInformationBlock
 from .telegram_header import TelegramHeader
 from .telegram_body import TelegramBody, TelegramBodyHeader, \
     TelegramBodyPayload
