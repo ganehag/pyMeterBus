@@ -19,7 +19,7 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEqual(meterbus.g.debug, False)
 
     def test_debug_set_true(self):
-        meterbus.g.debug = True
+        meterbus.debug(True)
         self.assertEqual(meterbus.g.debug, True)
 
 if __name__ == '__main__':
