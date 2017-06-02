@@ -16,6 +16,7 @@ class TestSequenceFunctions(unittest.TestCase):
             'loop://', baudrate=2400, timeout=0.1)
         self.slave = self.master
         self.partial_frame = b"\x68\x53\x53\x68\x08\x05\x72\x34\x08"
+        self.crcerror_frame = b"\x68\x03\x03\x68\x08\x0b\x72\x00\x16"
 
     def reset(self):
         self.master.reset_input_buffer()
@@ -24,6 +25,19 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_valid_request(self):
         self.reset()
         meterbus.send_request_frame(self.master, 0)
+        self.assertEqual(self.slave.read(5),
+                         b"\x10\x5B\x00\x5B\x16")
+
+    def test_existing_valid_request(self):
+        self.reset()
+
+        frame = meterbus.TelegramShort()
+        frame.header.cField.parts = [
+            meterbus.CONTROL_MASK_REQ_UD2 | meterbus.CONTROL_MASK_DIR_M2S
+        ]
+        frame.header.aField.parts = [0]
+
+        meterbus.send_request_frame(self.master, 0, frame)
         self.assertEqual(self.slave.read(5),
                          b"\x10\x5B\x00\x5B\x16")
 
@@ -125,6 +139,12 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_read_partial_frame(self):
         self.reset()
         self.slave.write(self.partial_frame)
+        frame = meterbus.recv_frame(self.master)
+        self.assertEqual(frame, False)
+
+    def test_crc_error_frame(self):
+        self.reset()
+        self.slave.write(self.crcerror_frame)
         frame = meterbus.recv_frame(self.master)
         self.assertEqual(frame, False)
 
