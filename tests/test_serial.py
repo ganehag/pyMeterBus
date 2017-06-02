@@ -37,7 +37,7 @@ class TestSequenceFunctions(unittest.TestCase):
         ]
         frame.header.aField.parts = [0]
 
-        meterbus.send_request_frame(self.master, 0, frame)
+        meterbus.send_request_frame(self.master, req=frame)
         self.assertEqual(self.slave.read(5),
                          b"\x10\x5B\x00\x5B\x16")
 
@@ -73,7 +73,7 @@ class TestSequenceFunctions(unittest.TestCase):
         ]
         frame.header.aField.parts = [0]
 
-        meterbus.send_request_frame(self.master, 0, None)
+        meterbus.send_request_frame(self.master, req=frame)
 
         self.assertEqual(self.slave.read(5),
                          b"\x10\x5B\x00\x5B\x16")
@@ -131,7 +131,7 @@ class TestSequenceFunctions(unittest.TestCase):
         # Next frame
         frame.header.cField.parts[0] ^= meterbus.CONTROL_MASK_FCB
         frame = meterbus.send_request_frame_multi(self.master,
-                                                  0, frame)
+                                                  req=frame)
 
         self.assertEqual(self.slave.read(5),
                          b"\x10\x5B\x00\x5B\x16")
