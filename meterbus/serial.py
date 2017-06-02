@@ -43,11 +43,11 @@ def send_ping_frame(ser, address):
 
   serial_send(ser, frame)
 
-def send_request_frame(ser, address, req=None):
-  if is_primary_address(address) == False:
+def send_request_frame(ser, address=None, req=None):
+  if address is not None and is_primary_address(address) == False:
     return False
 
-  if req is None:
+  if req is None and address is not None:
     frame = TelegramShort()
     frame.header.cField.parts = [
       CONTROL_MASK_REQ_UD2 | CONTROL_MASK_DIR_M2S
@@ -56,12 +56,13 @@ def send_request_frame(ser, address, req=None):
   else:
     frame = req
 
-  serial_send(ser, frame)
+  if frame is not None:
+    serial_send(ser, frame)
 
   return frame
 
-def send_request_frame_multi(ser, address, req=None):
-  if is_primary_address(address) == False:
+def send_request_frame_multi(ser, address=None, req=None):
+  if address is not None and is_primary_address(address) == False:
     return False
 
   if req is None:
@@ -73,7 +74,8 @@ def send_request_frame_multi(ser, address, req=None):
   else:
     frame = req
 
-  serial_send(ser, frame)
+  if frame is not None:
+    serial_send(ser, frame)
 
   return frame
 
