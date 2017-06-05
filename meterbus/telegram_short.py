@@ -20,7 +20,14 @@ class TelegramShort(object):
     def __init__(self, dbuf=None):
         self._header = TelegramHeader()
         if dbuf != None:
-            self._header.load(dbuf)
+            tgr = dbuf
+
+            if isinstance(dbuf, str):
+                tgr = list(map(ord, dbuf))
+            elif isinstance(dbuf, bytes):
+                tgr = list(dbuf)
+
+            self._header.load(tgr)
 
             if not self.check_crc():
                 raise MBusFrameCRCError(self.compute_crc(),

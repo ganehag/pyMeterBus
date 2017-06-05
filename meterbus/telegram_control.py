@@ -22,8 +22,11 @@ class TelegramControl(object):
         self._body = TelegramBody()
 
         tgr = dbuf
+
         if isinstance(dbuf, str):
             tgr = list(map(ord, dbuf))
+        elif isinstance(dbuf, bytes):
+            tgr = list(dbuf)
 
         headerLength = self.header.headerLength
         firstHeader = tgr[0:headerLength]
