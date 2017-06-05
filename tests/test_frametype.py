@@ -73,5 +73,21 @@ class TestSequenceFunctions(unittest.TestCase):
         with self.assertRaises(MBusFrameDecodeError):
             meterbus.TelegramLong.parse([])
 
+    def test_ack_parse_none(self):
+        with self.assertRaises(MBusFrameDecodeError):
+            meterbus.TelegramACK.parse(None)
+
+    def test_short_parse_none(self):
+        with self.assertRaises(MBusFrameDecodeError):
+            meterbus.TelegramShort.parse(None)
+
+    def test_control_parse_none(self):
+        with self.assertRaises(MBusFrameDecodeError):
+            meterbus.TelegramControl.parse(None)
+
+    def test_long_parse_none(self):
+        with self.assertRaises(MBusFrameDecodeError):
+            meterbus.TelegramLong.parse(None)
+
 if __name__ == '__main__':
     unittest.main()
