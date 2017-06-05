@@ -4,6 +4,9 @@ from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
 class TelegramACK(object):
     @staticmethod
     def parse(data):
+        if data is None:
+            raise MBusFrameDecodeError("Data is None")
+
         if data is not None and len(data) < 1:
             raise MBusFrameDecodeError("Invalid M-Bus length")
 
