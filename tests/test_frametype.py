@@ -57,5 +57,21 @@ class TestSequenceFunctions(unittest.TestCase):
             # Give it the wrong frame
             meterbus.TelegramLong.parse(list(self.invalid_frame))
 
+    def test_ack_parse_empty(self):
+        with self.assertRaises(MBusFrameDecodeError):
+            meterbus.TelegramACK.parse([])
+
+    def test_short_parse_empty(self):
+        with self.assertRaises(MBusFrameDecodeError):
+            meterbus.TelegramShort.parse([])
+
+    def test_control_parse_empty(self):
+        with self.assertRaises(MBusFrameDecodeError):
+            meterbus.TelegramControl.parse([])
+
+    def test_long_parse_empty(self):
+        with self.assertRaises(MBusFrameDecodeError):
+            meterbus.TelegramLong.parse([])
+
 if __name__ == '__main__':
     unittest.main()
