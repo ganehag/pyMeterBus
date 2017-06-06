@@ -68,3 +68,18 @@ class TelegramControl(object):
 
     def check_crc(self):
         return self.compute_crc() == self.header.crcField.parts[0]
+
+    def __len__(self):
+       return 0x09
+
+    def __iter__(self):
+        yield self.header.startField.parts[0]
+        yield self.header.lField.parts[0]
+        yield self.header.lField.parts[0]
+        yield self.header.startField.parts[0]
+
+        yield self.header.cField.parts[0]
+        yield self.header.aField.parts[0]
+        yield self.body.bodyHeader.ci_field.parts[0]
+        yield self.compute_crc()
+        yield self._header.stopField.parts[0]
