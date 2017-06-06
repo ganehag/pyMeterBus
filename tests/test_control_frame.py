@@ -14,10 +14,15 @@ from meterbus.exceptions import *
 class TestSequenceFunctions(unittest.TestCase):
     def setUp(self):
         self.frame = "\x68\x03\x03\x68\x08\x0b\x72\x85\x16"
+        self.frame_bytes = b"\x68\x03\x03\x68\x08\x0b\x72\x85\x16"
 
     def test_load_control_frame_str(self):
         frame = meterbus.TelegramControl(self.frame)
-        self.assertIsInstance(frame, meterbus.TelegramControl)
+        self.assertEqual(list(frame), list(self.frame_bytes))
+
+    def test_load_control_frame_bytes(self):
+        frame = meterbus.TelegramControl(self.frame_bytes)
+        self.assertEqual(list(frame), list(self.frame_bytes))
 
     def test_frame_header_setter(self):
         frame = meterbus.TelegramControl(self.frame)
