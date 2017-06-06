@@ -14,7 +14,7 @@ from .globals import g
 from .defines import *
 
 from .core_objects import DataEncoding, FunctionType, MeasureUnit, VIFUnit, \
-    VIFUnitExt, VIFUnitSecExt, VIFTable
+    VIFUnitExt, VIFUnitSecExt, VIFTable, DateCalculator
 
 from .telegram_ack import TelegramACK
 from .telegram_short import TelegramShort
