@@ -14,10 +14,15 @@ from meterbus.exceptions import *
 class TestSequenceFunctions(unittest.TestCase):
     def setUp(self):
         self.frame = "\x10\x08\x0b\x13\x16"
+        self.frame_bytes = b"\x10\x08\x0b\x13\x16"
 
     def test_load_string(self):
         frame = meterbus.TelegramShort(self.frame)
-        self.assertEqual(list(frame), list(bytearray(self.frame, 'ascii')))
+        self.assertEqual(list(frame), list(self.frame_bytes))
+
+    def test_load_bytes(self):
+        frame = meterbus.TelegramShort(self.frame_bytes)
+        self.assertEqual(list(frame), list(self.frame_bytes))
 
     def test_load_crc_error(self):
         frame_data = list(self.frame)
