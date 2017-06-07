@@ -76,7 +76,7 @@ class TestSequenceFunctions(unittest.TestCase):
         }
         for key, val in opts.items():
             self.assertEqual(
-                meterbus.aux.inter_byte_timeout(key), val)
+                meterbus.inter_byte_timeout(key), val)
 
 if __name__ == '__main__':
     unittest.main()
