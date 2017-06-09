@@ -26,6 +26,8 @@ from .value_information_block import ValueInformationBlock
 from .telegram_header import TelegramHeader
 from .telegram_body import TelegramBody, TelegramBodyHeader, \
     TelegramBodyPayload
+from .telegram_field import TelegramField
+from .telegram_variable_data_record import TelegramVariableDataRecord
 
 from .wtelegram_snd_nr import WTelegramSndNr
 from .wtelegram_header import WTelegramHeader
