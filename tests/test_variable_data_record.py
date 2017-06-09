@@ -220,9 +220,9 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_json_value_str(self):
         key = [12, 150, 230, 178, 56, 59, 222, 186,
                215, 88, 7, 205, 20, 237, 179, 10]
-        value = self.frame2.records[2].parsed_value
+        record = json.loads(self.frame2.records[2].to_JSON())
         self.assertEqual(
-            list(map(ord, value)),
+            list(map(ord, record['value'])),
             key
         )
 
