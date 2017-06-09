@@ -42,6 +42,38 @@ class TestSequenceFunctions(unittest.TestCase):
         self.frame = meterbus.load(self.frame)
         self.frame2 = meterbus.load(self.frame2)
 
+    def test_datafield_set(self):
+        tvdr = meterbus.TelegramVariableDataRecord()
+        field = meterbus.TelegramField()
+        tvdr.dataField = field
+        self.assertIs(tvdr.dataField, field)
+
+    def test_vif_mult_oxfc_0x78(self):
+        t = meterbus.TelegramVariableDataRecord()
+        t.vib.parts = [0xFC, 0x78]
+        mult, _, _ = t._parse_vifx()
+        self.assertEqual(mult, 0.001)
+
+    def test_vif_mult_oxfc_0x7B(self):
+        t = meterbus.TelegramVariableDataRecord()
+        t.vib.parts = [0xFC, 0x7B]
+        mult, _, _ = t._parse_vifx()
+        self.assertEqual(mult, 1.0)
+
+    def test_vif_mult_oxfc_0x7D(self):
+        t = meterbus.TelegramVariableDataRecord()
+        t.vib.parts = [0xFC, 0x7D]
+        mult, _, _ = t._parse_vifx()
+        self.assertEqual(mult, 1.0)
+
+    def test_parsed_value_invalid_data_len(self):
+        t = meterbus.TelegramVariableDataRecord()
+        t.dib.parts = [0x04]
+        t.vib.parts = [0xFC, 0x74]
+        t.vib.customVIF = meterbus.TelegramField([0x48, 0x52, 0x25])
+        t.dataField = meterbus.TelegramField([0xD4, 0x11])
+        self.assertEqual(t.parsed_value, None)
+
     def test_more_records_follow_true(self):
         # Check the last record
         self.assertEqual(
@@ -184,6 +216,15 @@ class TestSequenceFunctions(unittest.TestCase):
         }
         frame_rec_dict = json.loads(self.frame.records[11].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
+
+    def test_json_value_str(self):
+        key = [12, 150, 230, 178, 56, 59, 222, 186,
+               215, 88, 7, 205, 20, 237, 179, 10]
+        value = self.frame2.records[2].parsed_value
+        self.assertEqual(
+            list(map(ord, value)),
+            key
+        )
 
 if __name__ == '__main__':
     unittest.main()
