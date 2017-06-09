@@ -51,29 +51,28 @@ class TelegramVariableDataRecord(object):
 
         elif vif == 0xFC:
             #  && (vib->vife[0] & 0x78) == 0x70
-            if vif & vtf_ebm:
-                code = vife[0] & self.UNIT_MULTIPLIER_MASK
+
+            # Disable this for now as it is implicit
+            # from 0xFC
+            # if vif & vtf_ebm:
+            code = vife[0] & self.UNIT_MULTIPLIER_MASK
+            factor = 1
+
+            if 0x70 <= code <= 0x77:
+                factor = pow(10.0, (vife[0] & 0x07) - 6)
+            elif 0x78 <= code <= 0x7B:
+                factor = pow(10.0, (vife[0] & 0x03) - 3)
+            elif code == 0x7D:
                 factor = 1
 
-                if 0x70 <= code <= 0x77:
-                    factor = pow(10.0, (vife[0] & 0x07) - 6)
-                elif 0x78 <= code <= 0x7B:
-                    factor = pow(10.0, (vife[0] & 0x03) - 3)
-                elif code == 0x7D:
-                    factor = 1
-
-                return (factor, self.vib.customVIF.decodeASCII,
-                        VIFUnit.VARIABLE_VIF)
+            return (factor, self.vib.customVIF.decodeASCII,
+                    VIFUnit.VARIABLE_VIF)
 
             # // custom VIF
             # n = (vib->vife[0] & 0x07);
             # snprintf(buff, sizeof(buff), "%s %s", mbus_unit_prefix(n-6), vib->custom_vif);
             # return buff;
-
-            return (1, "FixME", "FixMe")
-
-        elif vif == VIFUnit.VIF_FOLLOWING:
-            return (1, "FixMe (VIF_FOLLOWING)", "FixMe (VIF_FOLLOWING)")
+            # return (1, "FixME", "FixMe")
 
         else:
             code = (vif & self.UNIT_MULTIPLIER_MASK)
