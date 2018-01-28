@@ -156,6 +156,7 @@ class TelegramLong(object):
          len(self.body.bodyHeader.acc_nr_field.parts) +
          len(self.body.bodyHeader.status_field.parts) +
          len(self.body.bodyHeader.sig_field.parts) +
+         len(self.body.bodyPayload.body.parts) +
          1 +
          len(self.header.stopField.parts)
        )
@@ -171,7 +172,8 @@ class TelegramLong(object):
           len(self.body.bodyHeader.measure_medium_field.parts) +
           len(self.body.bodyHeader.acc_nr_field.parts) +
           len(self.body.bodyHeader.status_field.parts) +
-          len(self.body.bodyHeader.sig_field.parts)
+          len(self.body.bodyHeader.sig_field.parts) +
+          len(self.body.bodyPayload.body.parts)
         ]
 
         yield self.header.startField.parts[0]
@@ -202,6 +204,9 @@ class TelegramLong(object):
             yield part
 
         for part in self.body.bodyHeader.sig_field.parts:
+            yield part
+
+        for part in self.body.bodyPayload.body.parts:
             yield part
 
         yield self.compute_crc()
