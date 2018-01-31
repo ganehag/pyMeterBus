@@ -82,9 +82,12 @@ if __name__ == '__main__':
                 req = meterbus.send_request_frame_multi(
                           ser, meterbus.ADDRESS_NETWORK_LAYER)
 
-                frame = meterbus.load(meterbus.recv_frame(ser))
+                try:
+                    frame = meterbus.load(meterbus.recv_frame(ser))
+                except meterbus.MBusFrameDecodeError:
+                    frame = None
 
-                while frame.more_records_follow:
+                while frame and frame.more_records_follow:
                     # toogle FCB on and off
                     req.header.cField.parts[0] ^= meterbus.CONTROL_MASK_FCB
 
