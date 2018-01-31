@@ -64,9 +64,15 @@ def mbus_probe_secondary_address(ser, mask):
 
     if isinstance(frame, meterbus.TelegramACK):
         meterbus.send_request_frame(ser, meterbus.ADDRESS_NETWORK_LAYER)
-        time.sleep(0.3)
-        frame = meterbus.load(
-            meterbus.recv_frame(ser))
+        time.sleep(0.5)
+
+        frame = None
+        try:
+            frame = meterbus.load(
+                meterbus.recv_frame(ser))
+        except meterbus.MBusFrameDecodeError:
+            pass
+
         if isinstance(frame, meterbus.TelegramLong):
             return True, frame.secondary_address, frame.manufacturer
 
