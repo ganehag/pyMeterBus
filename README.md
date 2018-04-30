@@ -50,7 +50,7 @@ What works
 Code examples
 -------
 
-## Decode the value of a single record (record 3)
+### Decode the value of a single record (record 3)
 ```python
 #!/usr/bin/python
 
@@ -75,7 +75,7 @@ print telegram.records[3].parsed_value
 ~$ 2014-02-19T11:18
 ```
 
-## Request a frame over Serial and dump it in JSON format
+### Request a frame over Serial and dump it in JSON format
 ```python
 #!/usr/bin/python
 
