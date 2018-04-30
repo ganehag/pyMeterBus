@@ -67,7 +67,9 @@ data = "\x68\x6A\x6A\x68\x08\x01\x72\x43\x53\x93\x07\x65" \
 
 telegram = meterbus.load(data)
 print telegram.records[3].parsed_value
+```
 
+```shell
 ~$ 2014-02-19T11:18
 ```
 
