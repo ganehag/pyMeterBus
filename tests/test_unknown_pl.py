@@ -31,7 +31,7 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_record1_value(self):
         tele = meterbus.load(self.frame)
         records = tele.body.bodyPayload.records
-        self.assertEqual(records[0].parsed_value, "18.3.2016")
+        self.assertEqual(records[0].parsed_value, "2016-03-18")
 
     def test_record2_value(self):
         tele = meterbus.load(self.frame)
