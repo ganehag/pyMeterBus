@@ -31,13 +31,13 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_get_time_with_seconds(self):
         self.assertEqual(
             meterbus.DateCalculator.getTimeWithSeconds(45, 23, 1),
-            "1:23:45"
+            "01:23:45"
         )
 
     def test_get_time(self):
         self.assertEqual(
             meterbus.DateCalculator.getTime(23, 1),
-            "1:23"
+            "01:23"
         )
 
     def test_get_date(self):
@@ -49,14 +49,14 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_get_datetime(self):
         self.assertEqual(
             meterbus.DateCalculator.getDateTime(23, 1, 141, 9, False),
-            "2004-09-13 1:23"
+            "2004-09-13T01:23"
         )
 
     def test_get_datetime(self):
         self.assertEqual(
             meterbus.DateCalculator.getDateTimeWithSeconds(
                 45, 23, 1, 141, 9, False),
-            "2004-09-13 1:23:45"
+            "2004-09-13T01:23:45"
         )
 
     def test_get_seconds(self):

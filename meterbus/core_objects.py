@@ -827,14 +827,14 @@ class DateCalculator(object):
 
     @staticmethod
     def getTimeWithSeconds(second, minute, hour):
-        return "{0}:{1}".format(
+        return "{0}:{1:02}".format(
             DateCalculator.getTime(minute, hour),
             DateCalculator.getSeconds(second)
         )
 
     @staticmethod
     def getTime(minute, hour):
-        return "{0}:{1}".format(
+        return "{0:02}:{1:02}".format(
             DateCalculator.getHour(hour),
             DateCalculator.getMinutes(minute)
         )
