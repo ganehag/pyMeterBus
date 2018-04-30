@@ -841,22 +841,22 @@ class DateCalculator(object):
 
     @staticmethod
     def getDate(day, month, century):
-        return "{0}.{1}.{2}".format(
-            DateCalculator.getDay(day),
+        return "{0:04}-{1:02}-{2:02}".format(
+            DateCalculator.getYear(day, month, 0, False),
             DateCalculator.getMonth(month),
-            DateCalculator.getYear(day, month, 0, False)
+            DateCalculator.getDay(day)
         )
 
     @staticmethod
     def getDateTime(minute, hour, day, month, century):
-        return "{0} {1}".format(
+        return "{0}T{1}".format(
             DateCalculator.getDate(day, month, century),
             DateCalculator.getTime(minute, hour)
         )
 
     @staticmethod
     def getDateTimeWithSeconds(second, minute, hour, day, month, century):
-        return "{0} {1}".format(
+        return "{0}T{1}".format(
             DateCalculator.getDate(day, month, century),
             DateCalculator.getTimeWithSeconds(second, minute, hour)
         )
