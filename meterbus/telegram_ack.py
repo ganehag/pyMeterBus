@@ -18,3 +18,9 @@ class TelegramACK(object):
     def __init__(self, dbuf=None):
         self.type = 0xE5
         self.base_size = 1
+
+    def __len__(self):
+       return 1
+
+    def __iter__(self):
+        yield 0xE5
