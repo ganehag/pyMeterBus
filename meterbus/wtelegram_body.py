@@ -8,6 +8,8 @@ from .telegram_body import TelegramBodyPayload
 
 
 class WTelegramBodyHeader(object):
+    BYTE_ORDER_MASK = 0x04    # 0000 0100
+
     def __init__(self):
         self._manufacturer_field = TelegramField()  # manufacturer
         self._id_nr_field = TelegramField()       # identification number field
@@ -50,7 +52,7 @@ class WTelegramBodyHeader(object):
 
     @property
     def isLSBOrder(self):
-        return False
+        return not (self._ci_field.parts[0] & self.BYTE_ORDER_MASK)
 
     @property
     def without_tl(self):
