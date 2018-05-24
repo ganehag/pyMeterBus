@@ -1,4 +1,4 @@
-import json
+import simplejson as json
 
 from .wtelegram_header import WTelegramHeader
 from .wtelegram_body import WTelegramBody
@@ -53,6 +53,17 @@ class WTelegramSndNr(object):
     def body(self, value):
         self._body = value
 
+    @property
+    def records(self):
+        return self._body.records
+
+    @property
+    def interpreted(self):
+        return {
+            'head': self.header.interpreted,
+            'body': self.body.interpreted
+        }
+
     def compute_crc(self):
         return (self.header.cField.parts[0] +
                 self.header.aField.parts[0]) % 256
@@ -61,12 +72,5 @@ class WTelegramSndNr(object):
         return True
         # return self.compute_crc() == self.header.crcField.parts[0]
 
-    @property
-    def records(self):
-        return self._body.records
-
     def to_JSON(self):
-        return json.dumps({
-            'head': json.loads(self.header.to_JSON()),
-            'body': json.loads(self.body.to_JSON())
-        }, sort_keys=False, indent=4)
+        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)

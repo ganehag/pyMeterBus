@@ -1,4 +1,4 @@
-import json
+import simplejson as json
 
 from .core_objects import DataEncoding, FunctionType
 from .telegram_field import TelegramField
@@ -30,6 +30,10 @@ class TelegramBodyPayload(object):
     @body.setter
     def body(self, value):
         self._body = TelegramField(value)
+
+    @property
+    def interpreted(self):
+        return [r.interpreted for r in self.records]
 
     def load(self, payload):
         self.body = payload
@@ -159,8 +163,7 @@ class TelegramBodyPayload(object):
         return False
 
     def to_JSON(self):
-        d = [json.loads(r.to_JSON()) for r in self.records]
-        return json.dumps(d, sort_keys=False, indent=4)
+        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
 
 
 class TelegramBodyHeader(object):
@@ -267,8 +270,9 @@ class TelegramBodyHeader(object):
     def sig_field(self, value):
         self._sig_field = TelegramField(value)
 
-    def to_JSON(self):
-        return json.dumps({
+    @property
+    def interpreted(self):
+        return {
             'type': hex(self.ci_field.parts[0]),
             'identification': ", ".join(map("0x{:02x}".format, self.id_nr)),
             'manufacturer': self.manufacturer_field.decodeManufacturer,
@@ -277,7 +281,10 @@ class TelegramBodyHeader(object):
             'access_no': self.acc_nr_field.parts[0],
             'status': hex(self.status_field.parts[0]),
             'sign': ", ".join(map(hex, self.sig_field.parts))
-        }, sort_keys=False, indent=4)
+        }
+
+    def to_JSON(self):
+        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
 
 
 class TelegramBody(object):
@@ -315,6 +322,13 @@ class TelegramBody(object):
     def more_records_follow(self):
         return self._bodyPayload.more_records_follow
 
+    @property
+    def interpreted(self):
+        return {
+            'header': self.bodyHeader.interpreted,
+            'records': self.bodyPayload.interpreted,
+        }
+
     def load(self, body):
         self.bodyHeader = body[0:self.bodyHeaderLength]
         self.bodyPayload.load(body[self.bodyHeaderLength:])
@@ -327,7 +341,4 @@ class TelegramBody(object):
         self.bodyPayload.debug()
 
     def to_JSON(self):
-        return json.dumps({
-            'header': json.loads(self.bodyHeader.to_JSON()),
-            'records': json.loads(self.bodyPayload.to_JSON()),
-        }, sort_keys=False, indent=4)
+        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)

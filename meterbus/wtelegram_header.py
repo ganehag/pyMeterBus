@@ -1,4 +1,4 @@
-import json
+import simplejson as json
 from .telegram_field import TelegramField
 
 
@@ -45,6 +45,13 @@ class WTelegramHeader(object):
     def cField(self, value):
         self._cField = TelegramField(value)
 
+    @property
+    def interpreted(self):
+        return {
+            'length': hex(self.lField.parts[0]),
+            'c': hex(self.cField.parts[0]),
+        }
+
     # @property
     # def crcField(self):
     #     return self._crcField
@@ -73,7 +80,4 @@ class WTelegramHeader(object):
         # self.stopField = header[-1]
 
     def to_JSON(self):
-        return json.dumps({
-            'length': hex(self.lField.parts[0]),
-            'c': hex(self.cField.parts[0]),
-        }, sort_keys=False, indent=4)
+        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)

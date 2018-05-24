@@ -1,11 +1,9 @@
-
-import json
+import simplejson as json
 
 from .telegram_body import TelegramBody
 from .telegram_header import TelegramHeader
 from .exceptions import (MBusFrameCRCError, MBusFrameDecodeError, FrameMismatch,
                          MbusFrameLengthError)
-
 
 class TelegramLong(object):
     @staticmethod
@@ -102,6 +100,13 @@ class TelegramLong(object):
 
         return False
 
+    @property
+    def interpreted(self):
+        return {
+            'head': self.header.interpreted,
+            'body': self.body.interpreted
+        }
+
     def load(self, tgr):
         telegram = tgr
 
@@ -137,10 +142,7 @@ class TelegramLong(object):
         return self.compute_crc() == self.header.crcField.parts[0]
 
     def to_JSON(self):
-        return json.dumps({
-            'head': json.loads(self.header.to_JSON()),
-            'body': json.loads(self.body.to_JSON())
-        }, sort_keys=True, indent=4)
+        return json.dumps(self.interpreted, sort_keys=True, indent=4, use_decimal=True)
 
     def __len__(self):
        return (

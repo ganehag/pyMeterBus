@@ -1,4 +1,4 @@
-import json
+import simplejson as json
 
 from .core_objects import DataEncoding, FunctionType
 from .telegram_field import TelegramField
@@ -159,8 +159,9 @@ class WTelegramBodyHeader(object):
     def configuration_field(self, value):
         self._configuration_field = TelegramField(value)
 
-    def to_JSON(self):
-        return json.dumps({
+    @property
+    def interpreted(self):
+        return {
             'manufacturer': self.manufacturer_field.decodeManufacturer,
             'identification': ", ".join(map(hex, self.id_nr)),
             'version': hex(self.version_field.parts[0]),
@@ -171,7 +172,10 @@ class WTelegramBodyHeader(object):
             'configuration': ", ".join(map(hex,
                                            self.configuration_field)),
             'decryption': ", ".join(map(hex, self.decryption_field)),
-        }, sort_keys=False, indent=4)
+        }
+
+    def to_JSON(self):
+        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
 
 
 class WTelegramBody(object):
@@ -205,6 +209,13 @@ class WTelegramBody(object):
     def bodyPayload(self, val):
         self._bodyPayload = TelegramBodyPayload(val)
 
+    @property
+    def interpreted(self):
+        return {
+            'header': self.bodyHeader.interpreted,
+            'records': self.bodyPayload.interpreted,
+        }
+
     def load(self, body):
         self.bodyHeader = body[0:self.bodyHeaderLength]
         self._bodyHeaderLength = self.bodyPayload.load(body[self.bodyHeaderLength:])
@@ -217,7 +228,4 @@ class WTelegramBody(object):
         self.bodyPayload.debug()
 
     def to_JSON(self):
-        return json.dumps({
-            'header': json.loads(self.bodyHeader.to_JSON()),
-            'records': json.loads(self.bodyPayload.to_JSON()),
-        }, sort_keys=False, indent=4)
+        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)

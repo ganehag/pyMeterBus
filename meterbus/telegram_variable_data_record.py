@@ -89,10 +89,7 @@ class TelegramVariableDataRecord(object):
     @property
     def value(self):
         value = self.parsed_value
-        if type(value) == decimal.Decimal:
-            value = float(value)
-
-        elif type(value) == str and all(ord(c) < 128 for c in value):
+        if type(value) == str and all(ord(c) < 128 for c in value):
             value = str(value)
 
         elif type(value) == str:
@@ -151,7 +148,8 @@ class TelegramVariableDataRecord(object):
             te.ENCODING_NULL: lambda: None
         }.get(enc, lambda: None)()
 
-    def to_JSON(self):
+    @property
+    def interpreted(self):
         mult, unit, typ = self._parse_vifx()
 
         try:
@@ -166,9 +164,12 @@ class TelegramVariableDataRecord(object):
             except AttributeError:
                 pass
 
-        return json.dumps({
+        return {
             'value': value,
             'unit': unit,
             'type': str(typ),
             'function': str(self.dib.function_type)
-        }, use_decimal=True)
+        }
+
+    def to_JSON(self):
+        return json.dumps(self.interpreted, sort_keys=True, indent=4, use_decimal=True)
