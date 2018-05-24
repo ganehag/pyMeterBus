@@ -30,6 +30,7 @@ class WTelegramSndNr(object):
         if tgr:
             self.header.load(tgr)
             headerLength = self.header.headerLength
+
             self.body.load(tgr[headerLength:])
 
             if not self.check_crc():
@@ -59,6 +60,10 @@ class WTelegramSndNr(object):
     def check_crc(self):
         return True
         # return self.compute_crc() == self.header.crcField.parts[0]
+
+    @property
+    def records(self):
+        return self._body.records
 
     def to_JSON(self):
         return json.dumps({

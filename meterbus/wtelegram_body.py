@@ -20,6 +20,8 @@ class WTelegramBodyHeader(object):
         self._decryption_field = TelegramField()  # decryption field
 
     def load(self, bodyHeader):
+        length = 15
+
         self.manufacturer_field = bodyHeader[0:2]
         self.id_nr_field = bodyHeader[2:6]
         self.version_field = bodyHeader[6]
@@ -34,6 +36,7 @@ class WTelegramBodyHeader(object):
             self.version_field = ptr[6]
             self.device_field = ptr[7]
             ptr = ptr[8:]
+            length += 8
 
         if self.long_tl or self.short_tl:
             self.acc_nr_field = ptr[0]
@@ -41,6 +44,13 @@ class WTelegramBodyHeader(object):
             self.configuration_field = ptr[2:4][::-1]
             # swap configuration bytes as these arrive little endian
             self.decryption_field = ptr[4:6]
+
+        return length
+
+
+    @property
+    def isLSBOrder(self):
+        return False
 
     @property
     def without_tl(self):
@@ -165,8 +175,12 @@ class WTelegramBodyHeader(object):
 class WTelegramBody(object):
     def __init__(self):
         self._bodyHeader = WTelegramBodyHeader()
-        self._bodyPayload = TelegramBodyPayload()
-        self._bodyHeaderLength = 15
+        self._bodyPayload = TelegramBodyPayload(parent=self)
+        self._bodyHeaderLength = 23
+
+    @property
+    def records(self):
+        return self.bodyPayload.records
 
     @property
     def bodyHeaderLength(self):
@@ -179,7 +193,7 @@ class WTelegramBody(object):
     @bodyHeader.setter
     def bodyHeader(self, val):
         self._bodyHeader = WTelegramBodyHeader()
-        self._bodyHeader.load(val[0:self.bodyHeaderLength])
+        self._bodyHeaderLength = self._bodyHeader.load(val[0:self.bodyHeaderLength])
 
     @property
     def bodyPayload(self):
@@ -191,7 +205,7 @@ class WTelegramBody(object):
 
     def load(self, body):
         self.bodyHeader = body[0:self.bodyHeaderLength]
-        self.bodyPayload.load(body[self.bodyHeaderLength:])
+        self._bodyHeaderLength = self.bodyPayload.load(body[self.bodyHeaderLength:])
 
     def parse(self):
         self.bodyPayload.parse()  # Load from raw into records
