@@ -1,11 +1,13 @@
 import struct
 from .core_objects import DateCalculator
 
+from builtins import (bytes, str, open, super, range,
+                      zip, round, input, int, pow, object)
+
 
 class TelegramField(object):
     def __init__(self, parts=None):
         self._parts = []
-        # self._parsed_value = None
 
         if parts is not None:
             if isinstance(parts, str):
@@ -53,7 +55,7 @@ class TelegramField(object):
     @property
     def decodeReal(self):
         real_data = self.parts
-        return struct.unpack('f', "".join(map(chr, real_data)))[0]
+        return struct.unpack('f', bytes(real_data))[0]
 
     @property
     def decodeManufacturer(self):

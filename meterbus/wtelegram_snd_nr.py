@@ -1,11 +1,14 @@
+from builtins import (bytes, str, open, super, range,
+                      zip, round, input, int, pow, object)
+
 import simplejson as json
 
 from .wtelegram_header import WTelegramHeader
-from .wtelegram_body import WTelegramBody
+from .wtelegram_body import WTelegramFrame
 from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
 
 
-class WTelegramSndNr(object):
+class WTelegramSndNr(WTelegramFrame):
     @staticmethod
     def parse(data):
         try:
@@ -20,49 +23,17 @@ class WTelegramSndNr(object):
         return WTelegramSndNr(data)
 
     def __init__(self, dbuf=None):
-        self._header = WTelegramHeader()
-        self._body = WTelegramBody()
-
         tgr = dbuf
         if isinstance(dbuf, str):
             tgr = list(map(ord, dbuf))
 
         if tgr:
-            self.header.load(tgr)
-            headerLength = self.header.headerLength
-
-            self.body.load(tgr[headerLength:])
+            super().__init__()
+            self.load(tgr)
 
             if not self.check_crc():
                 raise MBusFrameCRCError(self.compute_crc(),
                                         self.header.crcField.parts[0])
-
-    @property
-    def header(self):
-        return self._header
-
-    @header.setter
-    def header(self, value):
-        self._header = value
-
-    @property
-    def body(self):
-        return self._body
-
-    @body.setter
-    def body(self, value):
-        self._body = value
-
-    @property
-    def records(self):
-        return self._body.records
-
-    @property
-    def interpreted(self):
-        return {
-            'head': self.header.interpreted,
-            'body': self.body.interpreted
-        }
 
     def compute_crc(self):
         return (self.header.cField.parts[0] +

@@ -57,7 +57,7 @@ class TelegramBodyPayload(object):
         lowerBoundary = 0
         upperBoundary = 0
 
-        # self.body.debug_fields(startPos, 0)
+        # self.body.debug_fields(startPos, 1)
 
         rec = TelegramVariableDataRecord()
 
