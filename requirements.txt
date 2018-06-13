@@ -1,6 +1,5 @@
 enum34==1.1.6
 future==0.16.0
-pkg-resources==0.0.0
 py==1.5.3
 pyaml==16.12.2
 pycrypto==2.6.1
