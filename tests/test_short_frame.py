@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import, division, print_function
+from builtins import (bytes, str, open, super, range,
+                      zip, round, input, int, pow, object)
+
 import os
 import sys
 
@@ -31,8 +35,8 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEqual(list(frame), frame_bytes)
 
     def test_load_crc_error(self):
-        frame_data = list(self.frame)
-        frame_data[-2] = '\xFF'
+        frame_data = list(map(char2int, list(self.frame_bytes)))
+        frame_data[-2] = 255
 
         with self.assertRaises(MBusFrameCRCError):
             meterbus.TelegramShort(frame_data)

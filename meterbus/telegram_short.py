@@ -21,9 +21,9 @@ class TelegramShort(object):
         self._header = TelegramHeader()
         if dbuf != None:
             tgr = dbuf
-
             if isinstance(dbuf, str):
                 tgr = list(map(ord, dbuf))
+
             elif isinstance(dbuf, bytes):
                 tgr = list(dbuf)
 
