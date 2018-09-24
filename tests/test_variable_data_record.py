@@ -100,9 +100,8 @@ class TestSequenceFunctions(unittest.TestCase):
 
     def test_verify_ustr_value(self):
         self.assertEqual(
-            self.frame2.records[2].value,
-            u"\f\u0096\u00e6\u00b28;\u00de\u00ba\u00d7X" \
-            u"\u0007\u00cd\u0014\u00ed\u00b3\n")
+            "0A B3 ED 14 CD 07 58 D7 BA DE 3B 38 B2 E6 96 0C",
+            self.frame2.records[2].value)
 
     def test_json_record0(self):
         dict_record = {
@@ -218,11 +217,10 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEqual(frame_rec_dict, dict_record)
 
     def test_json_value_str(self):
-        key = [12, 150, 230, 178, 56, 59, 222, 186,
-               215, 88, 7, 205, 20, 237, 179, 10]
+        key = "0A B3 ED 14 CD 07 58 D7 BA DE 3B 38 B2 E6 96 0C"
         record = json.loads(self.frame2.records[2].to_JSON())
         self.assertEqual(
-            list(map(ord, record['value'])),
+            record['value'],
             key
         )
 
