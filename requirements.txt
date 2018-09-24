@@ -2,7 +2,7 @@ enum34==1.1.6
 future==0.16.0
 py==1.5.3
 pyaml==16.12.2
-pycryptodome==3.6.4
+pycryptodome==3.6.6
 pyserial==3.3
 pytest==3.1.0
 PyYAML==3.12
