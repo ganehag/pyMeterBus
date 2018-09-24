@@ -70,6 +70,10 @@ class TelegramField(object):
         return "".join(map(chr, reversed(self.parts)))
 
     @property
+    def decodeRAW(self):
+        return " ".join(map(lambda x: "%02X" % x, self.parts))
+
+    @property
     def decodeDate(self):
         return DateCalculator.getDate(
             self.parts[0], self.parts[1], False)

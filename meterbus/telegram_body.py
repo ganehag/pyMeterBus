@@ -68,6 +68,13 @@ class TelegramBodyPayload(object):
             if rec.dib.more_records_follow:
                 self.records.append(rec)
 
+            if rec.dib.is_manufacturer_specific:
+                rec.dataField.parts = \
+                self.body.parts[startPos + 1:]
+
+                # Add remaining data
+                self.records.append(rec)
+
             return len(self.body.parts)
 
         elif rec.dib.function_type == \

@@ -40,6 +40,18 @@ class DataInformationBlock(TelegramField):
         return False
 
     @property
+    def is_manufacturer_specific(self):
+        """Check for manufacturer specific record"""
+        try:
+            dif = self.parts[0]
+            if dif in [0x0F]:
+                return True
+        except IndexError:
+            pass
+
+        return False
+
+    @property
     def more_records_follow(self):
         try:
             dif = self.parts[0]
@@ -55,6 +67,7 @@ class DataInformationBlock(TelegramField):
             return FunctionType.MORE_RECORDS_FOLLOW
 
         elif self.parts[0] == 0x0F:
+            # Manufacturer Specific
             return FunctionType.SPECIAL_FUNCTION
 
         elif self.parts[0] == 0x2F:

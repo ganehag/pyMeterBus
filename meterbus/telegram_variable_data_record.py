@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 
 import decimal
+import string
 import simplejson as json
 
+from .core_objects import FunctionType
 from .telegram_field import TelegramField
 from .value_information_block import ValueInformationBlock
 from .data_information_block import DataInformationBlock
@@ -136,6 +138,10 @@ class TelegramVariableDataRecord(object):
         except KeyError:
             pass
 
+        if (enc == te.ENCODING_VARIABLE_LENGTH and
+            not all(chr(c) in string.printable for c in tdf.parts)):
+            return tdf.decodeRAW
+
         return {
             te.ENCODING_INTEGER: lambda: int(
                 tdf.decodeInt * mult) if mult > 1.0 else decimal.Decimal(
@@ -151,6 +157,7 @@ class TelegramVariableDataRecord(object):
     @property
     def interpreted(self):
         mult, unit, typ = self._parse_vifx()
+        dlen, enc = self.dib.length_encoding
 
         try:
             unit = str(unit).decode('unicode_escape')
@@ -163,6 +170,9 @@ class TelegramVariableDataRecord(object):
                 value = value.decode('unicode_escape')
             except AttributeError:
                 pass
+
+        if self.dib.function_type == FunctionType.SPECIAL_FUNCTION:
+            value = self._dataField.decodeRAW
 
         return {
             'value': value,
