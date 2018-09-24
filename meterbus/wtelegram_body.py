@@ -1,12 +1,14 @@
 from builtins import (bytes, str, open, super, range,
                       zip, round, input, int, pow, object)
 
+import binascii
+
 import simplejson as json
 from Crypto.Cipher import AES
 
 from .core_objects import DataEncoding, FunctionType
 from .telegram_field import TelegramField
-from .telegram_variable_data_record import TelegramVariableDataRecord
+# from .telegram_variable_data_record import TelegramVariableDataRecord
 from .value_information_block import ValueInformationBlock
 from .telegram_body import TelegramBodyPayload
 
@@ -25,7 +27,7 @@ class WTelegramBaseDataHeader(object):
             self._ci_field = frame._ci_field
             self._acc_nr_field = frame._acc_nr_field
             self._status_field = frame._status_field
-            self._config_field = frame._config_field
+            self._configuration_field = frame._configuration_field
             self._decryption_field = frame._decryption_field
 
         else:
@@ -37,7 +39,7 @@ class WTelegramBaseDataHeader(object):
             self._ci_field = TelegramField()  # control information field
             self._acc_nr_field = TelegramField()  # access number
             self._status_field = TelegramField()  # status
-            self._config_field = TelegramField()  # configuration field
+            self._configuration_field = TelegramField()  # configuration field
             self._decryption_field = TelegramField()  # decryption field
 
 
@@ -124,14 +126,6 @@ class WTelegramBaseDataHeader(object):
         self._status_field = TelegramField(value)
 
     @property
-    def config_field(self):
-        return self._config_field
-
-    @config_field.setter
-    def config_field(self, value):
-        self._config_field = TelegramField(value)
-
-    @property
     def decryption_field(self):
         return self._decryption_field
 
@@ -166,6 +160,12 @@ class WTelegramBaseDataHeader(object):
         """
         return self.ci_field[0] in (0x60, 0x64, 0x6B, 0x6F, 0x72, 0x73,
                                     0x75, 0x7C, 0x7E, 0x80, 0x8B)
+
+    @property
+    def manu_tl(self):
+        """ Returns True if the CI field indicates manufacturer specific layer
+        """
+        return self.ci_field[0] in (0xAA, )
 
     @property
     def encryption_mode(self):
@@ -232,12 +232,14 @@ class WTelegramBaseDataHeader(object):
             Man Man ID  ..  ..  ID  Ver Med Acc ..  ..  ..  ..  ..  ..  Acc
             LSB MSB LSB         MSB sio ium
             '''
-            iv = bytearray()
-            iv[:2] = self.manufacturer_field
-            iv[2:8] = self.address
 
-            for i in range(8, 16):
-                iv.append(self.acc_nr_field[0])
+            iv = bytearray(
+                 self.manufacturer_field.parts
+               + self.id_nr_field.parts
+               + self.version_field.parts
+               + self.device_field.parts
+               + self.acc_nr_field.parts * 8
+            )
 
             return iv
 
@@ -246,7 +248,7 @@ class WTelegramBaseDataHeader(object):
     def decrypt(self, data):
         # FIXME: implement proper handling of KEYS
         keys = {
-            '\x00\x00\x03\x11': '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F'
+            '\x00\x00\x03\x11': b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F'
         }
 
         devid = ''.join(chr(b) for b in self.id_nr_field[::-1])
@@ -271,21 +273,50 @@ class WTelegramBaseDataHeader(object):
 
     @property
     def interpreted(self):
-        return {
-            'manufacturer': self.manufacturer_field.decodeManufacturer,
-            'identification': ", ".join(map(hex, self.id_nr)),
-            'version': hex(self.version_field.parts[0]),
-            'device_type': hex(self.device_field.parts[0]),
-            'type': hex(self.ci_field.parts[0]),
-            'access_no': self.acc_nr_field.parts[0],
-            'status': hex(self.status_field.parts[0]),
-            'configuration': ", ".join(map(hex,
-                                           self.configuration_field)),
-            'decryption': ", ".join(map(hex, self.decryption_field)),
-        }
+        try:
+            return {
+                'manufacturer': self.manufacturer_field.decodeManufacturer,
+                'identification': ", ".join(map(hex, self.id_nr)),
+                'version': hex(self.version_field.parts[0]),
+                'device_type': hex(self.device_field.parts[0]),
+                'type': hex(self.ci_field.parts[0]),
+                'access_no': self.acc_nr_field.parts[0],
+                'status': hex(self.status_field.parts[0]),
+                'configuration': ", ".join(map(hex,
+                                               self.configuration_field)),
+                'decryption': ", ".join(map(hex, self.decryption_field)),
+            }
+        except IndexError:
+            return {
+                'manufacturer': self.manufacturer_field.decodeManufacturer,
+                'identification': ", ".join(map(hex, self.id_nr)),
+                'version': hex(self.version_field.parts[0]),
+                'device_type': hex(self.device_field.parts[0]),
+                'type': hex(self.ci_field.parts[0]),
+            }
 
     def to_JSON(self):
         return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
+
+
+class WTelegramManuSpecDataHeader(WTelegramBaseDataHeader):
+    HEADER_LENGTH = 0
+
+    def __init__(self, frame = None):
+        super().__init__(frame)
+
+    def load(self, bdata):
+        if len(bdata) < self.length:
+            return 0
+
+        super().load(bdata)
+        offset = super().length
+
+        return self.length
+
+    @property
+    def length(self):
+        return super().length + self.HEADER_LENGTH
 
 
 class WTelegramShortDataHeader(WTelegramBaseDataHeader):
@@ -339,7 +370,8 @@ class WTelegramLongDataHeader(WTelegramBaseDataHeader):
 
             self.acc_nr_field = ptr[8]
             self.status_field = ptr[9]
-            self.configuration_field = ptr[10:12][::-1]  # swap configuration bytes as these arrive little endian
+            # swap configuration bytes as these arrive little endian
+            self.configuration_field = ptr[10:12][::-1]
             self.decryption_field = ptr[12:14]
 
         return self.length
@@ -360,6 +392,9 @@ class WTelegramDataHeader(object):
 
         elif frame.short_tl:
             frame = WTelegramShortDataHeader()
+
+        elif frame.manu_tl:
+            frame = WTelegramManuSpecDataHeader()
 
         if frame.load(bdata) == 0:
             return None
@@ -436,8 +471,11 @@ class WTelegramFrame(object):
     def is_encrypted(self):
         """ Returns False if the captured frame signals "No encryption"
         """
-        if (self.dataHeader.configuration_field[0] & 0x0F != 0):
-            return True
+        try:
+            if (self.dataHeader.configuration_field[0] & 0x0F != 0):
+                return True
+        except IndexError:
+            pass
 
         return False
 
@@ -450,17 +488,25 @@ class WTelegramFrame(object):
 
         self.dataHeader = WTelegramDataHeader.load(bdata[2:])
         if self.dataHeader is None:
-            return None 
+            return None
 
         if self.is_encrypted:
-            d = self.dataHeader.decrypt(bdata[(2 + self.dataHeader.length):])
+            encrdata = bdata[2:]
+            # self.dataHeader.length also contains the encryption bytes so we need
+            # to step back two bytes... so -2
+            d = self.dataHeader.decrypt(encrdata[(self.dataHeader.length - 2):])
             if d:
                 bdata[(2 + self.dataHeader.length):] = d
 
-        try:
-            self._payload.load(bdata[(2 + self.dataHeader.length):])
-        except IndexError:
-            return None
+        if not isinstance(self.dataHeader, WTelegramManuSpecDataHeader):
+            try:
+                self._payload.load(bdata[(2 + self.dataHeader.length):])
+            except IndexError as e:
+                return None
+        else:
+            # Insert manu specific record with data
+            self._payload.load([0x0F] + bdata[(2 + self.dataHeader.length):])
+            pass
 
         return True
 
