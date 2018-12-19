@@ -36,7 +36,7 @@ from .wtelegram_header import WTelegramHeader
 from .exceptions import MBusFrameDecodeError, FrameMismatch
 
 from .serial import *
-from .aux import *
+from .auxiliary import *
 
 
 def load(data):
