@@ -11,7 +11,21 @@ About
 Current State
 -------------
 
-This implementation is currently under heavy development. It is targeted at a very specific solution. Thus only the *variable data structure* is implemented. However the missing pieces will be implemented in the future.
+The library works, but it lacks proper documentation. Well, it lacks any kind of documentation to be honest.
+
+The implementation is currently under ~~heavy~~ development. Its original intended use case was very specific, as a library to aid in the decoding of M-Bus telegrams sent over HTTP, and might thus not suite everyone.
+
+Still, it is a generic library, and has been used is several different use cases.
+
+- Decoding of re-encoded M-Bus frames sent from an Elvaco Wireless M-Bus master over HTTP.
+- Communicating with M-Bus devices over RS-232 serial.
+- Communication with M-Bus devices over RFC 2217.
+- As a debugging tool to decode M-Bus frames.
+
+Currently only the *variable data structures* are implemented. The library can only decode M-Bus frame. It does currently **NOT** support encoding and transmission of M-Bus frames, such as *control* frames.
+
+However, if the need arises, missing pieces can be implemented on a request basis.
+
 
 Tools
 -----
@@ -21,6 +35,7 @@ You can find a set of utilities in the `tools` folder.
 * mbus-serial-request-data.py
 * mbus-serial-request-data-multi-reply.py
 * mbus-serial-scan.py
+* mbus-serial-scan-seconday.py
 
 These tools can communicate over a serial device `/dev/ttyX` or even over RFC2217 using the format `rfc2217://host:port`.
 
@@ -35,20 +50,61 @@ Known Issues
 * Missing: Fixed data structure parsing.
 * Missing: Encoding to M-Bus frames.
 * Missing: Slave configuration.
-* Missing: Interface code (Serial, TCP/IP)
 * Missing: Extended VIF codes.
 
 
 What works
 ----------
 
-* Parsing of complete telegram.
-* Parsing of just Used Data segment.
-* Generation of basic JSON structure from telegram/user-data/record.
+* Querying a M-Bus device over serial.
+* Parsing of a complete telegram.
+* Parsing of just the *Used Data* segment.
+* Generation of a basic JSON structure from the telegram/user-data/records.
+
+
+Basic API documentation
+-----------------------
+
+#### meterbus.load(data)
+* data[str]: M-Bus frame data
+
+Returns an object of either type *WTelegramSndNr, TelegramACK, TelegramShort, TelegramControl* or *TelegramLong*. If an error occurs, it will raise a *MBusFrameDecodeError*.
+
+#### meterbus.debug(state)
+* state[bool]: set the global debug state
+
+Produces debug messages to stdout.
+
+#### meterbus.send_ping_frame(ser, address)
+* ser[pySerial connection]: an open pySerial object
+* address: The target primary address
+
+Sends a PING frame to *address* over the serial connection *ser*.
+
+#### meterbus.recv_frame(ser, length)
+* ser[pySerial connection]: an open pySerial object
+* length: The minimum length of the reply. An ACK frame is one (1) byte.
+
+Reads an entire frame and returns the unparsed data.
+
+#### meterbus.send_request_frame_multi(ser, address, req)
+* ser[pySerial connection]: an open pySerial object
+* address: The target primary address
+
+If *req* is None, build a new *request* frame using *address* and send it.
+
+#### meterbus.send_select_frame(ser, secondary_address)
+* ser[pySerial connection]: an open pySerial object
+* secondary_address[str]: A target using secondary address format
+
+Sends a select frame with the supplied secondary address.
+
+#### meterbus.XXX
+More to come...
 
 
 Code examples
--------
+-------------
 
 ### Decode the value of a single record (record 3)
 ```python
