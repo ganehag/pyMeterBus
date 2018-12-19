@@ -31,7 +31,6 @@ setup(name='pyMeterBus',
           'Topic :: Software Development :: Libraries'
       ],
 
-#      packages=find_packages(exclude=['tests', 'mbus_ref']),
       packages=['meterbus'],
       install_requires=['enum34', 'simplejson', 'pyaml',
                         'pyserial', 'future', 'pycryptodome'],
