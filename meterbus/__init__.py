@@ -12,7 +12,7 @@
 
 __author__ = "Mikael Ganehag Brorsson"
 __license__ = "BSD-3-Clause"
-__version__ = "0.7.10"
+__version__ = "0.7.11"
 
 from .globals import g
 from .defines import *
