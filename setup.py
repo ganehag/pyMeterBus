@@ -1,23 +1,30 @@
+import os.path
+import codecs
+import re
+
 from setuptools import setup, find_packages
 
-with open('README.md') as f:
-    readme = f.read()
+here = os.path.abspath(os.path.dirname(__file__))
 
-with open('VERSION') as f:
-    version = f.readline()
+def read(*parts):
+    with codecs.open(os.path.join(here, *parts), 'r') as fp:
+        return fp.read()
 
-with open('LICENSE') as f:
-    license = f.readline()
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 setup(name='pyMeterBus',
       description='Python implementation of the Meter-Bus protocol',
-      long_description=readme,
-      long_description_content_type='text/markdown',
-      version=version,
+      version=find_version("meterbus", "__init__.py"),
       url='https://github.com/ganehag/pyMeterBus',
       author='Mikael Ganehag Brorsson',
       author_email='mikael.brorsson@gmail.com',
-      license=license,
+      license="BSD-3-Clause",
 
       classifiers=[
           'Development Status :: 4 - Beta',

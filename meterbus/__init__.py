@@ -10,6 +10,10 @@
     :license: BSD, see LICENSE for more details.
 """
 
+__author__ = "Mikael Ganehag Brorsson"
+__license__ = "BSD-3-Clause"
+__version__ = "0.7.9"
+
 from .globals import g
 from .defines import *
 
