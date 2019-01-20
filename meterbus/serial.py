@@ -4,7 +4,7 @@
 from .globals import g
 from .telegram_short import TelegramShort
 from .telegram_long import TelegramLong
-from .aux import is_primary_address, is_secondary_address
+from .auxiliary import is_primary_address, is_secondary_address
 
 from .telegram_ack import TelegramACK
 from .telegram_short import TelegramShort

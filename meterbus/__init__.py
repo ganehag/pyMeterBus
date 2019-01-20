@@ -12,7 +12,7 @@
 
 __author__ = "Mikael Ganehag Brorsson"
 __license__ = "BSD-3-Clause"
-__version__ = "0.7.9"
+__version__ = "0.7.10"
 
 from .globals import g
 from .defines import *
@@ -40,7 +40,7 @@ from .wtelegram_header import WTelegramHeader
 from .exceptions import MBusFrameDecodeError, FrameMismatch
 
 from .serial import *
-from .aux import *
+from .auxiliary import *
 
 
 def load(data):

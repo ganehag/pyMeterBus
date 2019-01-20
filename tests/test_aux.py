@@ -16,23 +16,23 @@ class TestSequenceFunctions(unittest.TestCase):
         pass
 
     def test_manufacturer_encode(self):
-        intval = meterbus.aux.manufacturer_id("WEP")
+        intval = meterbus.auxiliary.manufacturer_id("WEP")
         h1, h2 = meterbus.manufacturer_encode(intval, 2)
         hexstr = "{0:02X}{1:02X}".format(h1, h2)
         self.assertEqual(hexstr, "B05C")
 
     def test_invalid_manufacturer_length(self):
-        intval = meterbus.aux.manufacturer_id("J")
+        intval = meterbus.auxiliary.manufacturer_id("J")
         falseVal = meterbus.manufacturer_encode(intval, 2)
         self.assertEqual(falseVal, None)
 
     def test_invalid_manufacturer_string(self):
-        intval = meterbus.aux.manufacturer_id("@@@")
+        intval = meterbus.auxiliary.manufacturer_id("@@@")
         falseVal = meterbus.manufacturer_encode(intval, 2)
         self.assertEqual(falseVal, None)
 
     def test_invalid_manufacturer_string_unicode(self):
-        intval = meterbus.aux.manufacturer_id(u"ÖÖÖ")
+        intval = meterbus.auxiliary.manufacturer_id(u"ÖÖÖ")
         self.assertEqual(False, intval)
 
     def test_is_primary_true(self):
