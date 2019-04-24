@@ -174,7 +174,7 @@ class TelegramBodyPayload(object):
 
 
 class TelegramBodyHeader(object):
-    BYTE_ORDER_MASK = 0x04    # 0000 0100
+    MODE_BIT_MASK = 0x04  # 0000 0100 (6.1 CI-Field Mode bit)
 
     def __init__(self):
         self._ci_field = TelegramField()        # control information field
@@ -211,7 +211,7 @@ class TelegramBodyHeader(object):
 
     @property
     def isLSBOrder(self):
-        return not (self._ci_field.parts[0] & self.BYTE_ORDER_MASK)
+        return not (self._ci_field.parts[0] & self.MODE_BIT_MASK)
 
     @property
     def ci_field(self):
