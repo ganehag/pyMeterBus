@@ -48,6 +48,9 @@ class TelegramLong(object):
 
             self.body.load(tgr[headerLength:-2])
 
+            if self.body.isVariableData == False:
+                raise MBusFrameDecodeError("Not a variable data long frame")
+
             if not self.check_crc():
                 raise MBusFrameCRCError(self.compute_crc(),
                                         self.header.crcField.parts[0])

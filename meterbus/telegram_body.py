@@ -175,6 +175,8 @@ class TelegramBodyPayload(object):
 
 class TelegramBodyHeader(object):
     MODE_BIT_MASK = 0x04  # 0000 0100 (6.1 CI-Field Mode bit)
+    CI_VARIABLE_DATA = [0x72, 0x76]
+    CI_FIXED_DATA = [0x73, 0x77]
 
     def __init__(self):
         self._ci_field = TelegramField()        # control information field
@@ -191,10 +193,16 @@ class TelegramBodyHeader(object):
             self.ci_field = bodyHeader[0]
         else:
             self.ci_field = bodyHeader[0]
-            self.id_nr_field = bodyHeader[1:5]
-            self.manufacturer_field = bodyHeader[5:7]
-            self.version_field = bodyHeader[7]
-            self.measure_medium_field = bodyHeader[8]
+
+            if len(bodyHeader) >= 5:
+                self.id_nr_field = bodyHeader[1:5]
+            if len(bodyHeader) >= 7:
+                self.manufacturer_field = bodyHeader[5:7]
+            if len(bodyHeader) >= 8:
+                self.version_field = bodyHeader[7]
+            if len(bodyHeader) >= 9:
+                self.measure_medium_field = bodyHeader[8]
+
             if len(bodyHeader) > 9:
                 self.acc_nr_field = bodyHeader[9]
                 self.status_field = bodyHeader[10]
@@ -212,6 +220,14 @@ class TelegramBodyHeader(object):
     @property
     def isLSBOrder(self):
         return not (self._ci_field.parts[0] & self.MODE_BIT_MASK)
+
+    @property
+    def isVariableData(self):
+        return (self._ci_field.parts[0] in self.CI_VARIABLE_DATA)
+
+    @property
+    def isFixedData(self):
+        return (self._ci_field.parts[0] in self.CI_FIXED_DATA)
 
     @property
     def ci_field(self):
@@ -299,6 +315,14 @@ class TelegramBody(object):
         self._bodyHeader = TelegramBodyHeader()
         self._bodyPayload = TelegramBodyPayload(parent=self)
         self._bodyHeaderLength = 13
+
+    @property
+    def isVariableData(self):
+        return self._bodyHeader.isVariableData
+
+    @property
+    def isFixedData(self):
+        return self._bodyHeader.isFixedData
 
     @property
     def bodyHeaderLength(self):
