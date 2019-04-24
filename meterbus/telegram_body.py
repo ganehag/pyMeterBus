@@ -44,7 +44,6 @@ class TelegramBodyPayload(object):
 
     def parse(self):
         self.records = []
-
         recordPos = 0
 
         try:
@@ -175,7 +174,7 @@ class TelegramBodyPayload(object):
 
 class TelegramBodyHeader(object):
     MODE_BIT_MASK = 0x04  # 0000 0100 (6.1 CI-Field Mode bit)
-    CI_VARIABLE_DATA = [0x72, 0x76]
+    CI_VARIABLE_DATA = [0x72, 0x76, 0x78]
     CI_FIXED_DATA = [0x73, 0x77]
 
     def __init__(self):
@@ -193,6 +192,9 @@ class TelegramBodyHeader(object):
             self.ci_field = bodyHeader[0]
         else:
             self.ci_field = bodyHeader[0]
+
+            if self.noDataHeader:
+                return
 
             if len(bodyHeader) >= 5:
                 self.id_nr_field = bodyHeader[1:5]
@@ -220,6 +222,10 @@ class TelegramBodyHeader(object):
     @property
     def isLSBOrder(self):
         return not (self._ci_field.parts[0] & self.MODE_BIT_MASK)
+
+    @property
+    def noDataHeader(self):
+        return (self._ci_field.parts and self._ci_field.parts[0] == 0x78)
 
     @property
     def isVariableData(self):
@@ -295,6 +301,10 @@ class TelegramBodyHeader(object):
 
     @property
     def interpreted(self):
+        if self.noDataHeader:
+            return {
+                'type': hex(self.ci_field.parts[0])
+            }
         return {
             'type': hex(self.ci_field.parts[0]),
             'identification': ", ".join(map("0x{:02x}".format, self.id_nr)),
@@ -325,7 +335,13 @@ class TelegramBody(object):
         return self._bodyHeader.isFixedData
 
     @property
+    def noDataHeader(self):
+        return (self._bodyHeader.noDataHeader)
+
+    @property
     def bodyHeaderLength(self):
+        if self.noDataHeader:
+            return 1  # need to offset with 1
         return self._bodyHeaderLength
 
     @bodyHeaderLength.setter

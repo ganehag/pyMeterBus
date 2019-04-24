@@ -116,6 +116,9 @@ class TelegramVariableDataRecord(object):
         te = DataEncoding
         tdf = self._dataField
 
+        if self.dib.function_type == FunctionType.SPECIAL_FUNCTION:
+            return self._dataField.decodeRAW
+
         if length != len(tdf.parts) and enc != te.ENCODING_VARIABLE_LENGTH:
             return None
 
