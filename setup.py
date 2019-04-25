@@ -39,6 +39,11 @@ setup(name='pyMeterBus',
       ],
 
       packages=['meterbus'],
-      install_requires=['enum34', 'simplejson', 'pyaml',
-                        'pyserial', 'future', 'pycryptodome'],
+      install_requires=[
+           'enum34;python_version<"3.4"',
+           'simplejson',
+           'pyaml',
+           'pyserial',
+           'future;python_version<"3.3"',
+           'pycryptodome'],
 )
