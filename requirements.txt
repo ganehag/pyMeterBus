@@ -1,5 +1,5 @@
-enum34==1.1.6
-future==0.17.1
+enum34==1.1.6; python_version < '3.0'
+future==0.17.1; python_version < '3.0'
 pyaml==18.11.0
 pycryptodome==3.7.3
 pyserial==3.4
