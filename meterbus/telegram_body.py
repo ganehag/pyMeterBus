@@ -225,7 +225,7 @@ class TelegramBodyHeader(object):
 
     @property
     def noDataHeader(self):
-        return (self._ci_field.parts and self._ci_field.parts[0] == 0x78)
+        return (self._ci_field.parts and self._ci_field.parts[0] in (0x78, 0x51) )
 
     @property
     def isVariableData(self):
