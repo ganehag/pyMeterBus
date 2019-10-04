@@ -45,3 +45,7 @@ docs/_build/
 
 twine/*
 test_venv/*
+
+mbus_ref/*
+misc
+venv
