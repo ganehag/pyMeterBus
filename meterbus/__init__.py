@@ -6,13 +6,9 @@
 
     A library to decode M-Bus frames.
 
-    :copyright: (c) 2017 by Mikael Ganehag Brorsson.
+    :copyright: (c) 2017-2019 by Mikael Ganehag Brorsson.
     :license: BSD, see LICENSE for more details.
 """
-
-__author__ = "Mikael Ganehag Brorsson"
-__license__ = "BSD-3-Clause"
-__version__ = "0.7.15"
 
 from .globals import g
 from .defines import *
@@ -41,6 +37,10 @@ from .exceptions import MBusFrameDecodeError, FrameMismatch
 
 from .serial import *
 from .auxiliary import *
+
+__author__ = "Mikael Ganehag Brorsson"
+__license__ = "BSD-3-Clause"
+__version__ = "0.7.17"
 
 
 def load(data):
