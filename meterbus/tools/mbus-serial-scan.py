@@ -8,7 +8,7 @@ try:
     import meterbus
 except ImportError:
     import sys
-    sys.path.append('../')
+    sys.path.append('../../')
     import meterbus
 
 
