@@ -17,7 +17,7 @@ class WTelegramBaseDataHeader(object):
     BYTE_ORDER_MASK = 0x04    # 0000 0100
     PADDING_BYTE = 0x00
 
-    def __init__(self, frame = None):
+    def __init__(self, frame=None):
         if isinstance(frame, WTelegramBaseDataHeader):
             self._manufacturer_field = frame._manufacturer_field
             self._id_nr_field = frame._id_nr_field
@@ -42,7 +42,6 @@ class WTelegramBaseDataHeader(object):
             self._configuration_field = TelegramField()  # configuration field
             self._decryption_field = TelegramField()  # decryption field
 
-
     def load(self, bdata):
         self.manufacturer_field = bdata[0:2]
         self.id_nr_field = bdata[2:6]
@@ -62,7 +61,8 @@ class WTelegramBaseDataHeader(object):
 
     @property
     def address(self):
-        return self.id_nr_field.parts + self.version_field.parts + self.device_field.parts
+        return self.id_nr_field.parts + self.version_field.parts + \
+               self.device_field.parts
 
     @property
     def ci_field(self):
@@ -235,10 +235,10 @@ class WTelegramBaseDataHeader(object):
 
             iv = bytearray(
                  self.manufacturer_field.parts
-               + self.id_nr_field.parts
-               + self.version_field.parts
-               + self.device_field.parts
-               + self.acc_nr_field.parts * 8
+                 + self.id_nr_field.parts
+                 + self.version_field.parts
+                 + self.device_field.parts
+                 + self.acc_nr_field.parts * 8
             )
 
             return iv
@@ -262,7 +262,7 @@ class WTelegramBaseDataHeader(object):
 
             spec = AES.new(key, AES.MODE_CBC, bytes(self.crypto_iv))
             data = data + ((16 - orig_len % 16) * [self.PADDING_BYTE])
-            data = [ int(x) for x in bytearray(spec.decrypt(bytes(data))) ]
+            data = [int(x) for x in bytearray(spec.decrypt(bytes(data)))]
 
             if data[0:2] != [0x2F, 0x2F]:
                 return False
@@ -296,13 +296,14 @@ class WTelegramBaseDataHeader(object):
             }
 
     def to_JSON(self):
-        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
+        return json.dumps(self.interpreted, sort_keys=False,
+                          indent=4, use_decimal=True)
 
 
 class WTelegramManuSpecDataHeader(WTelegramBaseDataHeader):
     HEADER_LENGTH = 0
 
-    def __init__(self, frame = None):
+    def __init__(self, frame=None):
         super().__init__(frame)
 
     def load(self, bdata):
@@ -322,7 +323,7 @@ class WTelegramManuSpecDataHeader(WTelegramBaseDataHeader):
 class WTelegramShortDataHeader(WTelegramBaseDataHeader):
     HEADER_LENGTH = 6
 
-    def __init__(self, frame = None):
+    def __init__(self, frame=None):
         super().__init__(frame)
 
     def load(self, bdata):
@@ -337,7 +338,8 @@ class WTelegramShortDataHeader(WTelegramBaseDataHeader):
 
             self.acc_nr_field = ptr[0]
             self.status_field = ptr[1]
-            self.configuration_field = ptr[2:4][::-1]  # swap configuration bytes as these arrive little endian
+            # swap configuration bytes as these arrive little endian
+            self.configuration_field = ptr[2:4][::-1]
             self.decryption_field = ptr[4:6]
 
         return self.length
@@ -350,7 +352,7 @@ class WTelegramShortDataHeader(WTelegramBaseDataHeader):
 class WTelegramLongDataHeader(WTelegramBaseDataHeader):
     HEADER_LENGTH = 14
 
-    def __init__(self, frame = None):
+    def __init__(self, frame=None):
         super().__init__(frame)
 
     def load(self, bdata):
@@ -492,9 +494,10 @@ class WTelegramFrame(object):
 
         if self.is_encrypted:
             encrdata = bdata[2:]
-            # self.dataHeader.length also contains the encryption bytes so we need
-            # to step back two bytes... so -2
-            d = self.dataHeader.decrypt(encrdata[(self.dataHeader.length - 2):])
+            # self.dataHeader.length also contains the encryption bytes so we
+            # need to step back two bytes... so -2
+            d = self.dataHeader.decrypt(
+                encrdata[(self.dataHeader.length - 2):])
             if d:
                 bdata[(2 + self.dataHeader.length):] = d
 
@@ -510,7 +513,7 @@ class WTelegramFrame(object):
 
         return True
 
-
     def to_JSON(self):
-        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
+        return json.dumps(self.interpreted, sort_keys=False,
+                          indent=4, use_decimal=True)
 

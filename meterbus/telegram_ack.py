@@ -20,7 +20,7 @@ class TelegramACK(object):
         self.base_size = 1
 
     def __len__(self):
-       return 1
+        return 1
 
     def __iter__(self):
         yield 0xE5

@@ -19,7 +19,7 @@ class TelegramShort(object):
 
     def __init__(self, dbuf=None):
         self._header = TelegramHeader()
-        if dbuf != None:
+        if dbuf is not None:
             tgr = dbuf
             if isinstance(dbuf, str):
                 tgr = list(map(ord, dbuf))
@@ -33,12 +33,12 @@ class TelegramShort(object):
                 raise MBusFrameCRCError(self.compute_crc(),
                                         self.header.crcField.parts[0])
         else:
-           self._header.startField.parts = [FRAME_SHORT_START]
-           self._header.lField.parts = [0x00]  # not used in short frame
-           self._header.cField.parts = [0x00]
-           self._header.aField.parts = [0x00]
-           self._header.crcField.parts = [0x00]
-           self._header.stopField.parts = [FRAME_STOP]
+            self._header.startField.parts = [FRAME_SHORT_START]
+            self._header.lField.parts = [0x00]  # not used in short frame
+            self._header.cField.parts = [0x00]
+            self._header.aField.parts = [0x00]
+            self._header.crcField.parts = [0x00]
+            self._header.stopField.parts = [FRAME_STOP]
 
     @property
     def header(self):
@@ -56,7 +56,7 @@ class TelegramShort(object):
         return self.compute_crc() == self.header.crcField.parts[0]
 
     def __len__(self):
-       return 0x05
+        return 0x05
 
     def __iter__(self):
         yield self._header.startField.parts[0]

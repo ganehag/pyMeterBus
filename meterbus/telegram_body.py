@@ -69,7 +69,7 @@ class TelegramBodyPayload(object):
 
             if rec.dib.is_manufacturer_specific:
                 rec.dataField.parts = \
-                self.body.parts[startPos + 1:]
+                    self.body.parts[startPos + 1:]
 
                 # Add remaining data
                 self.records.append(rec)
@@ -169,7 +169,8 @@ class TelegramBodyPayload(object):
         return False
 
     def to_JSON(self):
-        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
+        return json.dumps(self.interpreted, sort_keys=False,
+                          indent=4, use_decimal=True)
 
 
 class TelegramBodyHeader(object):
@@ -317,7 +318,8 @@ class TelegramBodyHeader(object):
         }
 
     def to_JSON(self):
-        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
+        return json.dumps(self.interpreted, sort_keys=False,
+                          indent=4, use_decimal=True)
 
 
 class TelegramBody(object):
@@ -388,4 +390,5 @@ class TelegramBody(object):
         self.bodyPayload.debug()
 
     def to_JSON(self):
-        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
+        return json.dumps(self.interpreted, sort_keys=False,
+                          indent=4, use_decimal=True)

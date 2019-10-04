@@ -2,8 +2,9 @@ import simplejson as json
 
 from .telegram_body import TelegramBody
 from .telegram_header import TelegramHeader
-from .exceptions import (MBusFrameCRCError, MBusFrameDecodeError, FrameMismatch,
-                         MbusFrameLengthError)
+from .exceptions import (MBusFrameCRCError, MBusFrameDecodeError,
+                         FrameMismatch, MbusFrameLengthError)
+
 
 class TelegramLong(object):
     @staticmethod
@@ -23,7 +24,7 @@ class TelegramLong(object):
         self._header = TelegramHeader()
         self._body = TelegramBody()
 
-        if dbuf != None:
+        if dbuf is not None:
             tgr = dbuf
             if isinstance(dbuf, str):
                 tgr = list(map(ord, dbuf))
@@ -48,7 +49,7 @@ class TelegramLong(object):
 
             self.body.load(tgr[headerLength:-2])
 
-            if self.body.isVariableData == False:
+            if self.body.isVariableData is False:
                 raise MBusFrameDecodeError("Not a variable data long frame")
 
             if not self.check_crc():
@@ -70,7 +71,7 @@ class TelegramLong(object):
 
     @property
     def manufacturer(self):
-       return self.body.bodyHeader.manufacturer_field.decodeManufacturer
+        return self.body.bodyHeader.manufacturer_field.decodeManufacturer
 
     @property
     def header(self):
@@ -145,26 +146,27 @@ class TelegramLong(object):
         return self.compute_crc() == self.header.crcField.parts[0]
 
     def to_JSON(self):
-        return json.dumps(self.interpreted, sort_keys=True, indent=4, use_decimal=True)
+        return json.dumps(self.interpreted, sort_keys=True,
+                          indent=4, use_decimal=True)
 
     def __len__(self):
-       return (
-         len(self.header.startField.parts) * 2 +
-         len(self.header.lField.parts) * 2 +
-         len(self.header.cField.parts) +
-         len(self.header.aField.parts) +
-         len(self.body.bodyHeader.ci_field.parts) +
-         len(self.body.bodyHeader.id_nr_field.parts) +
-         len(self.body.bodyHeader.manufacturer_field.parts) +
-         len(self.body.bodyHeader.version_field.parts) +
-         len(self.body.bodyHeader.measure_medium_field.parts) +
-         len(self.body.bodyHeader.acc_nr_field.parts) +
-         len(self.body.bodyHeader.status_field.parts) +
-         len(self.body.bodyHeader.sig_field.parts) +
-         len(self.body.bodyPayload.body.parts) +
-         1 +
-         len(self.header.stopField.parts)
-       )
+        return (
+            len(self.header.startField.parts) * 2 +
+            len(self.header.lField.parts) * 2 +
+            len(self.header.cField.parts) +
+            len(self.header.aField.parts) +
+            len(self.body.bodyHeader.ci_field.parts) +
+            len(self.body.bodyHeader.id_nr_field.parts) +
+            len(self.body.bodyHeader.manufacturer_field.parts) +
+            len(self.body.bodyHeader.version_field.parts) +
+            len(self.body.bodyHeader.measure_medium_field.parts) +
+            len(self.body.bodyHeader.acc_nr_field.parts) +
+            len(self.body.bodyHeader.status_field.parts) +
+            len(self.body.bodyHeader.sig_field.parts) +
+            len(self.body.bodyPayload.body.parts) +
+            1 +
+            len(self.header.stopField.parts)
+        )
 
     def __iter__(self):
         self.header.lField = [

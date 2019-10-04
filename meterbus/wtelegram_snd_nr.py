@@ -44,4 +44,5 @@ class WTelegramSndNr(WTelegramFrame):
         # return self.compute_crc() == self.header.crcField.parts[0]
 
     def to_JSON(self):
-        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
+        return json.dumps(self.interpreted, sort_keys=False,
+                          indent=4, use_decimal=True)

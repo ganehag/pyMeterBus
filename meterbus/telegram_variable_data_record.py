@@ -142,7 +142,7 @@ class TelegramVariableDataRecord(object):
             pass
 
         if (enc == te.ENCODING_VARIABLE_LENGTH and
-            not all(chr(c) in string.printable for c in tdf.parts)):
+                not all(chr(c) in string.printable for c in tdf.parts)):
             return tdf.decodeRAW
 
         return {
@@ -185,4 +185,5 @@ class TelegramVariableDataRecord(object):
         }
 
     def to_JSON(self):
-        return json.dumps(self.interpreted, sort_keys=True, indent=4, use_decimal=True)
+        return json.dumps(self.interpreted, sort_keys=True,
+                          indent=4, use_decimal=True)

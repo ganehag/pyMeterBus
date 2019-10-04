@@ -103,4 +103,5 @@ class TelegramHeader(object):
             self.stopField = header[-1]
 
     def to_JSON(self):
-        return json.dumps(self.interpreted, sort_keys=False, indent=4, use_decimal=True)
+        return json.dumps(self.interpreted, sort_keys=False,
+                          indent=4, use_decimal=True)
