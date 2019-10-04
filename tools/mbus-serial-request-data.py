@@ -60,6 +60,8 @@ def do_char_dev(args):
                     meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
 
             elif meterbus.is_secondary_address(address):
+                ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
+
                 meterbus.send_select_frame(ser, address)
                 try:
                     frame = meterbus.load(meterbus.recv_frame(ser, 1))
