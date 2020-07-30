@@ -74,7 +74,7 @@ def mbus_probe_secondary_address(ser, mask, read_echo=False):
         frame = e.value
 
     if isinstance(frame, meterbus.TelegramACK):
-        meterbus.send_request_frame(ser, meterbus.ADDRESS_NETWORK_LAYER, read_echo)
+        meterbus.send_request_frame(ser, meterbus.ADDRESS_NETWORK_LAYER, read_echo=read_echo)
         time.sleep(0.5)
 
         frame = None
@@ -111,7 +111,7 @@ def do_char_dev(args):
 
             if meterbus.is_primary_address(address):
                 if ping_address(ser, address, args.retries, args.echofix):
-                    meterbus.send_request_frame(ser, address)
+                    meterbus.send_request_frame(ser, address, read_echo=args.echofix)
                     frame = meterbus.load(
                         meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
 
@@ -383,7 +383,7 @@ def serial_request_multi():
                     req.header.cField.parts[0] ^= meterbus.CONTROL_MASK_FCB
 
                     req = meterbus.send_request_frame_multi(
-                              ser, meterbus.ADDRESS_NETWORK_LAYER, req)
+                              ser, meterbus.ADDRESS_NETWORK_LAYER, req, read_echo=args.echofix)
 
                     next_frame = meterbus.load(meterbus.recv_frame(ser))
                     frame += next_frame
