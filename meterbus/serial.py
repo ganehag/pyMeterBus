@@ -22,18 +22,25 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def serial_send(ser, data):
-    if g.debug:
+def serial_send(ser, data=None, read_echo=False):
+    if not data:
+        if g.debug:
+            logger.info('Unable to send {0} value'.format(data))
+        return None
+
+    if g.debug and data:
         frame_data = bytearray(data)
         logger.info('SEND ({0:03d}) {1}'.format(
-             len(data),
+             len(frame_data),
              " ".join(["{:02x}".format(x).upper() for x in frame_data])
         ))
 
     ser.write(bytearray(data))
+    if read_echo:
+        _ = ser.read(len(bytearray(data)))
 
 
-def send_ping_frame(ser, address):
+def send_ping_frame(ser, address, read_echo=False):
     if is_primary_address(address) is False:
         return False
 
@@ -43,10 +50,10 @@ def send_ping_frame(ser, address):
     ]
     frame.header.aField.parts = [address]
 
-    serial_send(ser, frame)
+    serial_send(ser, frame, read_echo)
 
 
-def send_request_frame(ser, address=None, req=None):
+def send_request_frame(ser, address=None, req=None, read_echo=False):
     if address is not None and is_primary_address(address) is False:
         return False
 
@@ -60,12 +67,12 @@ def send_request_frame(ser, address=None, req=None):
         frame = req
 
     if ser is not None and frame is not None:
-        serial_send(ser, frame)
+        serial_send(ser, frame, read_echo)
 
     return frame
 
 
-def send_request_frame_multi(ser, address=None, req=None):
+def send_request_frame_multi(ser, address=None, req=None, read_echo=False):
     if address is not None and is_primary_address(address) is False:
         return False
 
@@ -80,12 +87,12 @@ def send_request_frame_multi(ser, address=None, req=None):
         frame = req
 
     if ser is not None and frame is not None:
-        serial_send(ser, frame)
+        serial_send(ser, frame, read_echo)
 
     return frame
 
 
-def send_select_frame(ser, secondary_address):
+def send_select_frame(ser, secondary_address, read_echo=False):
     frame = TelegramLong()
 
     frame.header.cField.parts = [
@@ -116,7 +123,7 @@ def send_select_frame(ser, secondary_address):
 
     frame.body.bodyHeader = frame_data
 
-    serial_send(ser, frame)
+    serial_send(ser, frame, read_echo)
 
 
 def recv_frame(ser, length=1):
@@ -169,7 +176,7 @@ class MBusSerial:
         self.ser = ser
         self.preamble = preamble
 
-    def serial_send(self, data):
+    def serial_send(self, data, read_echo=False):
         if g.debug:
             frame_data = bytearray(data)
             logger.info('SEND ({0:03d}) {1}'.format(
@@ -178,13 +185,15 @@ class MBusSerial:
             ))
 
         self.ser.write(bytearray(data))
+        if read_echo:
+            self.ser.read(len(data))
 
-    def send_ping_frame(self, address):
+    def send_ping_frame(self, address, read_echo=False):
         if is_primary_address(address) is False:
             return False
 
         if self.preamble:
-            self.serial_send(self.preamble)
+            self.serial_send(self.preamble, read_echo)
 
         frame = TelegramShort()
         frame.header.cField.parts = [
@@ -192,14 +201,14 @@ class MBusSerial:
         ]
         frame.header.aField.parts = [address]
 
-        self.serial_send(frame)
+        self.serial_send(frame, read_echo)
 
-    def send_request_frame(self, addr=None, req=None):
+    def send_request_frame(self, addr=None, req=None, read_echo=False):
         if address is not None and is_primary_address(address) is False:
             return False
 
         if self.preamble:
-            self.serial_send(self.preamble)
+            self.serial_send(self.preamble, read_echo)
 
         if req is None and address is not None:
             frame = TelegramShort()
@@ -211,16 +220,16 @@ class MBusSerial:
             frame = req
 
         if frame is not None:
-            self.serial_send(frame)
+            self.serial_send(frame, read_echo)
 
         return frame
 
-    def send_request_frame_multi(self, address=None, req=None):
+    def send_request_frame_multi(self, address=None, req=None, read_echo=False):
         if address is not None and is_primary_address(address) is False:
             return False
 
         if self.preamble:
-            self.serial_send(self.preamble)
+            self.serial_send(self.preamble, read_echo)
 
         if req is None:
             frame = TelegramShort()
@@ -233,12 +242,12 @@ class MBusSerial:
             frame = req
 
         if frame is not None:
-            self.serial_send(frame)
+            self.serial_send(frame, read_echo)
 
         return frame
 
-    def send_select_frame(self, secondary_address):
-        return send_select_frame(self.ser, secondary_address)
+    def send_select_frame(self, secondary_address, read_echo=False):
+        return send_select_frame(self.ser, secondary_address, read_echo)
 
     def recv_frame(self, length=1):
         data = b""

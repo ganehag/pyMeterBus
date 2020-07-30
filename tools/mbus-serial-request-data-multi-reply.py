@@ -7,6 +7,8 @@ import simplejson as json
 import yaml
 import sys
 
+from decimal import Decimal
+
 try:
     import meterbus
 except ImportError:
@@ -15,15 +17,17 @@ except ImportError:
     import meterbus
 
 
-def ping_address(ser, address, retries=5):
+def ping_address(ser, address, retries=5, read_echo=False):
     for i in range(0, retries + 1):
-        meterbus.send_ping_frame(ser, address)
+        meterbus.send_ping_frame(ser, address, read_echo)
         try:
             frame = meterbus.load(meterbus.recv_frame(ser, 1))
             if isinstance(frame, meterbus.TelegramACK):
                 return True
         except meterbus.MBusFrameDecodeError:
             pass
+
+        time.sleep(0.5)
 
     return False
 
@@ -41,8 +45,10 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--retries',
                         type=int, default=5,
                         help='Number of ping retries for each address')
-    parser.add_argument('-o', '--output', default="json",
+    parser.add_argument('-o', '--output', default="dump",
                         help='Output format')
+    parser.add_argument('--echofix', action='store_true',
+                        help='Read and ignore echoed data from target')
     parser.add_argument('device', type=str, help='Serial device or URI')
     args = parser.parse_args()
 
@@ -64,23 +70,23 @@ if __name__ == '__main__':
             frame = None
 
             if meterbus.is_primary_address(address):
-                if False == ping_address(ser, address, 0):
+                if False == ping_address(ser, address, args.retries, args.echofix):
                      sys.exit(1)
 
-                meterbus.send_request_frame_multi(ser, address)
+                meterbus.send_request_frame_multi(ser, address, read_echo=args.echofix)
                 frame = meterbus.load(
                     meterbus.recv_frame(ser))
 
             elif meterbus.is_secondary_address(address):
-                if False == ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0):
-                    ping_address(ser, meterbus.ADDRESS_BROADCAST_NOREPLY, 0)
+                if False == ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, args.retries, args.echofix):
+                    ping_address(ser, meterbus.ADDRESS_BROADCAST_NOREPLY, args.retries, args.echofix)
 
-                meterbus.send_select_frame(ser, address)
+                meterbus.send_select_frame(ser, address, args.echofix)
                 frame = meterbus.load(meterbus.recv_frame(ser, 1))
                 assert isinstance(frame, meterbus.TelegramACK)
 
                 req = meterbus.send_request_frame_multi(
-                          ser, meterbus.ADDRESS_NETWORK_LAYER)
+                          ser, meterbus.ADDRESS_NETWORK_LAYER, read_echo=args.echofix)
 
                 try:
                     frame = meterbus.load(meterbus.recv_frame(ser))
@@ -92,7 +98,7 @@ if __name__ == '__main__':
                     req.header.cField.parts[0] ^= meterbus.CONTROL_MASK_FCB
 
                     req = meterbus.send_request_frame_multi(
-                              ser, meterbus.ADDRESS_NETWORK_LAYER, req)
+                              ser, meterbus.ADDRESS_NETWORK_LAYER, req, read_echo=args.echofix)
 
                     next_frame = meterbus.load(meterbus.recv_frame(ser))
                     frame += next_frame
@@ -125,9 +131,14 @@ if __name__ == '__main__':
                             text = '{0:.4f}'.format(value).rstrip('0').rstrip('.')
                         return dumper.represent_scalar(u'tag:yaml.org,2002:float', text)
 
+                    # Handle float and Decimal representation
                     yaml.add_representer(float, float_representer)
+                    yaml.add_representer(Decimal, float_representer)
 
                     print(yaml.dump(ydata, default_flow_style=False, allow_unicode=True, encoding=None))
+
+                elif args.output == 'dump':
+                    print(frame.to_JSON())
 
     except serial.serialutil.SerialException as e:
         print(e)

@@ -7,6 +7,10 @@ import serial
 import time
 import os
 import stat
+import simplejson as json
+import yaml
+
+from decimal import Decimal
 
 try:
     import meterbus
@@ -16,15 +20,17 @@ except ImportError:
     import meterbus
 
 
-def ping_address(ser, address, retries=5):
+def ping_address(ser, address, retries=5, read_echo=False):
     for i in range(0, retries + 1):
-        meterbus.send_ping_frame(ser, address)
+        meterbus.send_ping_frame(ser, address, read_echo)
         try:
             frame = meterbus.load(meterbus.recv_frame(ser, 1))
             if isinstance(frame, meterbus.TelegramACK):
                 return True
-        except meterbus.MBusFrameDecodeError:
+        except meterbus.MBusFrameDecodeError as e:
             pass
+
+        time.sleep(0.5)
 
     return False
 
@@ -53,35 +59,71 @@ def do_char_dev(args):
             frame = None
 
             if meterbus.is_primary_address(address):
-                ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
-
-                meterbus.send_request_frame(ser, address)
-                frame = meterbus.load(
-                    meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+                if ping_address(ser, address, args.retries, args.echofix):
+                    meterbus.send_request_frame(ser, address, read_echo=args.echofix)
+                    frame = meterbus.load(
+                        meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+                else:
+                    print("no reply")
 
             elif meterbus.is_secondary_address(address):
-                ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
+                if ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, args.retries, args.echofix):
+                    meterbus.send_select_frame(ser, address, args.echofix)
+                    try:
+                        frame = meterbus.load(meterbus.recv_frame(ser, 1))
+                    except meterbus.MBusFrameDecodeError as e:
+                        frame = e.value
 
-                meterbus.send_select_frame(ser, address)
-                try:
-                    frame = meterbus.load(meterbus.recv_frame(ser, 1))
-                except meterbus.MBusFrameDecodeError as e:
-                    frame = e.value
+                    # Ensure that the select frame request was handled by the slave
+                    assert isinstance(frame, meterbus.TelegramACK)
 
-                assert isinstance(frame, meterbus.TelegramACK)
+                    frame = None
 
-                frame = None
-                # ping_address(ser, meterbus.ADDRESS_NETWORK_LAYER, 0)
+                    meterbus.send_request_frame(
+                        ser, meterbus.ADDRESS_NETWORK_LAYER, read_echo=args.echofix)
 
-                meterbus.send_request_frame(
-                    ser, meterbus.ADDRESS_NETWORK_LAYER)
+                    time.sleep(0.3)
 
-                time.sleep(0.3)
+                    frame = meterbus.load(
+                        meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+                else:
+                    print("no reply")
 
-                frame = meterbus.load(
-                    meterbus.recv_frame(ser, meterbus.FRAME_DATA_LENGTH))
+            if frame is not None and args.output != 'dump':
+                recs = []
+                for rec in frame.records:
+                    recs.append({
+                        'value': rec.value,
+                        'unit': rec.unit
+                    })
 
-            if frame is not None:
+                ydata = {
+                    'manufacturer': frame.body.bodyHeader.manufacturer_field.decodeManufacturer,
+                    'identification': ''.join(map('{:02x}'.format, frame.body.bodyHeader.id_nr)),
+                    'access_no': frame.body.bodyHeader.acc_nr_field.parts[0],
+                    'medium':  frame.body.bodyHeader.measure_medium_field.parts[0],
+                    'records': recs
+                }
+
+                if args.output == 'json':
+                    print(json.dumps(ydata, indent=4, sort_keys=True))
+
+                elif args.output == 'yaml':
+                    def float_representer(dumper, value):
+                        if int(value) == value:
+                            text = '{0:.4f}'.format(value).rstrip('0').rstrip('.')
+                            return dumper.represent_scalar(u'tag:yaml.org,2002:int', text)
+                        else:
+                            text = '{0:.4f}'.format(value).rstrip('0').rstrip('.')
+                        return dumper.represent_scalar(u'tag:yaml.org,2002:float', text)
+
+                    # Handle float and Decimal representation
+                    yaml.add_representer(float, float_representer)
+                    yaml.add_representer(Decimal, float_representer)
+
+                    print(yaml.dump(ydata, default_flow_style=False, allow_unicode=True, encoding=None))
+
+            elif frame is not None:
                 print(frame.to_JSON())
 
     except serial.serialutil.SerialException as e:
@@ -89,6 +131,7 @@ def do_char_dev(args):
 
 
 if __name__ == '__main__':
+    # meterbus.ADDRESS_NETWORK_LAYER
     parser = argparse.ArgumentParser(
         description='Request data over serial M-Bus for devices.')
     parser.add_argument('-d', action='store_true',
@@ -100,8 +143,12 @@ if __name__ == '__main__':
                         type=str, default=meterbus.ADDRESS_BROADCAST_REPLY,
                         help='Primary or secondary address')
     parser.add_argument('-r', '--retries',
-                        type=int, default=5,
+                        type=int, default=3,
                         help='Number of ping retries for each address')
+    parser.add_argument('-o', '--output', default="dump",
+                        help='Output format [dump,json,yaml]')
+    parser.add_argument('--echofix', action='store_true',
+                        help='Read and ignore echoed data from target')
     parser.add_argument('device', type=str, help='Serial device, URI or binary file')
 
     args = parser.parse_args()
