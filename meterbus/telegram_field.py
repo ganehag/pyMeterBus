@@ -43,12 +43,18 @@ class TelegramField(object):
     def decodeBCD(self):
         bcd_data = self.parts
         val = 0
+
         i = len(bcd_data)
         while i > 0:
-            val = (val * 10) + ((bcd_data[i-1] >> 4) & 0xF)
-            val = (val * 10) + (bcd_data[i-1] & 0xF)
+            val = (val * 10)
+            if bcd_data[i-1]>>4 < 0xA:
+                val += ((bcd_data[i-1]>>4) & 0xF)
+            val = (val * 10) + ( bcd_data[i-1] & 0xF)
 
             i -= 1
+
+        if(bcd_data[len(bcd_data)-1]>>4 == 0xF):
+            val *= -1
 
         return val
 
