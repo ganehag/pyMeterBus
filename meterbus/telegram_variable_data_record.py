@@ -161,6 +161,7 @@ class TelegramVariableDataRecord(object):
     def interpreted(self):
         mult, unit, typ = self._parse_vifx()
         dlen, enc = self.dib.length_encoding
+        storage_number, tariff, device = self.dib.parse_dife()
 
         try:
             unit = str(unit).decode('unicode_escape')
@@ -177,12 +178,21 @@ class TelegramVariableDataRecord(object):
         if self.dib.function_type == FunctionType.SPECIAL_FUNCTION:
             value = self._dataField.decodeRAW
 
-        return {
+        record = {
             'value': value,
             'unit': unit,
             'type': str(typ),
+            'storage_number': storage_number,
             'function': str(self.dib.function_type)
         }
+
+        if tariff is not None:
+            record['tariff'] = tariff
+
+        if device is not None:
+            record['device'] = device
+
+        return record
 
     def to_JSON(self):
         return json.dumps(self.interpreted, sort_keys=True,

@@ -4,6 +4,7 @@ from .core_objects import DataEncoding, FunctionType
 from .telegram_field import TelegramField
 from .telegram_variable_data_record import TelegramVariableDataRecord
 from .value_information_block import ValueInformationBlock
+from .exceptions import MBusFrameDecodeError
 
 
 class TelegramBodyPayload(object):
@@ -87,6 +88,9 @@ class TelegramBodyPayload(object):
 
                 if not rec.dib.has_extension_bit:
                     break
+
+        if len(rec.dib.parts) > 11:
+            raise MBusFrameDecodeError("Too many DIFE's")
 
         # Value Information Block
         try:
