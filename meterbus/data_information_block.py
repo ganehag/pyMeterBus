@@ -4,12 +4,20 @@ from .telegram_field import TelegramField
 
 class DataInformationBlock(TelegramField):
     EXTENSION_BIT_MASK = 0x80  # 1000 0000
+    STORAGE_NUMBER_MASK = 0x40   # 0100 0000
     FUNCTION_MASK = 0x30   # 0011 0000
     DATA_FIELD_MASK = 0x0F  # 0000 1111
     MORE_RECORDS_FOLLOW = 0x1F  # 0001 1111
 
+    DIFE_TARIFF_MASK = 0x30
+    DIFE_STORAGE_NUMBER_MASK = 0x0F
+    DIFE_DEVICE_MASK = 0x40
+
     def __init__(self, parts=None):
         super(DataInformationBlock, self).__init__(parts)
+        self.storage_number = 0
+        self.tariff = None
+        self.device = None
 
     @property
     def has_extension_bit(self):
@@ -108,3 +116,32 @@ class DataInformationBlock(TelegramField):
             14: (6, DataEncoding.ENCODING_BCD),  # 12 digit BCD [40 bit]
             15: (0, DataEncoding.ENCODING_NULL)  # Special Function FIXME
         }[len_enc]
+
+    def parse_dife(self):
+        dif = self.parts[0]
+        storage_number, storage_number_bit_index = 0, 0
+        storage_number |= (dif & self.STORAGE_NUMBER_MASK) >> 6
+        storage_number_bit_index += 1
+
+        if (dif & self.EXTENSION_BIT_MASK) > 0 and len(self.parts) > 1:
+            tariff, device = 0, 0
+            tariff_bit_index, device_bit_index = 0, 0
+
+            # skip DIF
+            for part in self.parts[1:]:
+                tariff |= ((part & self.DIFE_TARIFF_MASK)
+                           >> 4) << tariff_bit_index
+                tariff_bit_index += 2
+
+                storage_number |= (
+                    part & self.DIFE_STORAGE_NUMBER_MASK) << storage_number_bit_index
+                storage_number_bit_index += 4
+
+                device |= ((part & self.DIFE_DEVICE_MASK)
+                           >> 6) << device_bit_index
+                device_bit_index += 1
+            self.tariff = tariff
+            self.device = device
+
+        self.storage_number = storage_number
+        return self.storage_number, self.tariff, self.device

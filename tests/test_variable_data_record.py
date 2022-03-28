@@ -1,3 +1,7 @@
+from json import encoder
+from meterbus.exceptions import *
+import meterbus
+import unittest
 import os
 import sys
 import json
@@ -5,11 +9,6 @@ import json
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/../')
 
-import unittest
-import meterbus
-from meterbus.exceptions import *
-
-from json import encoder
 
 class TestSequenceFunctions(unittest.TestCase):
     def setUp(self):
@@ -108,7 +107,8 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 0,
             "unit": "MeasureUnit.NONE",
             "type": "VIFUnitExt.DIGITAL_INPUT",
-            "function": "FunctionType.INSTANTANEOUS_VALUE"
+            "function": "FunctionType.INSTANTANEOUS_VALUE",
+            "storage_number": 0,
         }
         frame_rec_dict = json.loads(self.frame.records[0].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -118,7 +118,8 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 45.64,
             "unit": "%RH",
             "type": "VIFUnit.VARIABLE_VIF",
-            "function": "FunctionType.INSTANTANEOUS_VALUE"
+            "function": "FunctionType.INSTANTANEOUS_VALUE",
+            "storage_number": 0,
         }
         frame_rec_dict = json.loads(self.frame.records[1].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -128,7 +129,8 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 45.52,
             "unit": "%RH",
             "type": "VIFUnit.VARIABLE_VIF",
-            "function": "FunctionType.MINIMUM_VALUE"
+            "function": "FunctionType.MINIMUM_VALUE",
+            "storage_number": 0,
         }
         frame_rec_dict = json.loads(self.frame.records[2].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -141,7 +143,8 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 22.56,
             "unit": "MeasureUnit.C",
             "type": "VIFUnit.EXTERNAL_TEMPERATURE",
-            "function": "FunctionType.INSTANTANEOUS_VALUE"
+            "function": "FunctionType.INSTANTANEOUS_VALUE",
+            "storage_number": 0,
         }
         frame_rec_dict = json.loads(self.frame.records[4].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -151,7 +154,8 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 21.60,
             "unit": "MeasureUnit.C",
             "type": "VIFUnit.EXTERNAL_TEMPERATURE",
-            "function": "FunctionType.MINIMUM_VALUE"
+            "function": "FunctionType.MINIMUM_VALUE",
+            "storage_number": 0,
         }
         frame_rec_dict = json.loads(self.frame.records[5].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -161,7 +165,8 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 23.39,
             "unit": "MeasureUnit.C",
             "type": "VIFUnit.EXTERNAL_TEMPERATURE",
-            "function": "FunctionType.MAXIMUM_VALUE"
+            "function": "FunctionType.MAXIMUM_VALUE",
+            "storage_number": 0,
         }
         frame_rec_dict = json.loads(self.frame.records[6].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -171,7 +176,8 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 86400,
             "unit": "MeasureUnit.SECONDS",
             "type": "VIFUnit.AVG_DURATION",
-            "function": "FunctionType.INSTANTANEOUS_VALUE"
+            "function": "FunctionType.INSTANTANEOUS_VALUE",
+            "storage_number": 0,
         }
         frame_rec_dict = json.loads(self.frame.records[7].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -181,7 +187,8 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 22.76,
             "unit": "MeasureUnit.C",
             "type": "VIFUnit.EXTERNAL_TEMPERATURE",
-            "function": "FunctionType.INSTANTANEOUS_VALUE"
+            "function": "FunctionType.INSTANTANEOUS_VALUE",
+            "storage_number": 1,
         }
         frame_rec_dict = json.loads(self.frame.records[8].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -191,7 +198,10 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 22.69,
             "unit": "MeasureUnit.C",
             "type": "VIFUnit.EXTERNAL_TEMPERATURE",
-            "function": "FunctionType.INSTANTANEOUS_VALUE"
+            "function": "FunctionType.INSTANTANEOUS_VALUE",
+            "storage_number": 2,
+            "tariff": 0,
+            "device": 0
         }
         frame_rec_dict = json.loads(self.frame.records[9].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -201,7 +211,8 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 54000834,
             "unit": "MeasureUnit.NONE",
             "type": "VIFUnit.FABRICATION_NO",
-            "function": "FunctionType.INSTANTANEOUS_VALUE"
+            "function": "FunctionType.INSTANTANEOUS_VALUE",
+            "storage_number": 0,
         }
         frame_rec_dict = json.loads(self.frame.records[10].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -211,7 +222,8 @@ class TestSequenceFunctions(unittest.TestCase):
             "value": 262144,
             "unit": "MeasureUnit.NONE",
             "type": "VIFUnitExt.SOFTWARE_VERSION",
-            "function": "FunctionType.INSTANTANEOUS_VALUE"
+            "function": "FunctionType.INSTANTANEOUS_VALUE",
+            "storage_number": 0,
         }
         frame_rec_dict = json.loads(self.frame.records[11].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
@@ -223,6 +235,7 @@ class TestSequenceFunctions(unittest.TestCase):
             record['value'],
             key
         )
+
 
 if __name__ == '__main__':
     unittest.main()
