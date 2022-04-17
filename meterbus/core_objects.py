@@ -3,7 +3,7 @@ from enum import Enum
 
 class MeasureUnit(Enum):
     KWH = "kWh"
-    WH = "WH"
+    WH = "Wh"
     J = "J"
     M3 = "m^3"
     L = "l"
