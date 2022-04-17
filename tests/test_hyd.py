@@ -62,12 +62,12 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_record8_value(self):
         tele = meterbus.load(list(map(ord, self.frame)))
         records = tele.body.bodyPayload.records
-        self.assertAlmostEqual(float(records[7].parsed_value), 1445.223, 3)
+        self.assertAlmostEqual(float(records[7].parsed_value), 131.113, 3)
 
     def test_record9_value(self):
         tele = meterbus.load(list(map(ord, self.frame)))
         records = tele.body.bodyPayload.records
-        self.assertAlmostEqual(float(records[8].parsed_value), 144445223.0, 1)
+        self.assertAlmostEqual(float(records[8].parsed_value), 13131113.0, 1)
 
     def test_record10_value(self):
         tele = meterbus.load(list(map(ord, self.frame)))
@@ -88,12 +88,12 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_record1_unit(self):
         tele = meterbus.load(list(map(ord, self.frame)))
         records = tele.body.bodyPayload.records
-        self.assertEqual(records[0].unit, "WH")
+        self.assertEqual(records[0].unit, "Wh")
 
     def test_record2_unit(self):
         tele = meterbus.load(list(map(ord, self.frame)))
         records = tele.body.bodyPayload.records
-        self.assertEqual(records[1].unit, "WH")
+        self.assertEqual(records[1].unit, "Wh")
 
     def test_record3_unit(self):
         tele = meterbus.load(list(map(ord, self.frame)))
