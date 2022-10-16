@@ -4,8 +4,6 @@
 #
 #    pip-compile requirements.in
 #
-enum34==1.1.10
-    # via -r requirements.in
 pycryptodome==3.15.0
     # via -r requirements.in
 pyserial==3.5

@@ -30,25 +30,23 @@ setup(
     author_email='mikael.brorsson@gmail.com',
     license="BSD-3-Clause",
 
-    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
+    python_requires='>=3.6',
 
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Software Development :: Libraries'
     ],
 
     packages=find_packages(),
 
     install_requires=[
-        'enum34;python_version<"3.4"',
-        'future;python_version<"3.3"',
         'pyaml',
         'pycryptodome',
         'pyserial',
