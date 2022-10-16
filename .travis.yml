@@ -1,14 +1,16 @@
 language: python
 # Existing Python versions
 python:
-  - "2.7"
-  - "3.5"
   - "3.6"
-# Enable 3.7 without globally enabling sudo and dist: xenial for other build jobs
+  - "3.7"
+  - "3.8"
+  - "3.9"
+  - "3.10"
+# Enable 3.10 without globally enabling sudo and dist: jammy for other build jobs
 matrix:
   include:
-    - python: 3.7
-      dist: xenial
+    - python: 3.10
+      dist: jammy
       sudo: true
 install:
   - pip install codecov
