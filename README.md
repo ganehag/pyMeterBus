@@ -5,26 +5,31 @@ Meter-Bus for Python
 About
 -----
 
-[M-Bus](http://www.m-bus.com/) (Meter-Bus) is a European standard (EN 13757-2 physical and link layer, EN 13757-3 application layer) for the remote reading of gas or electricity meters. M-Bus is also usable for other types of consumption meters. The M-Bus interface is made for communication on two wires, making it very cost effective.
+[M-Bus](http://www.m-bus.com/) (Meter-Bus) is a European standard (EN 13757-2 physical and link layer, EN 13757-3 application layer) for the remote reading of gas or electricity meters. M-Bus is also usable for other types of consumption meters. The M-Bus interface is made for communication on two wires, making it very cost-effective.
+
+Python version
+--------------
+
+I've decided only to support active Python version. Thus, any EOL version is not supported.
 
 
-Current State
+Current State (2022)
 -------------
 
-The library works, but it lacks proper documentation. Well, it lacks any kind of documentation to be honest.
+The library works, but it lacks proper documentation. Well, it lacks any documentation, to be honest.
 
-The implementation is currently under ~~heavy~~ development. Its original intended use case was very specific, as a library to aid in the decoding of M-Bus telegrams sent over HTTP, and might thus not suite everyone.
+The implementation is currently under ~~heavy~~ development. Its original intended use case was particular, as a library to aid in decoding M-Bus telegrams sent over HTTP, and might thus not suit everyone.
 
-Still, it is a generic library, and has been used is several different use cases.
+Still, it is a generic library and supports several different use cases.
 
 - Decoding of re-encoded M-Bus frames sent from an Elvaco Wireless M-Bus master over HTTP.
 - Communicating with M-Bus devices over RS-232 serial.
 - Communication with M-Bus devices over RFC 2217.
 - As a debugging tool to decode M-Bus frames.
 
-Currently only the *variable data structures* are implemented. The library can only decode M-Bus frame. It does currently **NOT** support encoding and transmission of M-Bus frames, such as *control* frames.
+Currently, only the *variable data structures* are implemented. The library can only decode M-Bus frames. It does presently **NOT** support encoding and transmission of M-Bus frames, such as *control* frames.
 
-However, if the need arises, missing pieces can be implemented on a request basis.
+However, if the need arises, I might implement missing pieces on a request basis.
 
 
 Tools
@@ -39,7 +44,7 @@ You can find a set of utilities in the `tools` folder.
 
 These tools can communicate over a serial device `/dev/ttyX` or even over RFC2217 using the format `rfc2217://host:port`.
 
-If you are using `ser2net` as a RFC2217 server. You need to configure it the following way:
+Suppose you are using `ser2net` as an RFC2217 server. You need to configure it the following way:
 
 ```
 2000:telnet:0:/dev/ttySX:2400 remctl banner
@@ -56,10 +61,10 @@ Known Issues
 What works
 ----------
 
-* Querying a M-Bus device over serial.
+* Querying an M-Bus device over serial.
 * Parsing of a complete telegram.
 * Parsing of just the *Used Data* segment.
-* Generation of a basic JSON structure from the telegram/user-data/records.
+* Generating a basic JSON structure from the telegram/user-data/records.
 
 
 Basic API documentation
@@ -68,7 +73,7 @@ Basic API documentation
 #### meterbus.load(data)
 * data[str]: M-Bus frame data
 
-Returns an object of either type *WTelegramSndNr, TelegramACK, TelegramShort, TelegramControl* or *TelegramLong*. If an error occurs, it will raise a *MBusFrameDecodeError*.
+Returns an object of either type *WTelegramSndNr, TelegramACK, TelegramShort, TelegramControl* or *TelegramLong*. If an error occurs, it will raise an *MBusFrameDecodeError*.
 
 #### meterbus.debug(state)
 * state[bool]: set the global debug state
@@ -77,7 +82,7 @@ Produces debug messages to stdout.
 
 #### meterbus.send_ping_frame(ser, address)
 * ser[pySerial connection]: an open pySerial object
-* address: The target primary address
+* address: The target's primary address
 
 Sends a PING frame to *address* over the serial connection *ser*.
 
@@ -89,7 +94,7 @@ Reads an entire frame and returns the unparsed data.
 
 #### meterbus.send_request_frame_multi(ser, address, req)
 * ser[pySerial connection]: an open pySerial object
-* address: The target primary address
+* address: The target's primary address
 
 If *req* is None, build a new *request* frame using *address* and send it.
 
