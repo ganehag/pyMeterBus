@@ -1,6 +1,6 @@
 Meter-Bus for Python
 ====================
-[![Build Status](https://travis-ci.org/ganehag/pyMeterBus.svg?branch=master)](https://travis-ci.org/ganehag/pyMeterBus) [![codecov](https://codecov.io/gh/ganehag/pyMeterBus/branch/master/graph/badge.svg?token=gHfokXGQ70)](https://codecov.io/gh/ganehag/pyMeterBus)
+[![Build status](https://github.com/ganehag/pyMeterBus/actions/workflows/run-test.yaml/badge.svg)](https://github.com/ganehag/pyMeterBus/actions/workflows/run-test.yaml) [![codecov](https://codecov.io/gh/ganehag/pyMeterBus/branch/master/graph/badge.svg?token=gHfokXGQ70)](https://codecov.io/gh/ganehag/pyMeterBus)
 
 About
 -----
