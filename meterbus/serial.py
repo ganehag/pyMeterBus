@@ -18,7 +18,6 @@ from .exceptions import (MBusFrameDecodeError, MBusFrameCRCError,
 from .defines import *
 import logging
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
