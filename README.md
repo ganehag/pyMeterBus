@@ -35,7 +35,7 @@ You can find a set of utilities in the `tools` folder.
 * mbus-serial-request-data.py
 * mbus-serial-request-data-multi-reply.py
 * mbus-serial-scan.py
-* mbus-serial-scan-seconday.py
+* mbus-serial-scan-secondary.py
 
 These tools can communicate over a serial device `/dev/ttyX` or even over RFC2217 using the format `rfc2217://host:port`.
 
