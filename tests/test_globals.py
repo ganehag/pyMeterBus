@@ -13,6 +13,7 @@ from meterbus.exceptions import *
 
 class TestSequenceFunctions(unittest.TestCase):
     def setUp(self):
+        meterbus.debug(False)
         pass
 
     def test_debug_default_value(self):
