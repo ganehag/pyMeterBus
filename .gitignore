@@ -49,3 +49,5 @@ test_venv/*
 mbus_ref/*
 misc
 venv
+# Eclipse
+.project
