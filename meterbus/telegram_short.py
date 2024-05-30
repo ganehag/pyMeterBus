@@ -1,3 +1,5 @@
+import simplejson as json
+
 from .defines import *
 from .telegram_header import TelegramHeader
 from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch

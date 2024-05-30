@@ -1,3 +1,5 @@
+import simplejson as json
+
 from .telegram_body import TelegramBody
 from .telegram_header import TelegramHeader
 from .exceptions import MBusFrameCRCError, MBusFrameDecodeError, MBusFrameEncodeError, FrameMismatch
@@ -113,6 +115,12 @@ class TelegramControl(object):
     def body(self, value):
         self._body = value
 
+    @property
+    def interpreted(self):
+        return {
+            'head': self.header.interpreted
+        }
+
     def compute_crc(self):
         return (self.header.cField.parts[0] +
                 self.header.aField.parts[0] +
@@ -120,6 +128,9 @@ class TelegramControl(object):
 
     def check_crc(self):
         return self.compute_crc() == self.header.crcField.parts[0]
+
+    def to_JSON(self):
+        return json.dumps(self.interpreted, sort_keys=True, indent=4, use_decimal=True)
 
     def __len__(self):
         return (
