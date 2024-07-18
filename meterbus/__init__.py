@@ -40,7 +40,7 @@ from .auxiliary import *
 
 __author__ = "Mikael Ganehag Brorsson"
 __license__ = "BSD-3-Clause"
-__version__ = "0.8.3"
+__version__ = "0.8.4"
 
 
 def load(data):
