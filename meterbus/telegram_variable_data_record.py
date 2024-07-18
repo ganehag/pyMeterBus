@@ -9,7 +9,7 @@ from .telegram_field import TelegramField
 from .value_information_block import ValueInformationBlock
 from .data_information_block import DataInformationBlock
 
-from .core_objects import VIFTable, VIFUnit, DataEncoding, MeasureUnit
+from .core_objects import VIFTable, VIFUnit, VIFUnitEnhExt, DataEncoding, MeasureUnit
 
 
 class TelegramVariableDataRecord(object):
@@ -36,11 +36,11 @@ class TelegramVariableDataRecord(object):
 
     def _parse_vifx(self):
         if len(self.vib.parts) == 0:
-            return None, None, None
+            return None, None, None, None
 
         vif = self.vib.parts[0]
         vife = self.vib.parts[1:]
-        vtf_ebm = self.EXTENSION_BIT_MASK
+        vif_enh = None
 
         if vif == VIFUnit.FIRST_EXT_VIF_CODES.value:  # 0xFB
             code = (vife[0] & self.UNIT_MULTIPLIER_MASK) | 0x200
@@ -49,7 +49,7 @@ class TelegramVariableDataRecord(object):
             code = (vife[0] & self.UNIT_MULTIPLIER_MASK) | 0x100
 
         elif vif in [VIFUnit.VIF_FOLLOWING.value]:  # 0x7C
-            return (1, self.vib.customVIF.decodeASCII, VIFUnit.VARIABLE_VIF)
+            return (1, self.vib.customVIF.decodeASCII, VIFUnit.VARIABLE_VIF, None)
 
         elif vif == 0xFC:
             #  && (vib->vife[0] & 0x78) == 0x70
@@ -68,22 +68,29 @@ class TelegramVariableDataRecord(object):
                 factor = 1
 
             return (factor, self.vib.customVIF.decodeASCII,
-                    VIFUnit.VARIABLE_VIF)
+                    VIFUnit.VARIABLE_VIF, None)
 
             # // custom VIF
             # n = (vib->vife[0] & 0x07);
             # snprintf(buff, sizeof(buff), "%s %s", mbus_unit_prefix(n-6), vib->custom_vif);
             # return buff;
-            # return (1, "FixME", "FixMe")
+            # return (1, "FixME", "FixMe", None)
+
+        elif vif & self.EXTENSION_BIT_MASK:
+            code = (vif & self.UNIT_MULTIPLIER_MASK)
+            vif_enh = vife[0] & self.UNIT_MULTIPLIER_MASK
 
         else:
             code = (vif & self.UNIT_MULTIPLIER_MASK)
 
-        return VIFTable.lut[code]
+        return (
+            *VIFTable.lut[code],
+            VIFTable.enh.get(vif_enh, VIFUnitEnhExt.UNKNOWN_ENHANCEMENT) if vif_enh else None,
+        )
 
     @property
     def unit(self):
-        _, unit, _ = self._parse_vifx()
+        _, unit, _, _ = self._parse_vifx()
         if isinstance(unit, MeasureUnit):
             return unit.value
         return unit
@@ -109,7 +116,7 @@ class TelegramVariableDataRecord(object):
 
     @property
     def parsed_value(self):
-        mult, unit, typ = self._parse_vifx()
+        mult, unit, _, _ = self._parse_vifx()
 
         length, enc = self.dib.length_encoding
 
@@ -159,8 +166,7 @@ class TelegramVariableDataRecord(object):
 
     @property
     def interpreted(self):
-        mult, unit, typ = self._parse_vifx()
-        dlen, enc = self.dib.length_encoding
+        _, unit, typ, unit_enh = self._parse_vifx()
         storage_number, tariff, device = self.dib.parse_dife()
 
         try:
@@ -185,6 +191,9 @@ class TelegramVariableDataRecord(object):
             'storage_number': storage_number,
             'function': str(self.dib.function_type)
         }
+
+        if unit_enh is not None:
+            record['unit_enh'] = str(unit_enh)
 
         if tariff is not None:
             record['tariff'] = tariff
