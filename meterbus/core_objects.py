@@ -55,6 +55,8 @@ class DataEncoding(Enum):
 
 
 class VIFUnit(Enum):
+    # REF: M-Bus, §8.4.4a
+
     ENERGY_WH = 0x07                # E000 0xxx
     ENERGY_J = 0x0F                 # E000 1xxx
     VOLUME = 0x17                   # E001 0xxx
@@ -96,6 +98,8 @@ class VIFUnit(Enum):
 
 
 class VIFUnitExt(Enum):
+    # REF: M-Bus, §8.4.4b
+
     # Currency Units
     CURRENCY_CREDIT = 0x03  # E000 00nn Credit of 10 nn-3 of the nominal ...
     CURRENCY_DEBIT = 0x07   # E000 01nn Debit of 10 nn-3 of the nominal ...
@@ -172,6 +176,44 @@ class VIFUnitExt(Enum):
 
 class VIFUnitSecExt(Enum):
     RELATIVE_HUMIDITY = 0x1A
+
+
+class VIFUnitEnhExt(Enum):
+    # REF: M-Bus, §8.4.5 ("enhancement of VIF's other than $FD")
+
+    # E00x xxxx Reserved
+    PER_SECOND = 0x20              # E010 0000 per second
+    PER_MINUTE = 0x21              # E010 0001 per minute
+    PER_HOUR = 0x22                # E010 0010 per hour
+    PER_DAY = 0x23                 # E010 0011 per day
+    PER_WEEK = 0x24                # E010 0100 per week
+    PER_MONTH = 0x25               # E010 0101 per month
+    PER_YEAR = 0x26                # E010 0110 per year
+    PER_REVOLUTION = 0x27          # E010 0111 per revolution / measurement
+    PER_INPUT_PULSE0 = 0x28        # E010 100p increment per input pulse on input channel #p
+    PER_INPUT_PULSE1 = 0x29
+    PER_OUTPUT_PULSE0 = 0x2A       # E010 101p increment per output pulse on output channel #p
+    PER_OUTPUT_PULSE1 = 0x2B
+    PER_LITER = 0x2C               # E010 1100 per liter
+    PER_M3 = 0x2D                  # E010 1101 per m3
+    PER_KG = 0x2E                  # E010 1110 per kg
+    PER_KELVIN = 0x2F              # E010 1111 per K (Kelvin)
+    PER_KWH = 0x30                 # E011 0000 per kWh
+    PER_GJ = 0x31                  # E011 0001 per GJ
+    PER_KW = 0x32                  # E011 0010 per kW
+    PER_KELVIN_LITER = 0x33        # E011 0011 per (K*l) (Kelvin*liter)
+    PER_VOLT = 0x34                # E011 0100 per V (Volt)
+    PER_AMPERE = 0x35              # E011 0101 per A (Ampere)
+    MULT_SEK = 0x36                # E011 0110 multiplied by sek
+    MULT_SEK_PER_VOLT = 0x37       # E011 0111 multiplied by sek / V
+    MULT_SEK_PER_AMPERE = 0x38     # E011 1000 multiplied by sek / A
+    START_DATE_TIME = 0x39         # E011 1001 start date(/time) of  
+    UNCORRECTED_UNIT = 0x3A        # E011 1010 VIF contains uncorrected unit instead of corrected unit
+    POSITIVE_ACCUMULATION = 0x3B   # E011 1011 Accumulation only if positive ACCUMULATIONs
+    NEGATIVE_ACCUMULATION = 0x3C   # E011 1100 Accumulation of abs value only if negative ACCUMULATIONs
+    # E011 1101 to # E011 1111 Reserved
+
+    UNKNOWN_ENHANCEMENT = 0x100
 
 
 class VIFTable(object):
@@ -799,6 +841,41 @@ class VIFTable(object):
         0x27D: (1.0e2,  MeasureUnit.W, "Cumul count max power"),
         0x27E: (1.0e3,  MeasureUnit.W, "Cumul count max power"),
         0x27F: (1.0e4,  MeasureUnit.W, "Cumul count max power")
+    }
+
+    # Additional VIFE-Code Extension table (following other primary VIF)
+    # See 8.4.5
+
+    enh = {
+        0x20: VIFUnitEnhExt.PER_SECOND,
+        0x21: VIFUnitEnhExt.PER_MINUTE,
+        0x22: VIFUnitEnhExt.PER_HOUR,
+        0x23: VIFUnitEnhExt.PER_DAY,
+        0x24: VIFUnitEnhExt.PER_WEEK,
+        0x25: VIFUnitEnhExt.PER_MONTH,
+        0x26: VIFUnitEnhExt.PER_YEAR,
+        0x27: VIFUnitEnhExt.PER_REVOLUTION,
+        0x28: VIFUnitEnhExt.PER_INPUT_PULSE0,
+        0x29: VIFUnitEnhExt.PER_INPUT_PULSE1,
+        0x2A: VIFUnitEnhExt.PER_OUTPUT_PULSE0,
+        0x2B: VIFUnitEnhExt.PER_OUTPUT_PULSE1,
+        0x2C: VIFUnitEnhExt.PER_LITER,
+        0x2D: VIFUnitEnhExt.PER_M3,
+        0x2E: VIFUnitEnhExt.PER_KG,
+        0x2F: VIFUnitEnhExt.PER_KELVIN,
+        0x30: VIFUnitEnhExt.PER_KWH,
+        0x31: VIFUnitEnhExt.PER_GJ,
+        0x32: VIFUnitEnhExt.PER_KW,
+        0x33: VIFUnitEnhExt.PER_KELVIN_LITER,
+        0x34: VIFUnitEnhExt.PER_VOLT,
+        0x35: VIFUnitEnhExt.PER_AMPERE,
+        0x36: VIFUnitEnhExt.MULT_SEK,
+        0x37: VIFUnitEnhExt.MULT_SEK_PER_VOLT,
+        0x38: VIFUnitEnhExt.MULT_SEK_PER_AMPERE,
+        0x39: VIFUnitEnhExt.START_DATE_TIME,
+        0x3A: VIFUnitEnhExt.UNCORRECTED_UNIT,
+        0x3B: VIFUnitEnhExt.POSITIVE_ACCUMULATION,
+        0x3C: VIFUnitEnhExt.NEGATIVE_ACCUMULATION,
     }
 
 

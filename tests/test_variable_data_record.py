@@ -18,7 +18,8 @@ class TestSequenceFunctions(unittest.TestCase):
                      "\xfc\x03\x48\x52\x25\x74\xb4\x16\x02\x65\xd0\x08\x22\x65" \
                      "\x70\x08\x12\x65\x23\x09\x01\x72\x18\x42\x65\xe4\x08\x82" \
                      "\x01\x65\xdd\x08\x0c\x78\x34\x08\x00\x54\x03\xfd\x0f\x00" \
-                     "\x00\x04\x1f\x5d\x16"
+                     "\x00\x04\x04\x83\x3b\x87\xd6\x12\x00\x04\x83\x3c\x87\xd6" \
+                     "\x12\x00\x1f\xc0\x16"
         self.frame2 = "\x68\xD8\xD8\x68\x08\x00\x72\x92\x03\x00\x64\x96\x15" \
                       "\x14\x31\x04\x00\x00\x00\x0C\x78\x92\x03\x00\x64\x0D" \
                       "\xFD\x0F\x05\x33\x2E\x36\x2E\x31\x0D\x7C\x03\x79\x65" \
@@ -50,19 +51,19 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_vif_mult_oxfc_0x78(self):
         t = meterbus.TelegramVariableDataRecord()
         t.vib.parts = [0xFC, 0x78]
-        mult, _, _ = t._parse_vifx()
+        mult, _, _, _ = t._parse_vifx()
         self.assertEqual(mult, 0.001)
 
     def test_vif_mult_oxfc_0x7B(self):
         t = meterbus.TelegramVariableDataRecord()
         t.vib.parts = [0xFC, 0x7B]
-        mult, _, _ = t._parse_vifx()
+        mult, _, _, _ = t._parse_vifx()
         self.assertEqual(mult, 1.0)
 
     def test_vif_mult_oxfc_0x7D(self):
         t = meterbus.TelegramVariableDataRecord()
         t.vib.parts = [0xFC, 0x7D]
-        mult, _, _ = t._parse_vifx()
+        mult, _, _, _ = t._parse_vifx()
         self.assertEqual(mult, 1.0)
 
     def test_parsed_value_invalid_data_len(self):
@@ -226,6 +227,30 @@ class TestSequenceFunctions(unittest.TestCase):
             "storage_number": 0,
         }
         frame_rec_dict = json.loads(self.frame.records[11].to_JSON())
+        self.assertEqual(frame_rec_dict, dict_record)
+
+    def test_json_record12(self):
+        dict_record = {
+            "value": 1234567,
+            "unit": "MeasureUnit.WH",
+            "type": "VIFUnit.ENERGY_WH",
+            "function": "FunctionType.INSTANTANEOUS_VALUE",
+            "storage_number": 0,
+            "unit_enh": "VIFUnitEnhExt.POSITIVE_ACCUMULATION",
+        }
+        frame_rec_dict = json.loads(self.frame.records[12].to_JSON())
+        self.assertEqual(frame_rec_dict, dict_record)
+
+    def test_json_record13(self):
+        dict_record = {
+            "value": 1234567,
+            "unit": "MeasureUnit.WH",
+            "type": "VIFUnit.ENERGY_WH",
+            "function": "FunctionType.INSTANTANEOUS_VALUE",
+            "storage_number": 0,
+            "unit_enh": "VIFUnitEnhExt.NEGATIVE_ACCUMULATION",
+        }
+        frame_rec_dict = json.loads(self.frame.records[13].to_JSON())
         self.assertEqual(frame_rec_dict, dict_record)
 
     def test_json_value_str(self):
