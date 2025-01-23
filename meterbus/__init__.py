@@ -9,8 +9,8 @@
     :copyright: (c) 2017-2019 by Mikael Ganehag Brorsson.
     :license: BSD, see LICENSE for more details.
 """
+import warnings
 
-from .globals import g
 from .defines import *
 
 from .core_objects import DataEncoding, FunctionType, MeasureUnit, VIFUnit, \
@@ -70,4 +70,4 @@ def load(data):
     raise MBusFrameDecodeError("unable to decode frame")
 
 def debug(state):
-  g.debug = state
+    warnings.warn("Logging is now controlled via the log levels.", DeprecationWarning)
