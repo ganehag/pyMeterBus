@@ -5,10 +5,12 @@ from .telegram_field import TelegramField
 from .telegram_variable_data_record import TelegramVariableDataRecord
 from .value_information_block import ValueInformationBlock
 from .exceptions import MBusFrameDecodeError
+from decimal import Decimal
+from typing import Any, Dict, List, Optional, Union
 
 
 class TelegramBodyPayload(object):
-    def __init__(self, payload=None, parent=None):
+    def __init__(self, payload: None=None, parent: Optional[TelegramBody]=None) -> None:
         self._body = TelegramField()
         if payload is not None:
             self._body = TelegramField(payload)
@@ -33,17 +35,17 @@ class TelegramBodyPayload(object):
         self._body = TelegramField(value)
 
     @property
-    def interpreted(self):
+    def interpreted(self) -> List[Dict[str, Union[Decimal, str, int]]]:
         return [r.interpreted for r in self.records]
 
-    def load(self, payload):
+    def load(self, payload: List[Union[Any, int]]) -> None:
         self.body = payload
         self.parse()
 
     def set_payload(self, payload):
         self.body = payload
 
-    def parse(self):
+    def parse(self) -> None:
         self.records = []
         recordPos = 0
 
@@ -53,7 +55,7 @@ class TelegramBodyPayload(object):
         except IndexError:
             raise
 
-    def _parse_variable_data_rec(self, startPos):
+    def _parse_variable_data_rec(self, startPos: int) -> int:
         lowerBoundary = 0
         upperBoundary = 0
 
@@ -182,7 +184,7 @@ class TelegramBodyHeader(object):
     CI_VARIABLE_DATA = [0x72, 0x76, 0x78]
     CI_FIXED_DATA = [0x73, 0x77]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._ci_field = TelegramField()        # control information field
         self._id_nr_field = TelegramField()     # identification number field
         self._manufacturer_field = TelegramField()     # manufacturer
@@ -192,7 +194,7 @@ class TelegramBodyHeader(object):
         self._status_field = TelegramField()           # status
         self._sig_field = TelegramField()              # signature field
 
-    def load(self, bodyHeader):
+    def load(self, bodyHeader: List[int]) -> None:
         if len(bodyHeader) == 1:
             self.ci_field = bodyHeader[0]
         else:
@@ -220,20 +222,20 @@ class TelegramBodyHeader(object):
                     self.sig_field.parts.reverse()
 
     @property
-    def id_nr(self):
+    def id_nr(self) -> List[int]:
         """ID number of telegram in reverse byte order"""
         return self._id_nr_field[::-1]
 
     @property
-    def isLSBOrder(self):
+    def isLSBOrder(self) -> bool:
         return not (self._ci_field.parts[0] & self.MODE_BIT_MASK)
 
     @property
-    def noDataHeader(self):
+    def noDataHeader(self) -> bool:
         return (self._ci_field.parts and self._ci_field.parts[0] == 0x78)
 
     @property
-    def isVariableData(self):
+    def isVariableData(self) -> bool:
         return (self._ci_field.parts[0] in self.CI_VARIABLE_DATA)
 
     @property
@@ -305,7 +307,7 @@ class TelegramBodyHeader(object):
         self._sig_field = TelegramField(value)
 
     @property
-    def interpreted(self):
+    def interpreted(self) -> Dict[str, Union[str, int]]:
         if self.noDataHeader:
             return {
                 'type': hex(self.ci_field.parts[0])
@@ -327,13 +329,13 @@ class TelegramBodyHeader(object):
 
 
 class TelegramBody(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self._bodyHeader = TelegramBodyHeader()
         self._bodyPayload = TelegramBodyPayload(parent=self)
         self._bodyHeaderLength = 13
 
     @property
-    def isVariableData(self):
+    def isVariableData(self) -> bool:
         return self._bodyHeader.isVariableData
 
     @property
@@ -341,7 +343,7 @@ class TelegramBody(object):
         return self._bodyHeader.isFixedData
 
     @property
-    def noDataHeader(self):
+    def noDataHeader(self) -> bool:
         return (self._bodyHeader.noDataHeader)
 
     @property
@@ -376,13 +378,13 @@ class TelegramBody(object):
         return self._bodyPayload.more_records_follow
 
     @property
-    def interpreted(self):
+    def interpreted(self) -> Dict[str, Union[Dict[str, Union[str, int]], List[Union[Dict[str, Union[str, int]], Dict[str, Union[Decimal, str, int]]]]]]:
         return {
             'header': self.bodyHeader.interpreted,
             'records': self.bodyPayload.interpreted,
         }
 
-    def load(self, body):
+    def load(self, body: List[int]) -> None:
         self.bodyHeader = body[0:self.bodyHeaderLength]
         self.bodyPayload.load(body[self.bodyHeaderLength:])
 

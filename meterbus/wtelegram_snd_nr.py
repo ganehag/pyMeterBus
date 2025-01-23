@@ -6,11 +6,12 @@ import simplejson as json
 from .wtelegram_header import WTelegramHeader
 from .wtelegram_body import WTelegramFrame
 from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
+from typing import List
 
 
 class WTelegramSndNr(WTelegramFrame):
     @staticmethod
-    def parse(data):
+    def parse(data: List[int]):
         try:
             if data[1] != 0x44:  # SND-NR
                 raise FrameMismatch()
