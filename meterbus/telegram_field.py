@@ -8,7 +8,7 @@ from typing import List, Optional, Union
 
 class TelegramField(object):
     def __init__(self, parts: Optional[Union[int, List[int]]]=None) -> None:
-        self._parts = []
+        self._parts: List[int] = []
 
         if parts is not None:
             if isinstance(parts, str):

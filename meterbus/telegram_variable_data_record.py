@@ -9,8 +9,8 @@ from .telegram_field import TelegramField
 from .value_information_block import ValueInformationBlock
 from .data_information_block import DataInformationBlock
 
-from .core_objects import VIFTable, VIFUnit, VIFUnitEnhExt, DataEncoding, MeasureUnit
-from typing import Any, Dict, Optional, Union
+from .core_objects import VIFTable, VIFUnit, VIFUnitEnhExt, DataEncoding, MeasureUnit, VIFUnitExt, VIFUnitSecExt
+from typing import Any, Dict, Optional, Union, Tuple
 
 
 class TelegramVariableDataRecord(object):
@@ -24,18 +24,21 @@ class TelegramVariableDataRecord(object):
         self._dataField = TelegramField()
 
     @property
-    def dataField(self):
+    def dataField(self) -> TelegramField:
         return self._dataField
 
     @dataField.setter
-    def dataField(self, value):
+    def dataField(self, value: TelegramField) -> None:
+        assert isinstance(value, TelegramField)
         self._dataField = value
 
     @property
     def more_records_follow(self) -> bool:
         return self.dib.more_records_follow and self.dib.is_eoud
 
-    def _parse_vifx(self) -> Any:
+    def _parse_vifx(self) -> Tuple[Union[None, int, float], Union[None, str, MeasureUnit], Union[None, str, VIFUnit, VIFUnitExt, VIFUnitSecExt], Union[None, VIFUnitEnhExt]]:
+        """
+        """
         if len(self.vib.parts) == 0:
             return None, None, None, None
 
@@ -59,16 +62,17 @@ class TelegramVariableDataRecord(object):
             # from 0xFC
             # if vif & vtf_ebm:
             code = vife[0] & self.UNIT_MULTIPLIER_MASK
-            factor = 1
 
-            if 0x70 <= code <= 0x77:
-                factor = pow(10.0, (vife[0] & 0x07) - 6)
-            elif 0x78 <= code <= 0x7B:
-                factor = pow(10.0, (vife[0] & 0x03) - 3)
-            elif code == 0x7D:
-                factor = 1
+            def factor()-> int: 
+                if 0x70 <= code <= 0x77:
+                    return pow(10.0, (vife[0] & 0x07) - 6)
+                if 0x78 <= code <= 0x7B:
+                    return pow(10.0, (vife[0] & 0x03) - 3)
+                if code == 0x7D:
+                    return 1
+                return 1
 
-            return (factor, self.vib.customVIF.decodeASCII,
+            return (factor(), self.vib.customVIF.decodeASCII,
                     VIFUnit.VARIABLE_VIF, None)
 
             # // custom VIF
@@ -97,16 +101,14 @@ class TelegramVariableDataRecord(object):
         return unit
 
     @property
-    def value(self) -> Union[str,     decimal.Decimal]:
+    def value(self) -> Union[str, decimal.Decimal]:
         value = self.parsed_value
-        if type(value) == str and all(ord(c) < 128 for c in value):
-            value = str(value)
+        if isinstance(value, str):
+            if all(ord(c) < 128 for c in value):
+                 str(value)
 
-        elif type(value) == str:
-            try:
+            elif isinstance(value, bytes):
                 value = value.decode('unicode_escape')
-            except AttributeError:
-                pass
 
         return value
 
@@ -116,7 +118,7 @@ class TelegramVariableDataRecord(object):
         return func.value
 
     @property
-    def parsed_value(self) -> Optional[Union[str, int,     decimal.Decimal]]:
+    def parsed_value(self) -> Optional[Union[str, int, decimal.Decimal]]:
         mult, unit, _, _ = self._parse_vifx()
 
         length, enc = self.dib.length_encoding
@@ -153,17 +155,26 @@ class TelegramVariableDataRecord(object):
                 not all(chr(c) in string.printable for c in tdf.parts)):
             return tdf.decodeRAW
 
-        return {
-            te.ENCODING_INTEGER: lambda: int(
-                tdf.decodeInt * mult) if mult > 1.0 else decimal.Decimal(
-                tdf.decodeInt * mult),
-            te.ENCODING_BCD: lambda: decimal.Decimal(
-                tdf.decodeBCD * mult),
-            te.ENCODING_REAL: lambda: decimal.Decimal(
-                tdf.decodeReal * mult),
-            te.ENCODING_VARIABLE_LENGTH: lambda: tdf.decodeASCII,
-            te.ENCODING_NULL: lambda: None
-        }.get(enc, lambda: None)()
+        def encode() -> Union[None, str, int, decimal.Decimal]:
+            if enc == te.ENCODING_INTEGER:
+                assert mult is not None
+                if mult > 1.0:
+                    # TODO: If 'mult' is for example 1.1, why should the result be rounded to an int?
+                    return int(tdf.decodeInt * mult) 
+                return decimal.Decimal(tdf.decodeInt * mult)
+            if enc == te.ENCODING_BCD:
+                assert mult is not None
+                return decimal.Decimal(tdf.decodeBCD * mult)
+            if enc == te.ENCODING_REAL: 
+                assert mult is not None
+                return decimal.Decimal(tdf.decodeReal * mult)
+            if enc == te.ENCODING_VARIABLE_LENGTH:
+                return tdf.decodeASCII
+            if enc == te.ENCODING_NULL:
+                return None
+            return None
+
+        return encode()
 
     @property
     def interpreted(self) -> Dict[str, Union[    decimal.Decimal, str, int]]:
