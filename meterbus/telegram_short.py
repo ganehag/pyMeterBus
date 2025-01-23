@@ -1,11 +1,12 @@
 from .defines import *
 from .telegram_header import TelegramHeader
 from .exceptions import MBusFrameDecodeError, MBusFrameCRCError, FrameMismatch
+from typing import Iterator, List, Optional, Union
 
 
 class TelegramShort(object):
     @staticmethod
-    def parse(data):
+    def parse(data: Optional[List[int]]) -> "TelegramShort":
         if data is None:
             raise MBusFrameDecodeError("Data is None")
 
@@ -17,7 +18,7 @@ class TelegramShort(object):
 
         return TelegramShort(data)
 
-    def __init__(self, dbuf=None):
+    def __init__(self, dbuf: Optional[Union[str, bytes, List[int]]]=None) -> None:
         self._header = TelegramHeader()
         if dbuf is not None:
             tgr = dbuf
@@ -48,17 +49,17 @@ class TelegramShort(object):
     def header(self, value):
         self._header = value
 
-    def compute_crc(self):
+    def compute_crc(self) -> int:
         return (self.header.cField.parts[0] +
                 self.header.aField.parts[0]) % 256
 
-    def check_crc(self):
+    def check_crc(self) -> bool:
         return self.compute_crc() == self.header.crcField.parts[0]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return 0x05
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int]:
         yield self._header.startField.parts[0]
         yield self._header.cField.parts[0]
         yield self._header.aField.parts[0]

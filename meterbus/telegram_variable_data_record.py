@@ -10,13 +10,14 @@ from .value_information_block import ValueInformationBlock
 from .data_information_block import DataInformationBlock
 
 from .core_objects import VIFTable, VIFUnit, VIFUnitEnhExt, DataEncoding, MeasureUnit
+from typing import Any, Dict, Optional, Union
 
 
 class TelegramVariableDataRecord(object):
     UNIT_MULTIPLIER_MASK = 0x7F    # 0111 1111
     EXTENSION_BIT_MASK = 0x80      # 1000 0000
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.dib = DataInformationBlock()
         self.vib = ValueInformationBlock()
 
@@ -31,10 +32,10 @@ class TelegramVariableDataRecord(object):
         self._dataField = value
 
     @property
-    def more_records_follow(self):
+    def more_records_follow(self) -> bool:
         return self.dib.more_records_follow and self.dib.is_eoud
 
-    def _parse_vifx(self):
+    def _parse_vifx(self) -> Any:
         if len(self.vib.parts) == 0:
             return None, None, None, None
 
@@ -89,14 +90,14 @@ class TelegramVariableDataRecord(object):
         )
 
     @property
-    def unit(self):
+    def unit(self) -> Optional[str]:
         _, unit, _, _ = self._parse_vifx()
         if isinstance(unit, MeasureUnit):
             return unit.value
         return unit
 
     @property
-    def value(self):
+    def value(self) -> Union[str,     decimal.Decimal]:
         value = self.parsed_value
         if type(value) == str and all(ord(c) < 128 for c in value):
             value = str(value)
@@ -110,12 +111,12 @@ class TelegramVariableDataRecord(object):
         return value
 
     @property
-    def function(self):
+    def function(self) -> int:
         func = self.dib.function_type
         return func.value
 
     @property
-    def parsed_value(self):
+    def parsed_value(self) -> Optional[Union[str, int,     decimal.Decimal]]:
         mult, unit, _, _ = self._parse_vifx()
 
         length, enc = self.dib.length_encoding
@@ -165,7 +166,7 @@ class TelegramVariableDataRecord(object):
         }.get(enc, lambda: None)()
 
     @property
-    def interpreted(self):
+    def interpreted(self) -> Dict[str, Union[    decimal.Decimal, str, int]]:
         _, unit, typ, unit_enh = self._parse_vifx()
         storage_number, tariff, device = self.dib.parse_dife()
 
@@ -203,6 +204,6 @@ class TelegramVariableDataRecord(object):
 
         return record
 
-    def to_JSON(self):
+    def to_JSON(self) -> str:
         return json.dumps(self.interpreted, sort_keys=True,
                           indent=4, use_decimal=True)
