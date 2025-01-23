@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from .globals import g
 from .telegram_short import TelegramShort
 from .telegram_long import TelegramLong
 from .auxiliary import is_primary_address, is_secondary_address
@@ -18,17 +17,16 @@ from .exceptions import (MBusFrameDecodeError, MBusFrameCRCError,
 from .defines import *
 import logging
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 def serial_send(ser, data=None, read_echo=False):
     if not data:
-        if g.debug:
+        if logger.isEnabledFor(logging.INFO):
             logger.info('Unable to send {0} value'.format(data))
         return None
 
-    if g.debug and data:
+    if logger.isEnabledFor(logging.INFO) and data:
         frame_data = bytearray(data)
         logger.info('SEND ({0:03d}) {1}'.format(
              len(frame_data),
@@ -141,7 +139,7 @@ def recv_frame(ser, length=1):
 
         data += characters
 
-        if g.debug and characters:
+        if logger.isEnabledFor(logging.INFO) and characters:
             logger.info('RECV ({0:03d}) {1}'.format(
                  len(characters),
                  " ".join(["{:02x}".format(x).upper() for x in characters])
@@ -177,7 +175,7 @@ class MBusSerial:
         self.preamble = preamble
 
     def serial_send(self, data, read_echo=False):
-        if g.debug:
+        if logger.isEnabledFor(logging.INFO):
             frame_data = bytearray(data)
             logger.info('SEND ({0:03d}) {1}'.format(
                  len(data),
@@ -264,7 +262,7 @@ class MBusSerial:
 
             data += characters
 
-            if g.debug and characters:
+            if logger.isEnabledFor(logging.INFO) and characters:
                 logger.info('RECV ({0:03d}) {1}'.format(
                      len(characters),
                      " ".join(["{:02x}".format(x).upper() for x in characters])
@@ -292,3 +290,10 @@ class MBusSerial:
             return False
 
         return None
+
+def main():
+    # Do not initalize running when just importing module
+    logging.basicConfig(level=logging.INFO)
+
+if __name__ == "__main__":
+    main()
