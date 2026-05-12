@@ -64,7 +64,7 @@ def test_control_frame_with_variable_data_ci_still_has_no_telegram():
 
 
 def test_truncated_long_variable_data_header_fails_in_strict_mode():
-    raw = bytes.fromhex("68 03 03 68 08 0B 72 85 16")
+    raw = bytes.fromhex("68 04 04 68 08 0B 72 00 85 16")
 
     result = decode(raw, mode=DecodeMode.STRICT)
 
