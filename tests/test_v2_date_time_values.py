@@ -17,12 +17,12 @@ def test_decode_date_value_from_vif_6c():
 
 
 def test_decode_datetime_value_from_vif_6d():
-    result = decode_record(bytes([0x04, 0x6D, 0x22, 0x0E, 0x15, 0x0C]))
+    result = decode_record(bytes([0x04, 0x6D, 0x22, 0x0E, 0x15, 0x3C]))
     record = result.record
 
     assert result.consumed == 6
     assert record.vif.kind == "datetime"
-    assert record.value.raw == b"\x22\x0E\x15\x0C"
+    assert record.value.raw == b"\x22\x0E\x15\x3C"
     assert record.value.value == "2024-12-21T14:34:00"
     assert record.value.type is ValueType.DATETIME
     assert record.value.scaled is False
