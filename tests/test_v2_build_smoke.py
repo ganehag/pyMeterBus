@@ -9,7 +9,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_build_smoke_script_builds_and_installs_wheel():
     script = (_PROJECT_ROOT / "scripts" / "smoke-build.sh").read_text()
 
-    assert "python -m build --wheel" in script
+    assert '"${BUILD_VENV_DIR}/bin/python" -m build --wheel' in script
     assert "python -m venv" in script
     assert "BUILD_VENV_DIR" in script
     assert "INSTALL_VENV_DIR" in script
