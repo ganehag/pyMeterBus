@@ -28,6 +28,18 @@ def test_decode_datetime_value_from_vif_6d():
     assert record.value.scaled is False
 
 
+def test_decode_amt_legacy_datetime_value_from_vif_6d():
+    result = decode_record(bytes([0x04, 0x6D, 0x21, 0x31, 0x6A, 0x27]))
+    record = result.record
+
+    assert result.consumed == 6
+    assert record.vif.kind == "datetime"
+    assert record.value.raw == b"\x21\x31\x6A\x27"
+    assert record.value.value == "2019-07-10T17:33:00"
+    assert record.value.type is ValueType.DATETIME
+    assert record.value.scaled is False
+
+
 def test_invalid_date_value_falls_back_to_raw_integer_value():
     result = decode_record(bytes([0x02, 0x6C, 0x00, 0x00]))
     record = result.record
