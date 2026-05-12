@@ -53,11 +53,20 @@ def test_decode_short_frame_still_has_no_telegram():
     assert result.telegram is None
 
 
-def test_truncated_variable_data_header_fails_in_strict_mode():
+def test_control_frame_with_variable_data_ci_still_has_no_telegram():
     raw = bytearray(load_hex_fixture("frames/control.hex").data)
     raw[6] = 0x72
 
     result = decode(bytes(raw), mode=DecodeMode.STRICT)
+
+    assert result.ok is True
+    assert result.telegram is None
+
+
+def test_truncated_long_variable_data_header_fails_in_strict_mode():
+    raw = bytes.fromhex("68 03 03 68 08 0B 72 85 16")
+
+    result = decode(raw, mode=DecodeMode.STRICT)
 
     assert result.ok is False
     assert result.telegram is None
