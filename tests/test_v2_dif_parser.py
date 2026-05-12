@@ -75,10 +75,10 @@ def test_parse_special_function_dif():
     assert result.data_information.data_encoding is DataEncoding.SPECIAL_FUNCTION
 
 
-def test_parse_first_dif_from_long_fixture_undecoded_data():
+def test_parse_first_dif_from_long_fixture_application_data():
     telegram = decode(load_hex_fixture("frames/long_basic.hex").data).telegram
 
-    result = parse_dif(telegram.undecoded_data)
+    result = parse_dif(telegram.raw_application_data)
     dif = result.data_information
 
     assert result.consumed == 1
