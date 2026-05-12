@@ -19,6 +19,9 @@ from meterbus.model import (
     DecodedValue,
     DecodeResult,
     Diagnostic,
+    FixedDataCounter,
+    FixedDataHeader,
+    FixedDataTelegram,
     Frame,
     LongFrame,
     PrimaryAddress,
@@ -88,6 +91,10 @@ def to_dict(value: Any, *, view: ExportView | str = ExportView.FULL) -> Any:
         return _unknown_record_to_dict(value)
     if isinstance(value, VariableDataHeader):
         return _variable_data_header_to_dict(value)
+    if isinstance(value, FixedDataHeader):
+        return _fixed_data_header_to_dict(value)
+    if isinstance(value, FixedDataCounter):
+        return _fixed_data_counter_to_dict(value)
     if isinstance(value, Telegram):
         return _telegram_to_dict(value)
 
@@ -121,6 +128,7 @@ def _decode_result_summary_to_dict(result: DecodeResult) -> dict[str, Any]:
         "frame": _frame_summary_to_dict(frame) if frame is not None else None,
         "meter": _meter_summary_to_dict(telegram) if telegram is not None else None,
         "records": len(telegram.records) if isinstance(telegram, VariableDataTelegram) else None,
+        "counters": len(telegram.counters) if isinstance(telegram, FixedDataTelegram) else None,
         "diagnostics": to_dict(result.diagnostics),
     }
     return _drop_none(payload)
@@ -129,11 +137,13 @@ def _decode_result_summary_to_dict(result: DecodeResult) -> dict[str, Any]:
 def _decode_result_records_to_dict(result: DecodeResult) -> dict[str, Any]:
     telegram = result.telegram
     records = telegram.records if isinstance(telegram, VariableDataTelegram) else ()
+    counters = telegram.counters if isinstance(telegram, FixedDataTelegram) else ()
 
     payload: dict[str, Any] = {
         "ok": result.ok,
         "meter": _meter_summary_to_dict(telegram) if telegram is not None else None,
         "records": [_record_summary_to_dict(record) for record in records],
+        "counters": [_fixed_data_counter_to_dict(counter) for counter in counters],
         "diagnostics": to_dict(result.diagnostics),
     }
     return _drop_none(payload)
@@ -149,18 +159,27 @@ def _frame_summary_to_dict(frame: Frame) -> dict[str, Any]:
 
 
 def _meter_summary_to_dict(telegram: Telegram) -> dict[str, Any] | None:
-    if not isinstance(telegram, VariableDataTelegram):
-        return None
-
-    header = telegram.header
-    return _drop_none(
-        {
-            "manufacturer": header.manufacturer,
-            "identification_number": header.identification_number,
-            "medium": header.medium,
-            "version": header.version,
-        }
-    )
+    if isinstance(telegram, VariableDataTelegram):
+        header = telegram.header
+        return _drop_none(
+            {
+                "manufacturer": header.manufacturer,
+                "identification_number": header.identification_number,
+                "medium": header.medium,
+                "version": header.version,
+            }
+        )
+    if isinstance(telegram, FixedDataTelegram):
+        header = telegram.header
+        return _drop_none(
+            {
+                "identification_number": header.identification_number,
+                "access_number": header.access_number,
+                "status": header.status,
+                "medium_unit_raw": to_dict(header.medium_unit_raw),
+            }
+        )
+    return None
 
 
 def _record_summary_to_dict(record: DataRecord | UnknownRecord) -> dict[str, Any]:
@@ -321,6 +340,24 @@ def _variable_data_header_to_dict(header: VariableDataHeader) -> dict[str, Any]:
     )
 
 
+def _fixed_data_header_to_dict(header: FixedDataHeader) -> dict[str, Any]:
+    return {
+        "identification_number": header.identification_number,
+        "access_number": header.access_number,
+        "status": header.status,
+        "medium_unit_raw": to_dict(header.medium_unit_raw),
+        "raw": to_dict(header.raw),
+    }
+
+
+def _fixed_data_counter_to_dict(counter: FixedDataCounter) -> dict[str, Any]:
+    return {
+        "index": counter.index,
+        "raw": to_dict(counter.raw),
+        "value": to_dict(counter.value),
+    }
+
+
 def _telegram_to_dict(telegram: Telegram) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "application_kind": to_dict(telegram.application_kind),
@@ -334,6 +371,15 @@ def _telegram_to_dict(telegram: Telegram) -> dict[str, Any]:
                 "header": to_dict(telegram.header),
                 "records": to_dict(telegram.records),
                 "more_records_follow": telegram.more_records_follow,
+                "raw_application_data": to_dict(telegram.raw_application_data),
+                "undecoded_data": to_dict(telegram.undecoded_data),
+            }
+        )
+    elif isinstance(telegram, FixedDataTelegram):
+        payload.update(
+            {
+                "header": to_dict(telegram.header),
+                "counters": to_dict(telegram.counters),
                 "raw_application_data": to_dict(telegram.raw_application_data),
                 "undecoded_data": to_dict(telegram.undecoded_data),
             }
