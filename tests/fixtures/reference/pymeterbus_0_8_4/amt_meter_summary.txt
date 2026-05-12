@@ -1,0 +1,19 @@
+Source frame: tests/test-frames/amt_meter.hex
+Comparator: pyMeterBus 0.8.4
+
+Frame type:
+  meterbus.telegram_long.TelegramLong
+
+Records:
+  22
+
+Datetime record:
+  index: 14
+  raw data field: 21 31 6A 27
+  parsed_value: 2019-07-10T17:33
+  unit: date time
+
+Notes:
+  libmbus also reports 2019-07-10T17:33:00 for this record.
+  v2 currently reports 2073-07-10T17:33:00.
+  Treat this as a datetime interpretation difference requiring spec review.
