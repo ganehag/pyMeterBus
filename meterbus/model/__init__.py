@@ -24,7 +24,14 @@ from .errors import (
 )
 from .frame import AckFrame, ControlField, ControlFrame, Frame, LongFrame, ShortFrame
 from .record import DataInformation, DataRecord, UnknownRecord, ValueInformation
-from .telegram import Telegram, VariableDataHeader, VariableDataTelegram
+from .telegram import (
+    FixedDataCounter,
+    FixedDataHeader,
+    FixedDataTelegram,
+    Telegram,
+    VariableDataHeader,
+    VariableDataTelegram,
+)
 from .value import DecodedValue, Unit
 
 __all__ = [
@@ -44,6 +51,9 @@ __all__ = [
     "Diagnostic",
     "Direction",
     "EncodeError",
+    "FixedDataCounter",
+    "FixedDataHeader",
+    "FixedDataTelegram",
     "Frame",
     "FrameKind",
     "FunctionType",
