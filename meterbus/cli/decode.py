@@ -6,7 +6,7 @@ import argparse
 import sys
 
 from meterbus.api import decode
-from meterbus.export import to_json
+from meterbus.export import ExportView, to_json
 from meterbus.model import DecodeMode
 
 
@@ -19,6 +19,12 @@ def main(argv: list[str] | None = None) -> int:
         default=DecodeMode.STRICT.value,
         help="Decode mode to use",
     )
+    parser.add_argument(
+        "--view",
+        choices=[view.value for view in ExportView],
+        default=ExportView.FULL.value,
+        help="JSON export view to print",
+    )
     parser.add_argument("--indent", type=int, default=None, help="Pretty-print JSON with this indentation")
     args = parser.parse_args(argv)
 
@@ -29,7 +35,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     result = decode(raw, mode=DecodeMode(args.mode))
-    print(to_json(result, indent=args.indent))
+    print(to_json(result, view=ExportView(args.view), indent=args.indent))
     return 0 if result.ok else 1
 
 
