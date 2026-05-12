@@ -2,8 +2,14 @@ name: Run tests
 
 on:
   push:
+    branches-ignore:
+      - v2
+      - v2-*
   pull_request:
-    branches-ignore: [ master ]
+    branches-ignore:
+      - master
+      - v2
+      - v2-*
 
 jobs:
   run-tests:
