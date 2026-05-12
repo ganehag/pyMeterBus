@@ -16,7 +16,9 @@ from meterbus.model import (
     Diagnostic,
     FixedDataCounter,
     FixedDataHeader,
+    FixedDataMediumUnit,
     FixedDataTelegram,
+    FixedDataUnit,
     LongFrame,
     Severity,
     UnknownRecord,
@@ -38,6 +40,92 @@ _FIXED_DATA_MINIMUM_LENGTH = _FIXED_DATA_HEADER_LENGTH + (2 * _FIXED_DATA_COUNTE
 _FILLER_BYTE = 0x2F
 _MANUFACTURER_SPECIFIC_DATA = 0x0F
 _MANUFACTURER_SPECIFIC_DATA_MORE_RECORDS = 0x1F
+
+_FIXED_DATA_MEDIA = {
+    0x0: "other",
+    0x1: "oil",
+    0x2: "electricity",
+    0x3: "gas",
+    0x4: "heat",
+    0x5: "steam",
+    0x6: "hot_water",
+    0x7: "water",
+    0x8: "heat_cost_allocator",
+    0x9: "reserved",
+    0xA: "gas_mode_2",
+    0xB: "heat_mode_2",
+    0xC: "hot_water_mode_2",
+    0xD: "water_mode_2",
+    0xE: "heat_cost_allocator_mode_2",
+    0xF: "reserved",
+}
+
+_FIXED_DATA_UNITS = {
+    0x00: "h_m_s",
+    0x01: "d_m_y",
+    0x02: "Wh",
+    0x03: "Wh_10",
+    0x04: "Wh_100",
+    0x05: "kWh",
+    0x06: "kWh_10",
+    0x07: "kWh_100",
+    0x08: "MWh",
+    0x09: "MWh_10",
+    0x0A: "MWh_100",
+    0x0B: "kJ",
+    0x0C: "kJ_10",
+    0x0D: "kJ_100",
+    0x0E: "MJ",
+    0x0F: "MJ_10",
+    0x10: "MJ_100",
+    0x11: "GJ",
+    0x12: "GJ_10",
+    0x13: "GJ_100",
+    0x14: "W",
+    0x15: "W_10",
+    0x16: "W_100",
+    0x17: "kW",
+    0x18: "kW_10",
+    0x19: "kW_100",
+    0x1A: "MW",
+    0x1B: "MW_10",
+    0x1C: "MW_100",
+    0x1D: "kJ_h",
+    0x1E: "kJ_h_10",
+    0x1F: "kJ_h_100",
+    0x20: "MJ_h",
+    0x21: "MJ_h_10",
+    0x22: "MJ_h_100",
+    0x23: "GJ_h",
+    0x24: "GJ_h_10",
+    0x25: "GJ_h_100",
+    0x26: "ml",
+    0x27: "ml_10",
+    0x28: "ml_100",
+    0x29: "l",
+    0x2A: "l_10",
+    0x2B: "l_100",
+    0x2C: "m3",
+    0x2D: "m3_10",
+    0x2E: "m3_100",
+    0x2F: "ml_h",
+    0x30: "ml_h_10",
+    0x31: "ml_h_100",
+    0x32: "l_h",
+    0x33: "l_h_10",
+    0x34: "l_h_100",
+    0x35: "m3_h",
+    0x36: "m3_h_10",
+    0x37: "m3_h_100",
+    0x38: "degC_0_001",
+    0x39: "heat_cost_allocator_units",
+    0x3A: "reserved",
+    0x3B: "reserved",
+    0x3C: "reserved",
+    0x3D: "reserved",
+    0x3E: "same_but_historic",
+    0x3F: "without_units",
+}
 
 
 @dataclass(frozen=True)
@@ -214,12 +302,40 @@ def decode_fixed_data_header(raw: bytes, *, lsb_order: bool = True) -> FixedData
     if len(raw) != _FIXED_DATA_HEADER_LENGTH:
         raise ValueError("fixed data header must be exactly 8 bytes")
 
+    medium_unit_raw = raw[6:8]
     return FixedDataHeader(
         identification_number=_decode_bcd_identification(raw[0:4], lsb_order=lsb_order),
         access_number=raw[4],
         status=raw[5],
-        medium_unit_raw=raw[6:8],
+        medium_unit_raw=medium_unit_raw,
+        medium_unit=decode_fixed_data_medium_unit(medium_unit_raw),
         raw=raw,
+    )
+
+
+def decode_fixed_data_medium_unit(raw: bytes) -> FixedDataMediumUnit:
+    """Decode the fixed-data Medium/Unit field.
+
+    The Medium/Unit field is always transmitted least-significant byte first.
+    The low six bits of byte 1 are counter 1's unit. The low six bits of byte 2
+    are counter 2's unit. The high two bits of both bytes form the 4-bit medium
+    code, with byte 2 contributing the two most significant bits.
+    """
+
+    if len(raw) != 2:
+        raise ValueError("fixed data medium/unit field must be exactly 2 bytes")
+
+    first, second = raw
+    counter_1_code = first & 0x3F
+    counter_2_code = second & 0x3F
+    medium_code = ((second & 0xC0) >> 4) | ((first & 0xC0) >> 6)
+
+    return FixedDataMediumUnit(
+        raw=raw,
+        medium_code=medium_code,
+        medium=_FIXED_DATA_MEDIA[medium_code],
+        counter_1_unit=FixedDataUnit(counter_1_code, _FIXED_DATA_UNITS[counter_1_code]),
+        counter_2_unit=FixedDataUnit(counter_2_code, _FIXED_DATA_UNITS[counter_2_code]),
     )
 
 
