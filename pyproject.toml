@@ -42,8 +42,8 @@ mbus-serial-req-multi = "meterbus.tools:serial_request_multi"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["meterbus"]
-exclude = ["tests", "examples"]
+include = ["meterbus", "meterbus.*"]
+exclude = ["tests", "tests.*", "examples"]
 
 [tool.setuptools.dynamic]
 version = { attr = "meterbus.__version__" }
