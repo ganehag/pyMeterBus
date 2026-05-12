@@ -32,6 +32,8 @@ def decode_value(
     dif: DataInformation,
     data_length: int | None,
     unit: Unit | None = None,
+    *,
+    lsb_order: bool = True,
 ) -> ValueDecodeResult:
     """Decode one raw value using DIF encoding and declared byte length."""
 
@@ -45,7 +47,7 @@ def decode_value(
 
     if dif.data_encoding is DataEncoding.VARIABLE_LENGTH:
         try:
-            value_raw, consumed, decoded, value_type = decode_variable_value(raw)
+            value_raw, consumed, decoded, value_type = decode_variable_value(raw, lsb_order=lsb_order)
         except VariableLengthValueError as exc:
             raise ValueDecodeError(str(exc)) from exc
         return ValueDecodeResult(
