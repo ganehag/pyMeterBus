@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyMeterBus"
+version = "0.0.0"  # Will be dynamically loaded from __init__.py
+description = "Python implementation of the Meter-Bus protocol"
+authors = [
+    { name = "Mikael Ganehag Brorsson", email = "mikael.brorsson@gmail.com" }
+]
+license = { text = "BSD-3-Clause" }
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "pyaml",
+    "pycryptodome",
+    "pyserial",
+    "simplejson"
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Libraries"
+]
+
+[project.urls]
+Homepage = "https://github.com/ganehag/pyMeterBus"
+
+[project.scripts]
+mbus-serial-scan-primary = "meterbus.tools:serial_scan_primary"
+mbus-serial-scan-secondary = "meterbus.tools:serial_scan_secondary"
+mbus-serial-req-single = "meterbus.tools:serial_request_single"
+mbus-serial-req-multi = "meterbus.tools:serial_request_multi"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["meterbus"]
+exclude = ["tests", "examples"]
+
+[tool.setuptools.dynamic]
+version = { attr = "meterbus.__version__" }

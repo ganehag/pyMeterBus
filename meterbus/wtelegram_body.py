@@ -17,6 +17,8 @@ class WTelegramBaseDataHeader(object):
     BYTE_ORDER_MASK = 0x04    # 0000 0100
     PADDING_BYTE = 0x00
 
+    _keys = {}
+
     def __init__(self, frame=None):
         if isinstance(frame, WTelegramBaseDataHeader):
             self._manufacturer_field = frame._manufacturer_field
@@ -245,14 +247,13 @@ class WTelegramBaseDataHeader(object):
 
         return None
 
-    def decrypt(self, data):
-        # FIXME: implement proper handling of KEYS
-        keys = {
-            '\x00\x00\x03\x11': b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F'
-        }
+    @classmethod
+    def add_decryption_key(cls, id_nr, key):
+        cls._keys[id_nr] = key
 
-        devid = ''.join(chr(b) for b in self.id_nr_field[::-1])
-        key = keys.get(devid, None)
+    def decrypt(self, data):
+        devid = bytes(self.id_nr_field[::-1])
+        key = self._keys.get(devid, None)
 
         if key is None:
             return False

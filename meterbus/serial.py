@@ -203,7 +203,7 @@ class MBusSerial:
 
         self.serial_send(frame, read_echo)
 
-    def send_request_frame(self, addr=None, req=None, read_echo=False):
+    def send_request_frame(self, address=None, req=None, read_echo=False):
         if address is not None and is_primary_address(address) is False:
             return False
 

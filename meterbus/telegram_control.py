@@ -143,3 +143,22 @@ class TelegramControl(object):
         yield self.body.bodyHeader.ci_field.parts[0]
         yield self.compute_crc()
         yield self._header.stopField.parts[0]
+
+def to_JSON(self):
+    """Convert telegram data to JSON string"""
+    data = {
+        "header": {
+            "start": self.header.startField.parts[0],
+            "length": len(self.body.bodyHeader.ci_field.parts) + 2,
+            "control": self.header.cField.parts[0],
+            "address": self.header.aField.parts[0],
+            "crc": self.header.crcField.parts[0],
+            "stop": self._header.stopField.parts[0]
+        },
+        "body": {
+            "ci_field": self.body.bodyHeader.ci_field.parts[0]
+        },
+        "computed_crc": self.compute_crc(),
+        "crc_valid": self.check_crc()
+    }
+    return json.dumps(data)

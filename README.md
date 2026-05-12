@@ -16,6 +16,12 @@ Python version
 
 I've decided only to support active Python version. Thus, any EOL version is not supported.
 
+Current State (2025)
+-------------
+
+I’m still active, but as with most side projects, this one often takes a back seat.
+
+If you have improvements that could benefit the project, feel free to submit a pull request. If it’s a good fit, I’ll be happy to merge it.
 
 Current State (2022)
 -------------

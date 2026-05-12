@@ -30,7 +30,7 @@ from .telegram_field import TelegramField
 from .telegram_variable_data_record import TelegramVariableDataRecord
 
 from .wtelegram_snd_nr import WTelegramSndNr
-from .wtelegram_body import WTelegramFrame
+from .wtelegram_body import WTelegramFrame, WTelegramBaseDataHeader
 from .wtelegram_header import WTelegramHeader
 
 from .exceptions import MBusFrameDecodeError, FrameMismatch
@@ -71,3 +71,6 @@ def load(data):
 
 def debug(state):
   g.debug = state
+
+def add_wmbus_encryption_key(id_nr, key):
+    WTelegramBaseDataHeader.add_decryption_key(id_nr, key)
