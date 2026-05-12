@@ -11,9 +11,19 @@ def test_build_smoke_script_builds_and_installs_wheel():
 
     assert "python -m build --wheel" in script
     assert "python -m venv" in script
+    assert "BUILD_VENV_DIR" in script
+    assert "INSTALL_VENV_DIR" in script
     assert "pymeterbus-decode E5" in script
     assert "from meterbus.api import decode" in script
     assert "from meterbus.export import to_json" in script
+
+
+def test_build_smoke_script_does_not_install_build_into_system_python():
+    script = (_PROJECT_ROOT / "scripts" / "smoke-build.sh").read_text()
+
+    assert "python -m pip install --upgrade pip build" not in script
+    assert '"${BUILD_VENV_DIR}/bin/python" -m pip install --upgrade pip build' in script
+    assert '"${INSTALL_VENV_DIR}/bin/python" -m pip install "${WHEEL_PATH}"' in script
 
 
 def test_build_smoke_workflow_uses_smoke_script():
