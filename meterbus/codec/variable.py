@@ -20,8 +20,10 @@ def decode_variable_value(raw: bytes, *, lsb_order: bool = True) -> tuple[bytes,
     * C0h..CFh: positive BCD number with (LVAR - C0h) bytes
     * D0h..DFh: negative BCD number with (LVAR - D0h) bytes
     * E0h..EFh: binary number with (LVAR - E0h) bytes
-    * F0h..FAh: floating point number, currently preserved as binary
-    * FBh..FFh: reserved, consumed as the marker only
+    * F0h..F4h: binary number with 16, 20, 24, 28, or 32 bytes
+    * F5h: binary number with 48 bytes
+    * F6h: binary number with 64 bytes
+    * F7h..FFh: reserved, consumed as the marker only
 
     In Mode 1 / LSB order, text characters are transmitted last character
     first. In Mode 2 / MSB order, the first character is transmitted first.
@@ -61,8 +63,12 @@ def _payload_length(marker: int) -> int:
         return marker - 0xD0
     if 0xE0 <= marker <= 0xEF:
         return marker - 0xE0
-    if 0xF0 <= marker <= 0xFA:
-        return marker - 0xF0
+    if 0xF0 <= marker <= 0xF4:
+        return 4 * (marker - 0xEC)
+    if marker == 0xF5:
+        return 48
+    if marker == 0xF6:
+        return 64
     return 0
 
 
