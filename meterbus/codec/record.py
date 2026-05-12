@@ -28,7 +28,11 @@ class DataRecordDecodeError(ValueError):
     """Raised when a single data record cannot be decoded."""
 
 
-def decode_record(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]) -> DataRecordDecodeResult:
+def decode_record(
+    data: bytes | bytearray | memoryview | list[int] | tuple[int, ...],
+    *,
+    lsb_order: bool = True,
+) -> DataRecordDecodeResult:
     """Decode one DIF/VIF/value record from the start of `data`."""
 
     raw = _normalize_input(data)
@@ -45,6 +49,7 @@ def decode_record(data: bytes | bytearray | memoryview | list[int] | tuple[int, 
             dif_result.data_information,
             dif_result.data_length,
             unit=vif_result.value_information.unit,
+            lsb_order=lsb_order,
         )
     except (DataInformationParseError, ValueInformationParseError, ValueDecodeError) as exc:
         raise DataRecordDecodeError(str(exc)) from exc

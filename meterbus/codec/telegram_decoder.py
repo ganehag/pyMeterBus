@@ -1,8 +1,8 @@
 """Application telegram decoder for pyMeterBus 2.0.
 
 This decoder recognizes variable-data telegrams carried by long frames with
-CI 0x72. It decodes the fixed header and then decodes records until filler
-bytes or undecodable trailing data are reached.
+CI 0x72 or 0x76. It decodes the fixed header and then decodes records until
+filler bytes or undecodable trailing data are reached.
 """
 
 from __future__ import annotations
@@ -23,7 +23,8 @@ from meterbus.model import (
 from .frame_decoder import FrameDecoder
 from .record import DataRecordDecodeError, decode_record
 
-_VARIABLE_DATA_CI = 0x72
+_VARIABLE_DATA_CI_MODE_1 = 0x72
+_VARIABLE_DATA_CI_MODE_2 = 0x76
 _VARIABLE_DATA_HEADER_LENGTH = 12
 _FILLER_BYTE = 0x2F
 
@@ -50,7 +51,7 @@ class TelegramDecoder:
             )
 
         frame = frame_result.frame
-        if not isinstance(frame, LongFrame) or frame.ci != _VARIABLE_DATA_CI:
+        if not isinstance(frame, LongFrame) or frame.ci not in (_VARIABLE_DATA_CI_MODE_1, _VARIABLE_DATA_CI_MODE_2):
             return DecodeResult(
                 ok=frame_result.ok,
                 telegram=None,
@@ -82,7 +83,11 @@ class TelegramDecoder:
 
         header = decode_variable_data_header(frame.payload[:_VARIABLE_DATA_HEADER_LENGTH])
         application_data = frame.payload[_VARIABLE_DATA_HEADER_LENGTH:]
-        records, undecoded_data, record_diagnostics = _decode_records(application_data, mode)
+        records, undecoded_data, record_diagnostics = _decode_records(
+            application_data,
+            mode,
+            lsb_order=frame.ci == _VARIABLE_DATA_CI_MODE_1,
+        )
         diagnostics.extend(record_diagnostics)
 
         telegram = VariableDataTelegram(
@@ -122,7 +127,7 @@ def decode_variable_data_header(raw: bytes) -> VariableDataHeader:
     )
 
 
-def _decode_records(application_data: bytes, mode: DecodeMode):
+def _decode_records(application_data: bytes, mode: DecodeMode, *, lsb_order: bool):
     records = []
     diagnostics: list[Diagnostic] = []
     offset = 0
@@ -132,7 +137,7 @@ def _decode_records(application_data: bytes, mode: DecodeMode):
             return records, application_data[offset:], diagnostics
 
         try:
-            result = decode_record(application_data[offset:])
+            result = decode_record(application_data[offset:], lsb_order=lsb_order)
         except DataRecordDecodeError as exc:
             diagnostic = Diagnostic(
                 severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,

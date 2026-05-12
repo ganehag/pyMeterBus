@@ -13,8 +13,8 @@ from meterbus.codec import parse_vif
         (0x00, "energy", "energy", "Wh", Decimal("0.001")),
         (0x03, "energy", "energy", "Wh", Decimal("1")),
         (0x07, "energy", "energy", "Wh", Decimal("10000")),
-        (0x08, "energy", "energy", "J", Decimal("100000")),
-        (0x0F, "energy", "energy", "J", Decimal("1000000000000")),
+        (0x08, "energy", "energy", "J", Decimal("1")),
+        (0x0F, "energy", "energy", "J", Decimal("10000000")),
         (0x10, "volume", "volume", "m^3", Decimal("0.000001")),
         (0x13, "volume", "volume", "m^3", Decimal("0.001")),
         (0x17, "volume", "volume", "m^3", Decimal("10")),
@@ -22,8 +22,8 @@ from meterbus.codec import parse_vif
         (0x1F, "mass", "mass", "kg", Decimal("10000")),
         (0x28, "power", "power", "W", Decimal("0.001")),
         (0x2F, "power", "power", "W", Decimal("10000")),
-        (0x30, "power", "power", "J/h", Decimal("0.001")),
-        (0x37, "power", "power", "J/h", Decimal("10000")),
+        (0x30, "power", "power", "J/h", Decimal("1")),
+        (0x37, "power", "power", "J/h", Decimal("10000000")),
         (0x38, "volume_flow", "volume_flow", "m^3/h", Decimal("0.000001")),
         (0x3F, "volume_flow", "volume_flow", "m^3/h", Decimal("10")),
         (0x40, "volume_flow", "volume_flow", "m^3/min", Decimal("0.0000001")),
@@ -71,6 +71,8 @@ def test_base_vif_numeric_ranges(vif, kind, unit_name, symbol, multiplier):
         (0x78, "fabrication_number", "fabrication_number"),
         (0x79, "enhanced_identification", "enhanced_identification"),
         (0x7A, "bus_address", "bus_address"),
+        (0x7E, "any_vif", "any_vif"),
+        (0x7F, "manufacturer_specific", "manufacturer_specific"),
     ],
 )
 def test_base_vif_discrete_values(vif, kind, unit_name):
@@ -82,30 +84,34 @@ def test_base_vif_discrete_values(vif, kind, unit_name):
 
 
 @pytest.mark.parametrize(
-    ("vif", "multiplier"),
+    ("vif", "kind", "multiplier"),
     [
-        (0x20, Decimal("1")),
-        (0x21, Decimal("60")),
-        (0x22, Decimal("3600")),
-        (0x23, Decimal("216000")),
-        (0x70, Decimal("1")),
-        (0x71, Decimal("60")),
-        (0x72, Decimal("3600")),
-        (0x73, Decimal("216000")),
+        (0x20, "on_time", Decimal("1")),
+        (0x21, "on_time", Decimal("60")),
+        (0x22, "on_time", Decimal("3600")),
+        (0x23, "on_time", Decimal("86400")),
+        (0x24, "operating_time", Decimal("1")),
+        (0x25, "operating_time", Decimal("60")),
+        (0x26, "operating_time", Decimal("3600")),
+        (0x27, "operating_time", Decimal("86400")),
+        (0x70, "average_duration", Decimal("1")),
+        (0x71, "average_duration", Decimal("60")),
+        (0x72, "average_duration", Decimal("3600")),
+        (0x73, "average_duration", Decimal("86400")),
     ],
 )
-def test_base_vif_duration_ranges(vif, multiplier):
+def test_base_vif_duration_ranges(vif, kind, multiplier):
     value_information = parse_vif(bytes([vif])).value_information
 
-    assert value_information.kind in {"operating_time", "average_duration"}
+    assert value_information.kind == kind
     assert value_information.unit.symbol == "s"
     assert value_information.multiplier == multiplier
 
 
 def test_unknown_base_vif_stays_preserved():
-    value_information = parse_vif(bytes([0x7F])).value_information
+    value_information = parse_vif(bytes([0x7D])).value_information
 
     assert value_information.unit is None
     assert value_information.kind == "unknown"
     assert value_information.multiplier == Decimal("1")
-    assert value_information.enhancement == "unknown_base_vif_0x7F"
+    assert value_information.enhancement == "unknown_base_vif_0x7D"

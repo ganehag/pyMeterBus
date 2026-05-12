@@ -56,13 +56,27 @@ def test_decode_real32_value():
     assert result.value.type is ValueType.DECIMAL
 
 
-def test_decode_variable_length_preserves_raw_payload():
+def test_decode_variable_length_text_payload_uses_mode_1_order_by_default():
     result = decode_value(bytes([0x03, 0x41, 0x42, 0x43, 0x99]), _dif(DataEncoding.VARIABLE_LENGTH), data_length=None)
 
     assert result.consumed == 4
     assert result.value.raw == b"ABC"
-    assert result.value.value == b"ABC"
-    assert result.value.type is ValueType.BINARY
+    assert result.value.value == "CBA"
+    assert result.value.type is ValueType.STRING
+
+
+def test_decode_variable_length_text_payload_can_use_mode_2_order():
+    result = decode_value(
+        bytes([0x03, 0x41, 0x42, 0x43, 0x99]),
+        _dif(DataEncoding.VARIABLE_LENGTH),
+        data_length=None,
+        lsb_order=False,
+    )
+
+    assert result.consumed == 4
+    assert result.value.raw == b"ABC"
+    assert result.value.value == "ABC"
+    assert result.value.type is ValueType.STRING
 
 
 def test_decode_special_function_consumes_no_bytes():
