@@ -34,7 +34,8 @@ def test_pyproject_uses_modern_license_metadata():
 def test_pyproject_uses_dynamic_runtime_version():
     pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
 
-    assert pyproject["project"]["version"] == "0.0.0"
+    assert "version" not in pyproject["project"]
+    assert pyproject["project"]["dynamic"] == ["version"]
     assert pyproject["tool"]["setuptools"]["dynamic"]["version"] == {"attr": "meterbus.__version__"}
     assert meterbus.__version__ == "2.0.0a1"
 
