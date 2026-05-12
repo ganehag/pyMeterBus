@@ -50,7 +50,7 @@ def test_decode_cli_supports_lenient_mode():
     payload = json.loads(completed.stdout)
     assert payload["ok"] is True
     assert payload["frame"]["checksum_valid"] is False
-    assert payload["diagnostics"][0]["severity"] == "warning"
+    assert payload["diagnostics"][0]["severity"] == "error"
 
 
 def test_decode_cli_returns_one_when_decode_result_is_not_ok():
