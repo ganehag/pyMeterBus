@@ -3,6 +3,7 @@
 from .crc import checksum
 from .dif import DataInformationParseError, DataInformationParseResult, parse_dif
 from .frame_decoder import FrameDecodeResult, FrameDecoder, decode_frame
+from .record import DataRecordDecodeError, DataRecordDecodeResult, decode_record
 from .telegram_decoder import TelegramDecoder, decode_telegram, decode_variable_data_header
 from .value import ValueDecodeError, ValueDecodeResult, decode_value
 from .vif import ValueInformationParseError, ValueInformationParseResult, parse_vif
@@ -10,6 +11,8 @@ from .vif import ValueInformationParseError, ValueInformationParseResult, parse_
 __all__ = [
     "DataInformationParseError",
     "DataInformationParseResult",
+    "DataRecordDecodeError",
+    "DataRecordDecodeResult",
     "FrameDecodeResult",
     "FrameDecoder",
     "TelegramDecoder",
@@ -19,6 +22,7 @@ __all__ = [
     "ValueInformationParseResult",
     "checksum",
     "decode_frame",
+    "decode_record",
     "decode_telegram",
     "decode_value",
     "decode_variable_data_header",
