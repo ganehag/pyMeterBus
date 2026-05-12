@@ -30,7 +30,7 @@ def test_decode_variable_data_header_rejects_wrong_length():
         decode_variable_data_header(b"\x00")
 
 
-def test_decode_long_variable_data_frame_returns_header_only_telegram():
+def test_decode_long_variable_data_frame_returns_variable_data_telegram():
     raw = load_hex_fixture("frames/long_basic.hex").data
 
     result = decode(raw)
@@ -41,9 +41,10 @@ def test_decode_long_variable_data_frame_returns_header_only_telegram():
     assert result.telegram.frame is result.frame
     assert result.telegram.header.identification_number == "00000021"
     assert result.telegram.header.manufacturer == "WEP"
-    assert result.telegram.records == ()
+    assert len(result.telegram.records) == 3
+    assert result.telegram.records[0].vif.kind == "fabrication_number"
     assert result.telegram.raw_application_data == result.frame.payload[12:]
-    assert result.telegram.undecoded_data == result.frame.payload[12:]
+    assert result.telegram.undecoded_data.startswith(b"\x2F\x2F")
 
 
 def test_decode_short_frame_still_has_no_telegram():
