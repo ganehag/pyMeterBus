@@ -27,3 +27,21 @@ def test_pyproject_uses_modern_license_metadata():
     assert pyproject["build-system"]["requires"] == ["setuptools>=77.0"]
     assert pyproject["project"]["license"] == "BSD-3-Clause"
     assert "License :: OSI Approved :: BSD License" not in pyproject["project"]["classifiers"]
+
+
+def test_v2_default_install_has_no_runtime_dependencies():
+    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
+
+    assert pyproject["project"]["dependencies"] == []
+
+
+def test_legacy_dependencies_are_available_as_extras():
+    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
+    extras = pyproject["project"]["optional-dependencies"]
+
+    assert extras["serial"] == ["pyserial"]
+    assert extras["yaml"] == ["pyaml"]
+    assert extras["json"] == ["simplejson"]
+    assert extras["crypto"] == ["pycryptodome"]
+    assert extras["legacy"] == ["pyserial", "pyaml", "simplejson", "pycryptodome"]
+    assert extras["all"] == ["pyserial", "pyaml", "simplejson", "pycryptodome"]
