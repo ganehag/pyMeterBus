@@ -185,6 +185,56 @@ def test_parse_alternate_extension_vifs(vife, kind, symbol, multiplier):
     assert vif.enhancement == "alternate_extension_vif"
 
 
+@pytest.mark.parametrize(
+    ("vife", "enhancement"),
+    [
+        (0x00, "record_error_none"),
+        (0x01, "record_error_too_many_difes"),
+        (0x02, "record_error_storage_number_not_implemented"),
+        (0x03, "record_error_unit_number_not_implemented"),
+        (0x04, "record_error_tariff_number_not_implemented"),
+        (0x05, "record_error_function_not_implemented"),
+        (0x06, "record_error_data_class_not_implemented"),
+        (0x07, "record_error_data_size_not_implemented"),
+        (0x0B, "record_error_too_many_vifes"),
+        (0x0C, "record_error_illegal_vif_group"),
+        (0x0D, "record_error_illegal_vif_exponent"),
+        (0x0E, "record_error_vif_dif_mismatch"),
+        (0x0F, "record_error_unimplemented_action"),
+        (0x15, "record_error_no_data_available"),
+        (0x16, "record_error_data_overflow"),
+        (0x17, "record_error_data_underflow"),
+        (0x18, "record_error_data_error"),
+        (0x1C, "record_error_premature_end_of_record"),
+    ],
+)
+def test_parse_record_error_vifes_preserves_base_vif_metadata(vife, enhancement):
+    vif = parse_vif(bytes([0x83, vife])).value_information
+
+    assert vif.kind == "energy"
+    assert vif.unit.symbol == "Wh"
+    assert vif.multiplier == Decimal("1")
+    assert vif.extension_bytes == bytes([vife])
+    assert vif.enhancement == enhancement
+
+
+def test_parse_record_error_vife_after_main_extension_true_vif():
+    vif = parse_vif(bytes([0xFD, 0x91, 0x16])).value_information
+
+    assert vif.kind == "customer"
+    assert vif.unit.name == "customer"
+    assert vif.extension_bytes == bytes([0x91, 0x16])
+    assert vif.enhancement == "record_error_data_overflow"
+
+
+def test_parse_record_error_vife_after_second_level_extension_true_vif():
+    vif = parse_vif(bytes([0xFD, 0xFD, 0x80, 0x1C])).value_information
+
+    assert vif.kind == "currently_selected_application"
+    assert vif.extension_bytes == bytes([0xFD, 0x80, 0x1C])
+    assert vif.enhancement == "record_error_premature_end_of_record"
+
+
 def test_parse_combinable_vife_preserves_base_vif_kind():
     result = parse_vif(bytes([0x83, 0x33]))
     vif = result.value_information
