@@ -15,6 +15,7 @@ from meterbus.model import (
     Diagnostic,
     LongFrame,
     Severity,
+    UnknownRecord,
     VariableDataHeader,
     VariableDataTelegram,
 )
@@ -133,31 +134,45 @@ def _decode_records(application_data: bytes, mode: DecodeMode):
         try:
             result = decode_record(application_data[offset:])
         except DataRecordDecodeError as exc:
-            diagnostics.append(
-                Diagnostic(
-                    severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,
-                    code="record_decode_error",
-                    message=str(exc),
-                    offset=_VARIABLE_DATA_HEADER_LENGTH + offset,
-                )
+            diagnostic = Diagnostic(
+                severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,
+                code="record_decode_error",
+                message=str(exc),
+                offset=_VARIABLE_DATA_HEADER_LENGTH + offset,
             )
-            return records, application_data[offset:], diagnostics
+            diagnostics.append(diagnostic)
+            if mode is DecodeMode.STRICT:
+                return records, application_data[offset:], diagnostics
+            preserved = _preserve_unknown_record(application_data[offset:], str(exc), diagnostic)
+            records.append(preserved)
+            return records, b"", diagnostics
 
         if result.consumed <= 0:
-            diagnostics.append(
-                Diagnostic(
-                    severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,
-                    code="record_decoder_did_not_advance",
-                    message="Record decoder did not consume any bytes.",
-                    offset=_VARIABLE_DATA_HEADER_LENGTH + offset,
-                )
+            diagnostic = Diagnostic(
+                severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,
+                code="record_decoder_did_not_advance",
+                message="Record decoder did not consume any bytes.",
+                offset=_VARIABLE_DATA_HEADER_LENGTH + offset,
             )
-            return records, application_data[offset:], diagnostics
+            diagnostics.append(diagnostic)
+            if mode is DecodeMode.STRICT:
+                return records, application_data[offset:], diagnostics
+            preserved = _preserve_unknown_record(application_data[offset:], diagnostic.message, diagnostic)
+            records.append(preserved)
+            return records, b"", diagnostics
 
         records.append(result.record)
         offset += result.consumed
 
     return records, b"", diagnostics
+
+
+def _preserve_unknown_record(raw: bytes, reason: str, diagnostic: Diagnostic) -> UnknownRecord:
+    return UnknownRecord(
+        raw=raw,
+        reason=reason,
+        diagnostics=(diagnostic,),
+    )
 
 
 def _decode_bcd_identification(raw: bytes) -> str:
