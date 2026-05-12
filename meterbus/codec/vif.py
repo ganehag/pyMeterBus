@@ -37,6 +37,7 @@ def parse_vif(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]
     base_vif = vif & 0x7F
     offset = 1
     extension_bytes: list[int] = []
+    record_error_bytes: list[int] = []
     custom_vif: bytes | None = None
 
     if base_vif == 0x7C:
@@ -48,16 +49,21 @@ def parse_vif(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]
     elif vif == 0xFD:
         extension_bytes, offset = _parse_vife_chain(raw, offset)
         unit, kind, multiplier, enhancement = _decode_main_extension_vif(extension_bytes)
+        record_error_bytes = _record_error_bytes_after_true_vif(extension_bytes)
     elif vif == 0xFB:
         extension_bytes, offset = _parse_vife_chain(raw, offset)
         unit, kind, multiplier, enhancement = _decode_alternate_extension_vif(extension_bytes)
+        record_error_bytes = extension_bytes[1:]
     elif vif & 0x80:
         extension_bytes, offset = _parse_vife_chain(raw, offset)
         unit, kind, multiplier, enhancement = _decode_base_vif(base_vif)
+        record_error_bytes = extension_bytes
         if enhancement is None:
             enhancement = "vife_extension"
     else:
         unit, kind, multiplier, enhancement = _decode_base_vif(base_vif)
+
+    enhancement = _apply_record_error_enhancement(enhancement, record_error_bytes)
 
     value_information = ValueInformation(
         raw=raw[:offset],
@@ -340,6 +346,47 @@ def _decode_alternate_extension_vif(extension_bytes: list[int]) -> tuple[Unit | 
         return Unit("cumulative_maximum_active_power", "W"), "cumulative_maximum_active_power", _power10((first & 0x07) - 3), "alternate_extension_vif"
 
     return None, "reserved_alternate_extension", Decimal("1"), f"reserved_alternate_extension_vif_0x{first:02X}"
+
+
+def _record_error_bytes_after_true_vif(extension_bytes: list[int]) -> list[int]:
+    if not extension_bytes:
+        return []
+    first = extension_bytes[0] & 0x7F
+    if first == 0x7D and len(extension_bytes) > 1:
+        return extension_bytes[2:]
+    return extension_bytes[1:]
+
+
+def _apply_record_error_enhancement(enhancement: str | None, extension_bytes: list[int]) -> str | None:
+    for extension_byte in extension_bytes:
+        record_error = _decode_record_error_vife(extension_byte & 0x7F)
+        if record_error is not None:
+            return f"record_error_{record_error}"
+    return enhancement
+
+
+def _decode_record_error_vife(code: int) -> str | None:
+    table = {
+        0x00: "none",
+        0x01: "too_many_difes",
+        0x02: "storage_number_not_implemented",
+        0x03: "unit_number_not_implemented",
+        0x04: "tariff_number_not_implemented",
+        0x05: "function_not_implemented",
+        0x06: "data_class_not_implemented",
+        0x07: "data_size_not_implemented",
+        0x0B: "too_many_vifes",
+        0x0C: "illegal_vif_group",
+        0x0D: "illegal_vif_exponent",
+        0x0E: "vif_dif_mismatch",
+        0x0F: "unimplemented_action",
+        0x15: "no_data_available",
+        0x16: "data_overflow",
+        0x17: "data_underflow",
+        0x18: "data_error",
+        0x1C: "premature_end_of_record",
+    }
+    return table.get(code)
 
 
 def _time_multiplier(selector: int) -> Decimal:
