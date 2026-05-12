@@ -50,7 +50,103 @@
     },
     "more_records_follow": false,
     "raw_application_data": "0C 78 49 04 00 64 02 75 0A 00 01 FD 71 1E 2F 2F 0A 66 20 02 0A FB 1A 31 05 02 FD 97 1D 00 00 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F",
-    "records": [],
-    "undecoded_data": "0C 78 49 04 00 64 02 75 0A 00 01 FD 71 1E 2F 2F 0A 66 20 02 0A FB 1A 31 05 02 FD 97 1D 00 00 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F"
+    "records": [
+      {
+        "diagnostics": [],
+        "dif": {
+          "data_encoding": "bcd",
+          "extension_bytes": "",
+          "function": "instantaneous_value",
+          "raw": "0C",
+          "storage_number": 0
+        },
+        "function": "instantaneous_value",
+        "more_records_follow": false,
+        "raw": "0C 78 49 04 00 64",
+        "storage_number": 0,
+        "value": {
+          "raw": "49 04 00 64",
+          "scaled": false,
+          "type": "decimal",
+          "unit": {
+            "name": "fabrication_number"
+          },
+          "value": "64000449"
+        },
+        "vif": {
+          "kind": "fabrication_number",
+          "multiplier": "1",
+          "raw": "78",
+          "unit": {
+            "name": "fabrication_number"
+          }
+        }
+      },
+      {
+        "diagnostics": [],
+        "dif": {
+          "data_encoding": "integer",
+          "extension_bytes": "",
+          "function": "instantaneous_value",
+          "raw": "02",
+          "storage_number": 0
+        },
+        "function": "instantaneous_value",
+        "more_records_follow": false,
+        "raw": "02 75 0A 00",
+        "storage_number": 0,
+        "value": {
+          "raw": "0A 00",
+          "scaled": false,
+          "type": "integer",
+          "unit": {
+            "name": "manufacturer"
+          },
+          "value": 10
+        },
+        "vif": {
+          "kind": "manufacturer",
+          "multiplier": "1",
+          "raw": "75",
+          "unit": {
+            "name": "manufacturer"
+          }
+        }
+      },
+      {
+        "diagnostics": [],
+        "dif": {
+          "data_encoding": "integer",
+          "extension_bytes": "",
+          "function": "instantaneous_value",
+          "raw": "01",
+          "storage_number": 0
+        },
+        "function": "instantaneous_value",
+        "more_records_follow": false,
+        "raw": "01 FD 71 1E",
+        "storage_number": 0,
+        "value": {
+          "raw": "1E",
+          "scaled": false,
+          "type": "integer",
+          "unit": {
+            "name": "dimensionless"
+          },
+          "value": 30
+        },
+        "vif": {
+          "enhancement": "first_extension_vif",
+          "extension_bytes": "71",
+          "kind": "dimensionless",
+          "multiplier": "1",
+          "raw": "FD 71",
+          "unit": {
+            "name": "dimensionless"
+          }
+        }
+      }
+    ],
+    "undecoded_data": "2F 2F 0A 66 20 02 0A FB 1A 31 05 02 FD 97 1D 00 00 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F"
   }
 }
