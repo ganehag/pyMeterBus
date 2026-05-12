@@ -6,6 +6,7 @@ import pytest
 
 import meterbus
 from meterbus.api import decode, decode_one, decode_one_frame
+from meterbus.codec.telegram_decoder import decode_fixed_data_medium_unit
 from meterbus.export import to_dict
 from meterbus.model import DecodeError, DecodeMode, DecodeResult, FixedDataTelegram, FrameKind, ShortFrame, VariableDataTelegram
 from tests.helpers.fixtures import load_hex_fixture
@@ -93,6 +94,9 @@ def test_decode_fixed_data_mode_1_telegram():
     assert result.telegram.header.access_number == 0x12
     assert result.telegram.header.status == 0
     assert result.telegram.header.medium_unit_raw == bytes.fromhex("2C 01")
+    assert result.telegram.header.medium_unit.medium == "other"
+    assert result.telegram.header.medium_unit.counter_1_unit.label == "m3"
+    assert result.telegram.header.medium_unit.counter_2_unit.label == "d_m_y"
     assert result.telegram.counters[0].index == 1
     assert result.telegram.counters[0].raw == bytes.fromhex("49 04 00 64")
     assert result.telegram.counters[0].value == Decimal("64000449")
@@ -112,6 +116,32 @@ def test_decode_fixed_data_mode_2_telegram_keeps_byte_order():
     assert result.telegram.header.identification_number == "00000021"
     assert result.telegram.counters[0].value == Decimal("64000449")
     assert result.telegram.counters[1].value == Decimal("1032")
+
+
+def test_decode_fixed_data_medium_unit_from_spec_example():
+    medium_unit = decode_fixed_data_medium_unit(bytes.fromhex("E9 7E"))
+
+    assert medium_unit.raw == bytes.fromhex("E9 7E")
+    assert medium_unit.medium_code == 0x07
+    assert medium_unit.medium == "water"
+    assert medium_unit.counter_1_unit.code == 0x29
+    assert medium_unit.counter_1_unit.label == "l"
+    assert medium_unit.counter_2_unit.code == 0x3E
+    assert medium_unit.counter_2_unit.label == "same_but_historic"
+
+
+def test_decode_fixed_data_medium_unit_mode_2_medium_code():
+    medium_unit = decode_fixed_data_medium_unit(bytes.fromhex("EA BE"))
+
+    assert medium_unit.medium_code == 0x0A
+    assert medium_unit.medium == "gas_mode_2"
+    assert medium_unit.counter_1_unit.label == "l_10"
+    assert medium_unit.counter_2_unit.label == "same_but_historic"
+
+
+def test_decode_fixed_data_medium_unit_rejects_wrong_length():
+    with pytest.raises(ValueError, match="medium/unit field must be exactly 2 bytes"):
+        decode_fixed_data_medium_unit(b"\x00")
 
 
 def test_decode_fixed_data_preserves_trailing_bytes():
@@ -135,14 +165,17 @@ def test_decode_fixed_data_rejects_truncated_payload():
 
 
 def test_fixed_data_telegram_exports_to_dict():
-    payload = bytes.fromhex("21 00 00 00 12 00 2C 01 49 04 00 64 32 10 00 00")
+    payload = bytes.fromhex("21 00 00 00 12 00 E9 7E 01 00 00 00 35 01 00 00")
 
     exported = to_dict(decode(_long_fixed_frame(payload, ci=0x73)).telegram)
 
     assert exported["application_kind"] == "fixed_data"
     assert exported["header"]["identification_number"] == "00000021"
-    assert exported["counters"][0]["value"] == "64000449"
-    assert exported["counters"][1]["value"] == "1032"
+    assert exported["header"]["medium_unit"]["medium"] == "water"
+    assert exported["header"]["medium_unit"]["counter_1_unit"]["label"] == "l"
+    assert exported["header"]["medium_unit"]["counter_2_unit"]["label"] == "same_but_historic"
+    assert exported["counters"][0]["value"] == "1"
+    assert exported["counters"][1]["value"] == "135"
 
 
 def test_decode_is_exposed_from_meterbus_package_root():
