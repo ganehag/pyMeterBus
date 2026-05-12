@@ -50,7 +50,8 @@ def decode_record(data: bytes | bytearray | memoryview | list[int] | tuple[int, 
         raise DataRecordDecodeError(str(exc)) from exc
 
     consumed = value_offset + value_result.consumed
-    value = _apply_vif_multiplier(value_result.value, vif_result.value_information.multiplier)
+    value = _interpret_vif_value(value_result.value, vif_result.value_information.kind)
+    value = _apply_vif_multiplier(value, vif_result.value_information.multiplier)
     record = DataRecord(
         raw=raw[:consumed],
         dif=dif_result.data_information,
@@ -64,6 +65,72 @@ def decode_record(data: bytes | bytearray | memoryview | list[int] | tuple[int, 
         diagnostics=(),
     )
     return DataRecordDecodeResult(record=record, consumed=consumed)
+
+
+def _interpret_vif_value(value: DecodedValue, kind: str) -> DecodedValue:
+    if kind == "date":
+        return _decode_date_value(value)
+    if kind == "datetime":
+        return _decode_datetime_value(value)
+    return value
+
+
+def _decode_date_value(value: DecodedValue) -> DecodedValue:
+    if len(value.raw) != 2:
+        return value
+
+    raw_value = value.raw[0] | (value.raw[1] << 8)
+    day = raw_value & 0x1F
+    month = (raw_value >> 8) & 0x0F
+    year = ((raw_value >> 5) & 0x07) | ((raw_value >> 9) & 0x78)
+    year += 2000
+
+    if not _valid_date_parts(year, month, day):
+        return value
+
+    return DecodedValue(
+        raw=value.raw,
+        value=f"{year:04d}-{month:02d}-{day:02d}",
+        type=ValueType.DATE,
+        unit=value.unit,
+        scaled=False,
+    )
+
+
+def _decode_datetime_value(value: DecodedValue) -> DecodedValue:
+    if len(value.raw) != 4:
+        return value
+
+    minute = value.raw[0] & 0x3F
+    hour = value.raw[1] & 0x1F
+    day = value.raw[2] & 0x1F
+    month = value.raw[3] & 0x0F
+    year = ((value.raw[1] >> 5) & 0x07) | ((value.raw[3] << 1) & 0x78)
+    year += 2000
+
+    if not _valid_date_parts(year, month, day) or hour > 23 or minute > 59:
+        return value
+
+    return DecodedValue(
+        raw=value.raw,
+        value=f"{year:04d}-{month:02d}-{day:02d}T{hour:02d}:{minute:02d}:00",
+        type=ValueType.DATETIME,
+        unit=value.unit,
+        scaled=False,
+    )
+
+
+def _valid_date_parts(year: int, month: int, day: int) -> bool:
+    if not 1 <= month <= 12:
+        return False
+    if not 1 <= day <= 31:
+        return False
+    if month in {4, 6, 9, 11} and day > 30:
+        return False
+    if month == 2:
+        leap_year = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+        return day <= 29 if leap_year else day <= 28
+    return True
 
 
 def _apply_vif_multiplier(value: DecodedValue, multiplier: Decimal) -> DecodedValue:
