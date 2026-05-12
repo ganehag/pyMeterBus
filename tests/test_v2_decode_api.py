@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from decimal import Decimal
+
 import pytest
 
 import meterbus
 from meterbus.api import decode, decode_one, decode_one_frame
-from meterbus.model import DecodeError, DecodeMode, DecodeResult, FrameKind, ShortFrame, VariableDataTelegram
+from meterbus.export import to_dict
+from meterbus.model import DecodeError, DecodeMode, DecodeResult, FixedDataTelegram, FrameKind, ShortFrame, VariableDataTelegram
 from tests.helpers.fixtures import load_hex_fixture
 
 
@@ -14,6 +17,11 @@ def _checksum(data: bytes) -> int:
 
 def _long_variable_frame(application_data: bytes, *, ci: int = 0x72) -> bytes:
     payload = bytes.fromhex("21 00 00 00 B0 5C 02 1B 12 00 00 00") + application_data
+    body = bytes([0x08, 0x0B, ci]) + payload
+    return bytes([0x68, len(body), len(body), 0x68]) + body + bytes([_checksum(body), 0x16])
+
+
+def _long_fixed_frame(payload: bytes, *, ci: int = 0x73) -> bytes:
     body = bytes([0x08, 0x0B, ci]) + payload
     return bytes([0x68, len(body), len(body), 0x68]) + body + bytes([_checksum(body), 0x16])
 
@@ -71,6 +79,70 @@ def test_decode_variable_data_mode_2_keeps_lvar_text_character_order():
     assert result.telegram.records[0].vif.kind == "customer"
     assert result.telegram.records[0].value.raw == b"ABC"
     assert result.telegram.records[0].value.value == "ABC"
+
+
+def test_decode_fixed_data_mode_1_telegram():
+    payload = bytes.fromhex("21 00 00 00 12 00 2C 01 49 04 00 64 32 10 00 00")
+
+    result = decode(_long_fixed_frame(payload, ci=0x73))
+
+    assert result.ok is True
+    assert isinstance(result.telegram, FixedDataTelegram)
+    assert result.telegram.application_kind == "fixed_data"
+    assert result.telegram.header.identification_number == "00000021"
+    assert result.telegram.header.access_number == 0x12
+    assert result.telegram.header.status == 0
+    assert result.telegram.header.medium_unit_raw == bytes.fromhex("2C 01")
+    assert result.telegram.counters[0].index == 1
+    assert result.telegram.counters[0].raw == bytes.fromhex("49 04 00 64")
+    assert result.telegram.counters[0].value == Decimal("64000449")
+    assert result.telegram.counters[1].index == 2
+    assert result.telegram.counters[1].raw == bytes.fromhex("32 10 00 00")
+    assert result.telegram.counters[1].value == Decimal("1032")
+    assert result.telegram.undecoded_data == b""
+
+
+def test_decode_fixed_data_mode_2_telegram_keeps_byte_order():
+    payload = bytes.fromhex("00 00 00 21 12 00 2C 01 64 00 04 49 00 00 10 32")
+
+    result = decode(_long_fixed_frame(payload, ci=0x77))
+
+    assert result.ok is True
+    assert isinstance(result.telegram, FixedDataTelegram)
+    assert result.telegram.header.identification_number == "00000021"
+    assert result.telegram.counters[0].value == Decimal("64000449")
+    assert result.telegram.counters[1].value == Decimal("1032")
+
+
+def test_decode_fixed_data_preserves_trailing_bytes():
+    payload = bytes.fromhex("21 00 00 00 12 00 2C 01 49 04 00 64 32 10 00 00 AA BB")
+
+    result = decode(_long_fixed_frame(payload, ci=0x73))
+
+    assert result.ok is True
+    assert isinstance(result.telegram, FixedDataTelegram)
+    assert result.telegram.undecoded_data == b"\xAA\xBB"
+
+
+def test_decode_fixed_data_rejects_truncated_payload():
+    payload = bytes.fromhex("21 00 00 00 12 00 2C 01 49 04")
+
+    result = decode(_long_fixed_frame(payload, ci=0x73), mode=DecodeMode.STRICT)
+
+    assert result.ok is False
+    assert result.telegram is None
+    assert result.diagnostics[-1].code == "truncated_fixed_data_telegram"
+
+
+def test_fixed_data_telegram_exports_to_dict():
+    payload = bytes.fromhex("21 00 00 00 12 00 2C 01 49 04 00 64 32 10 00 00")
+
+    exported = to_dict(decode(_long_fixed_frame(payload, ci=0x73)).telegram)
+
+    assert exported["application_kind"] == "fixed_data"
+    assert exported["header"]["identification_number"] == "00000021"
+    assert exported["counters"][0]["value"] == "64000449"
+    assert exported["counters"][1]["value"] == "1032"
 
 
 def test_decode_is_exposed_from_meterbus_package_root():
