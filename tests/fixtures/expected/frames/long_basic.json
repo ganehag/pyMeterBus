@@ -1,0 +1,22 @@
+{
+  "diagnostics": [],
+  "frame": {
+    "address": {
+      "value": 11
+    },
+    "checksum": 221,
+    "checksum_valid": true,
+    "ci": 114,
+    "control": {
+      "raw": 8
+    },
+    "diagnostics": [],
+    "kind": "long",
+    "length": 61,
+    "payload": "21 00 00 00 B0 5C 02 1B 12 00 00 00 0C 78 49 04 00 64 02 75 0A 00 01 FD 71 1E 2F 2F 0A 66 20 02 0A FB 1A 31 05 02 FD 97 1D 00 00 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F",
+    "raw": "68 3D 3D 68 08 0B 72 21 00 00 00 B0 5C 02 1B 12 00 00 00 0C 78 49 04 00 64 02 75 0A 00 01 FD 71 1E 2F 2F 0A 66 20 02 0A FB 1A 31 05 02 FD 97 1D 00 00 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F DD 16"
+  },
+  "ok": true,
+  "raw": "68 3D 3D 68 08 0B 72 21 00 00 00 B0 5C 02 1B 12 00 00 00 0C 78 49 04 00 64 02 75 0A 00 01 FD 71 1E 2F 2F 0A 66 20 02 0A FB 1A 31 05 02 FD 97 1D 00 00 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F DD 16",
+  "telegram": null
+}

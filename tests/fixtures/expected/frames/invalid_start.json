@@ -1,0 +1,17 @@
+{
+  "diagnostics": [
+    {
+      "code": "invalid_start_byte",
+      "context": {
+        "start_byte": 0
+      },
+      "message": "Frame does not start with a known M-Bus start byte.",
+      "offset": 0,
+      "severity": "fatal"
+    }
+  ],
+  "frame": null,
+  "ok": false,
+  "raw": "00 00 00 00 00 00 00 00 00 00 00 00 00",
+  "telegram": null
+}
