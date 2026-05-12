@@ -1,0 +1,19 @@
+{
+  "diagnostics": [],
+  "frame": {
+    "address": {
+      "value": 11
+    },
+    "checksum": 19,
+    "checksum_valid": true,
+    "control": {
+      "raw": 8
+    },
+    "diagnostics": [],
+    "kind": "short",
+    "raw": "10 08 0B 13 16"
+  },
+  "ok": true,
+  "raw": "10 08 0B 13 16",
+  "telegram": null
+}
