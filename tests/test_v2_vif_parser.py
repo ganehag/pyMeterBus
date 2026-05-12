@@ -96,8 +96,8 @@ def test_parse_unknown_vif_is_preserved():
 
 def test_parse_vif_after_first_dif_from_long_fixture():
     telegram = decode(load_hex_fixture("frames/long_basic.hex").data).telegram
-    dif_result = parse_dif(telegram.undecoded_data)
-    vif_result = parse_vif(telegram.undecoded_data[dif_result.consumed:])
+    dif_result = parse_dif(telegram.raw_application_data)
+    vif_result = parse_vif(telegram.raw_application_data[dif_result.consumed:])
     vif = vif_result.value_information
 
     assert vif_result.consumed == 1
