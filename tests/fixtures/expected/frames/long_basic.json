@@ -74,6 +74,7 @@
           "value": "64000449"
         },
         "vif": {
+          "extension_bytes": "",
           "kind": "fabrication_number",
           "multiplier": "1",
           "raw": "78",
@@ -105,6 +106,7 @@
           "value": 10
         },
         "vif": {
+          "extension_bytes": "",
           "kind": "manufacturer",
           "multiplier": "1",
           "raw": "75",
