@@ -12,6 +12,8 @@ from decimal import Decimal
 
 from meterbus.model import DataEncoding, DataInformation, DecodedValue, Unit, ValueType
 
+from .variable import VariableLengthValueError, decode_variable_value
+
 
 @dataclass(frozen=True)
 class ValueDecodeResult:
@@ -42,9 +44,12 @@ def decode_value(
         return ValueDecodeResult(DecodedValue(b"", None, ValueType.UNKNOWN, unit=unit), 0)
 
     if dif.data_encoding is DataEncoding.VARIABLE_LENGTH:
-        value_raw, consumed = _decode_variable_length_raw(raw)
+        try:
+            value_raw, consumed, decoded, value_type = decode_variable_value(raw)
+        except VariableLengthValueError as exc:
+            raise ValueDecodeError(str(exc)) from exc
         return ValueDecodeResult(
-            DecodedValue(value_raw, value_raw, ValueType.BINARY, unit=unit),
+            DecodedValue(value_raw, decoded, value_type, unit=unit),
             consumed,
         )
 
@@ -110,13 +115,3 @@ def _decode_bcd(raw: bytes) -> Decimal:
     if not value:
         value = "0"
     return Decimal(value)
-
-
-def _decode_variable_length_raw(raw: bytes) -> tuple[bytes, int]:
-    if not raw:
-        raise ValueDecodeError("variable-length value is missing length byte")
-    length = raw[0]
-    end = 1 + length
-    if len(raw) < end:
-        raise ValueDecodeError("variable-length value is truncated")
-    return raw[1:end], end
