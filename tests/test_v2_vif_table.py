@@ -64,6 +64,10 @@ def test_base_vif_numeric_ranges(vif, kind, unit_name, symbol, multiplier):
         (0x6D, "datetime", "datetime"),
         (0x6E, "heat_cost_allocator", "heat_cost_allocator"),
         (0x6F, "reserved", "reserved"),
+        (0x74, "actuality_duration", "actuality_duration"),
+        (0x75, "manufacturer", "manufacturer"),
+        (0x76, "enhanced_identification", "enhanced_identification"),
+        (0x77, "bus_address", "bus_address"),
         (0x78, "fabrication_number", "fabrication_number"),
         (0x79, "enhanced_identification", "enhanced_identification"),
         (0x7A, "bus_address", "bus_address"),
@@ -94,10 +98,6 @@ def test_base_vif_discrete_values(vif, kind, unit_name):
         (0x71, "average_duration", Decimal("60")),
         (0x72, "average_duration", Decimal("3600")),
         (0x73, "average_duration", Decimal("86400")),
-        (0x74, "actuality_duration", Decimal("1")),
-        (0x75, "actuality_duration", Decimal("60")),
-        (0x76, "actuality_duration", Decimal("3600")),
-        (0x77, "actuality_duration", Decimal("86400")),
     ],
 )
 def test_base_vif_duration_ranges(vif, kind, multiplier):
