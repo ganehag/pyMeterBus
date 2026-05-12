@@ -131,7 +131,7 @@ def test_decode_fixed_data_medium_unit_from_spec_example():
 
 
 def test_decode_fixed_data_medium_unit_mode_2_medium_code():
-    medium_unit = decode_fixed_data_medium_unit(bytes.fromhex("EA BE"))
+    medium_unit = decode_fixed_data_medium_unit(bytes.fromhex("AA BE"))
 
     assert medium_unit.medium_code == 0x0A
     assert medium_unit.medium == "gas_mode_2"
