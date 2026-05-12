@@ -138,7 +138,7 @@
           "value": 30
         },
         "vif": {
-          "enhancement": "first_extension_vif",
+          "enhancement": "main_extension_vif",
           "extension_bytes": "71",
           "kind": "dimensionless",
           "multiplier": "1",
