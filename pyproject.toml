@@ -28,10 +28,9 @@ classifiers = [
 [project.optional-dependencies]
 serial = ["pyserial"]
 yaml = ["pyaml"]
-json = ["simplejson"]
 crypto = ["pycryptodome"]
-legacy = ["pyserial", "pyaml", "simplejson", "pycryptodome"]
-all = ["pyserial", "pyaml", "simplejson", "pycryptodome"]
+legacy = ["pyserial", "pyaml", "pycryptodome"]
+all = ["pyserial", "pyaml", "pycryptodome"]
 
 [project.urls]
 Homepage = "https://github.com/ganehag/pyMeterBus"
