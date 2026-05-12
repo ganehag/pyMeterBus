@@ -1,7 +1,8 @@
 """Application telegram decoder for pyMeterBus 2.0.
 
-This slice only recognizes variable-data telegram headers carried by long
-frames with CI 0x72. DIF/VIF records are intentionally left undecoded.
+This decoder recognizes variable-data telegrams carried by long frames with
+CI 0x72. It decodes the fixed header and then decodes records until filler
+bytes or undecodable trailing data are reached.
 """
 
 from __future__ import annotations
@@ -19,14 +20,16 @@ from meterbus.model import (
 )
 
 from .frame_decoder import FrameDecoder
+from .record import DataRecordDecodeError, decode_record
 
 _VARIABLE_DATA_CI = 0x72
 _VARIABLE_DATA_HEADER_LENGTH = 12
+_FILLER_BYTE = 0x2F
 
 
 @dataclass(frozen=True)
 class TelegramDecoder:
-    """Decode application-level telegram shells from frame envelopes."""
+    """Decode application-level telegrams from frame envelopes."""
 
     frame_decoder: FrameDecoder = FrameDecoder()
 
@@ -78,14 +81,17 @@ class TelegramDecoder:
 
         header = decode_variable_data_header(frame.payload[:_VARIABLE_DATA_HEADER_LENGTH])
         application_data = frame.payload[_VARIABLE_DATA_HEADER_LENGTH:]
+        records, undecoded_data, record_diagnostics = _decode_records(application_data, mode)
+        diagnostics.extend(record_diagnostics)
+
         telegram = VariableDataTelegram(
             frame=frame,
             diagnostics=tuple(diagnostics),
             header=header,
-            records=(),
+            records=tuple(records),
             more_records_follow=False,
             raw_application_data=application_data,
-            undecoded_data=application_data,
+            undecoded_data=undecoded_data,
         )
         return DecodeResult(
             ok=not any(diagnostic.severity is Severity.FATAL for diagnostic in diagnostics),
@@ -115,6 +121,45 @@ def decode_variable_data_header(raw: bytes) -> VariableDataHeader:
     )
 
 
+def _decode_records(application_data: bytes, mode: DecodeMode):
+    records = []
+    diagnostics: list[Diagnostic] = []
+    offset = 0
+
+    while offset < len(application_data):
+        if application_data[offset] == _FILLER_BYTE:
+            return records, application_data[offset:], diagnostics
+
+        try:
+            result = decode_record(application_data[offset:])
+        except DataRecordDecodeError as exc:
+            diagnostics.append(
+                Diagnostic(
+                    severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,
+                    code="record_decode_error",
+                    message=str(exc),
+                    offset=_VARIABLE_DATA_HEADER_LENGTH + offset,
+                )
+            )
+            return records, application_data[offset:], diagnostics
+
+        if result.consumed <= 0:
+            diagnostics.append(
+                Diagnostic(
+                    severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,
+                    code="record_decoder_did_not_advance",
+                    message="Record decoder did not consume any bytes.",
+                    offset=_VARIABLE_DATA_HEADER_LENGTH + offset,
+                )
+            )
+            return records, application_data[offset:], diagnostics
+
+        records.append(result.record)
+        offset += result.consumed
+
+    return records, b"", diagnostics
+
+
 def _decode_bcd_identification(raw: bytes) -> str:
     """Decode the little-endian BCD identification number."""
 
@@ -139,6 +184,6 @@ def decode_telegram(
     data: bytes | bytearray | memoryview | list[int] | tuple[int, ...],
     mode: DecodeMode = DecodeMode.STRICT,
 ) -> DecodeResult:
-    """Decode one application telegram shell."""
+    """Decode one application telegram."""
 
     return TelegramDecoder().decode(data, mode=mode)
