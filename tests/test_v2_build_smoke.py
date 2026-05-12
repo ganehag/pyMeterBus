@@ -1,0 +1,26 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_build_smoke_script_builds_and_installs_wheel():
+    script = (_PROJECT_ROOT / "scripts" / "smoke-build.sh").read_text()
+
+    assert "python -m build --wheel" in script
+    assert "python -m venv" in script
+    assert "pymeterbus-decode E5" in script
+    assert "from meterbus.api import decode" in script
+    assert "from meterbus.export import to_json" in script
+
+
+def test_build_smoke_workflow_uses_smoke_script():
+    workflow = (_PROJECT_ROOT / ".github" / "workflows" / "build-smoke.yml").read_text()
+
+    assert "bash scripts/smoke-build.sh" in workflow
+    assert "actions/setup-python@v5" in workflow
+    assert '"3.11"' in workflow
+    assert '"3.12"' in workflow
+    assert '"3.13"' in workflow
