@@ -21,7 +21,9 @@ from meterbus.model import (
     Diagnostic,
     FixedDataCounter,
     FixedDataHeader,
+    FixedDataMediumUnit,
     FixedDataTelegram,
+    FixedDataUnit,
     Frame,
     LongFrame,
     PrimaryAddress,
@@ -91,6 +93,10 @@ def to_dict(value: Any, *, view: ExportView | str = ExportView.FULL) -> Any:
         return _unknown_record_to_dict(value)
     if isinstance(value, VariableDataHeader):
         return _variable_data_header_to_dict(value)
+    if isinstance(value, FixedDataUnit):
+        return _fixed_data_unit_to_dict(value)
+    if isinstance(value, FixedDataMediumUnit):
+        return _fixed_data_medium_unit_to_dict(value)
     if isinstance(value, FixedDataHeader):
         return _fixed_data_header_to_dict(value)
     if isinstance(value, FixedDataCounter):
@@ -177,6 +183,7 @@ def _meter_summary_to_dict(telegram: Telegram) -> dict[str, Any] | None:
                 "access_number": header.access_number,
                 "status": header.status,
                 "medium_unit_raw": to_dict(header.medium_unit_raw),
+                "medium": header.medium_unit.medium if header.medium_unit is not None else None,
             }
         )
     return None
@@ -340,12 +347,30 @@ def _variable_data_header_to_dict(header: VariableDataHeader) -> dict[str, Any]:
     )
 
 
+def _fixed_data_unit_to_dict(unit: FixedDataUnit) -> dict[str, Any]:
+    return {
+        "code": unit.code,
+        "label": unit.label,
+    }
+
+
+def _fixed_data_medium_unit_to_dict(medium_unit: FixedDataMediumUnit) -> dict[str, Any]:
+    return {
+        "raw": to_dict(medium_unit.raw),
+        "medium_code": medium_unit.medium_code,
+        "medium": medium_unit.medium,
+        "counter_1_unit": to_dict(medium_unit.counter_1_unit),
+        "counter_2_unit": to_dict(medium_unit.counter_2_unit),
+    }
+
+
 def _fixed_data_header_to_dict(header: FixedDataHeader) -> dict[str, Any]:
     return {
         "identification_number": header.identification_number,
         "access_number": header.access_number,
         "status": header.status,
         "medium_unit_raw": to_dict(header.medium_unit_raw),
+        "medium_unit": to_dict(header.medium_unit),
         "raw": to_dict(header.raw),
     }
 
