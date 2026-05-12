@@ -32,7 +32,7 @@ def test_parse_volume_vif():
     assert vif.unit.name == "volume"
     assert vif.unit.symbol == "m^3"
     assert vif.kind == "volume"
-    assert vif.multiplier == Decimal("0.000001")
+    assert vif.multiplier == Decimal("0.001")
 
 
 def test_parse_known_plain_fixture_vifs():
