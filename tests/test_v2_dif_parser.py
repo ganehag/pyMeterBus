@@ -50,7 +50,7 @@ def test_parse_dife_extension_metadata():
     assert result.has_extension is True
     assert dif.raw == b"\x84\x51"
     assert dif.extension_bytes == b"\x51"
-    assert dif.storage_number == 3
+    assert dif.storage_number == 2
     assert dif.tariff == 1
     assert dif.subunit == 1
 
@@ -61,7 +61,7 @@ def test_parse_multiple_dife_extension_bytes():
 
     assert result.consumed == 3
     assert dif.extension_bytes == b"\x81\x22"
-    assert dif.storage_number == 69
+    assert dif.storage_number == 66
     assert dif.tariff == 8
     assert dif.subunit == 0
 
