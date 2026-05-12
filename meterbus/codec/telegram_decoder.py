@@ -27,6 +27,8 @@ _VARIABLE_DATA_CI_MODE_1 = 0x72
 _VARIABLE_DATA_CI_MODE_2 = 0x76
 _VARIABLE_DATA_HEADER_LENGTH = 12
 _FILLER_BYTE = 0x2F
+_MANUFACTURER_SPECIFIC_DATA = 0x0F
+_MANUFACTURER_SPECIFIC_DATA_MORE_RECORDS = 0x1F
 
 
 @dataclass(frozen=True)
@@ -83,7 +85,7 @@ class TelegramDecoder:
 
         header = decode_variable_data_header(frame.payload[:_VARIABLE_DATA_HEADER_LENGTH])
         application_data = frame.payload[_VARIABLE_DATA_HEADER_LENGTH:]
-        records, undecoded_data, record_diagnostics = _decode_records(
+        records, undecoded_data, more_records_follow, record_diagnostics = _decode_records(
             application_data,
             mode,
             lsb_order=frame.ci == _VARIABLE_DATA_CI_MODE_1,
@@ -95,7 +97,7 @@ class TelegramDecoder:
             diagnostics=tuple(diagnostics),
             header=header,
             records=tuple(records),
-            more_records_follow=False,
+            more_records_follow=more_records_follow,
             raw_application_data=application_data,
             undecoded_data=undecoded_data,
         )
@@ -131,10 +133,19 @@ def _decode_records(application_data: bytes, mode: DecodeMode, *, lsb_order: boo
     records = []
     diagnostics: list[Diagnostic] = []
     offset = 0
+    more_records_follow = False
 
     while offset < len(application_data):
         if application_data[offset] == _FILLER_BYTE:
-            return records, application_data[offset:], diagnostics
+            return records, application_data[offset:], more_records_follow, diagnostics
+
+        if application_data[offset] in (_MANUFACTURER_SPECIFIC_DATA, _MANUFACTURER_SPECIFIC_DATA_MORE_RECORDS):
+            reason = "manufacturer_specific_data"
+            if application_data[offset] == _MANUFACTURER_SPECIFIC_DATA_MORE_RECORDS:
+                reason = "manufacturer_specific_data_more_records_follow"
+                more_records_follow = True
+            records.append(UnknownRecord(raw=application_data[offset:], reason=reason))
+            return records, b"", more_records_follow, diagnostics
 
         try:
             result = decode_record(application_data[offset:], lsb_order=lsb_order)
@@ -147,10 +158,10 @@ def _decode_records(application_data: bytes, mode: DecodeMode, *, lsb_order: boo
             )
             diagnostics.append(diagnostic)
             if mode is DecodeMode.STRICT:
-                return records, application_data[offset:], diagnostics
+                return records, application_data[offset:], more_records_follow, diagnostics
             preserved = _preserve_unknown_record(application_data[offset:], str(exc), diagnostic)
             records.append(preserved)
-            return records, b"", diagnostics
+            return records, b"", more_records_follow, diagnostics
 
         if result.consumed <= 0:
             diagnostic = Diagnostic(
@@ -161,15 +172,15 @@ def _decode_records(application_data: bytes, mode: DecodeMode, *, lsb_order: boo
             )
             diagnostics.append(diagnostic)
             if mode is DecodeMode.STRICT:
-                return records, application_data[offset:], diagnostics
+                return records, application_data[offset:], more_records_follow, diagnostics
             preserved = _preserve_unknown_record(application_data[offset:], diagnostic.message, diagnostic)
             records.append(preserved)
-            return records, b"", diagnostics
+            return records, b"", more_records_follow, diagnostics
 
         records.append(result.record)
         offset += result.consumed
 
-    return records, b"", diagnostics
+    return records, b"", more_records_follow, diagnostics
 
 
 def _preserve_unknown_record(raw: bytes, reason: str, diagnostic: Diagnostic) -> UnknownRecord:
