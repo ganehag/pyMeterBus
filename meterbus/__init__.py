@@ -43,6 +43,7 @@ from .exceptions import MBusFrameDecodeError, FrameMismatch
 
 from .serial import *
 from .auxiliary import *
+from .api import decode, decode_one, decode_one_frame
 
 __author__ = "Mikael Ganehag Brorsson"
 __license__ = "BSD-3-Clause"
