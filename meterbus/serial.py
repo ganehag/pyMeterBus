@@ -10,7 +10,10 @@ from .telegram_ack import TelegramACK
 from .telegram_short import TelegramShort
 from .telegram_control import TelegramControl
 from .telegram_long import TelegramLong
-from .wtelegram_snd_nr import WTelegramSndNr
+try:
+    from .wtelegram_snd_nr import WTelegramSndNr
+except ImportError:
+    WTelegramSndNr = None
 
 from .exceptions import (MBusFrameDecodeError, MBusFrameCRCError,
                          FrameMismatch, MbusFrameLengthError)
@@ -20,6 +23,13 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _frame_parsers():
+    frames = [TelegramACK, TelegramShort, TelegramControl, TelegramLong]
+    if WTelegramSndNr is not None:
+        frames.insert(0, WTelegramSndNr)
+    return frames
 
 
 def serial_send(ser, data=None, read_echo=False):
@@ -147,8 +157,7 @@ def recv_frame(ser, length=1):
                  " ".join(["{:02x}".format(x).upper() for x in characters])
             ))
 
-        for Frame in [WTelegramSndNr, TelegramACK, TelegramShort,
-                      TelegramControl, TelegramLong]:
+        for Frame in _frame_parsers():
                 try:
                         frame = Frame.parse(list(data))
                         return data
@@ -270,8 +279,7 @@ class MBusSerial:
                      " ".join(["{:02x}".format(x).upper() for x in characters])
                 ))
 
-            for Frame in [WTelegramSndNr, TelegramACK, TelegramShort,
-                          TelegramControl, TelegramLong]:
+            for Frame in _frame_parsers():
                     try:
                             frame = Frame.parse(list(data))
                             return data
