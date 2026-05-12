@@ -29,9 +29,15 @@ from .telegram_body import TelegramBody, TelegramBodyHeader, \
 from .telegram_field import TelegramField
 from .telegram_variable_data_record import TelegramVariableDataRecord
 
-from .wtelegram_snd_nr import WTelegramSndNr
-from .wtelegram_body import WTelegramFrame, WTelegramBaseDataHeader
-from .wtelegram_header import WTelegramHeader
+try:
+    from .wtelegram_snd_nr import WTelegramSndNr
+    from .wtelegram_body import WTelegramFrame, WTelegramBaseDataHeader
+    from .wtelegram_header import WTelegramHeader
+except ImportError:
+    WTelegramSndNr = None
+    WTelegramFrame = None
+    WTelegramBaseDataHeader = None
+    WTelegramHeader = None
 
 from .exceptions import MBusFrameDecodeError, FrameMismatch
 
@@ -59,8 +65,11 @@ def load(data):
     elif isinstance(data, list):
         pass
 
-    for Frame in [WTelegramSndNr, TelegramACK, TelegramShort, TelegramControl,
-                  TelegramLong]:
+    frame_types = [TelegramACK, TelegramShort, TelegramControl, TelegramLong]
+    if WTelegramSndNr is not None:
+        frame_types.insert(0, WTelegramSndNr)
+
+    for Frame in frame_types:
         try:
             return Frame.parse(data)
 
@@ -73,4 +82,6 @@ def debug(state):
   g.debug = state
 
 def add_wmbus_encryption_key(id_nr, key):
+    if WTelegramBaseDataHeader is None:
+        raise ImportError("wireless M-Bus support requires pycryptodome")
     WTelegramBaseDataHeader.add_decryption_key(id_nr, key)
