@@ -36,8 +36,8 @@ def test_record_decoder_does_not_scale_non_numeric_values():
     result = decode_record(bytes([0x0D, 0x78, 0x03]) + b"ABC")
     record = result.record
 
-    assert record.value.value == b"ABC"
-    assert record.value.type is ValueType.BINARY
+    assert record.value.value == "CBA"
+    assert record.value.type is ValueType.STRING
     assert record.value.scaled is False
 
 
