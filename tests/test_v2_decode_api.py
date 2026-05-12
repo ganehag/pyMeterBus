@@ -22,7 +22,7 @@ def test_decode_returns_decode_result_with_frame_but_no_telegram_for_short_frame
     assert result.diagnostics == ()
 
 
-def test_decode_returns_header_only_variable_data_telegram_for_long_frame():
+def test_decode_returns_variable_data_telegram_with_records_for_long_frame():
     raw = load_hex_fixture("frames/long_basic.hex").data
 
     result = decode(raw)
@@ -35,9 +35,12 @@ def test_decode_returns_header_only_variable_data_telegram_for_long_frame():
     assert result.telegram.header.medium == 0x1B
     assert result.telegram.header.access_number == 0x12
     assert result.telegram.header.status == 0
-    assert result.telegram.records == ()
+    assert len(result.telegram.records) == 3
+    assert result.telegram.records[0].vif.kind == "fabrication_number"
+    assert result.telegram.records[1].vif.kind == "manufacturer"
+    assert result.telegram.records[2].vif.kind == "dimensionless"
     assert result.telegram.raw_application_data == result.frame.payload[12:]
-    assert result.telegram.undecoded_data == result.frame.payload[12:]
+    assert result.telegram.undecoded_data.startswith(b"\x2F\x2F")
 
 
 def test_decode_is_exposed_from_meterbus_package_root():
@@ -79,7 +82,7 @@ def test_decode_one_returns_variable_data_telegram():
 
     assert isinstance(telegram, VariableDataTelegram)
     assert telegram.header.identification_number == "00000021"
-    assert telegram.records == ()
+    assert len(telegram.records) == 3
 
 
 def test_decode_one_raises_when_no_application_telegram_is_available():
