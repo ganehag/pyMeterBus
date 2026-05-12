@@ -16,6 +16,29 @@ Python version
 
 I've decided only to support active Python version. Thus, any EOL version is not supported.
 
+Version 2 decoder API
+---------------------
+
+The v2 decoder work-in-progress provides a structured, diagnostics-first API for decoding M-Bus frames without using the older object model directly.
+
+```python
+from meterbus.api import decode
+from meterbus.export import to_json
+
+result = decode(bytes.fromhex("E5"))
+print(result.ok)
+print(to_json(result))
+```
+
+The same decoder can be used from the command line:
+
+```shell
+python -m meterbus.cli.decode "E5"
+pymeterbus-decode "E5"
+```
+
+See [docs/v2-usage.md](docs/v2-usage.md) for decode modes, JSON export, and longer examples.
+
 Current State (2025)
 -------------
 
