@@ -24,31 +24,36 @@ class ControlField:
             raise ValueError("control field must fit in one byte")
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, init=False)
 class Frame:
     """Base frame model preserving raw bytes and diagnostics."""
 
     kind: FrameKind
     raw: bytes
-    checksum: int | None = None
-    checksum_valid: bool | None = None
-    diagnostics: tuple[Diagnostic, ...] = ()
+    checksum: int | None
+    checksum_valid: bool | None
+    diagnostics: tuple[Diagnostic, ...]
 
 
 @dataclass(frozen=True)
 class AckFrame(Frame):
     """Single-byte ACK frame."""
 
-    kind: FrameKind = FrameKind.ACK
     raw: bytes = b"\xE5"
     checksum: int | None = None
     checksum_valid: bool | None = None
+    diagnostics: tuple[Diagnostic, ...] = ()
+    kind: FrameKind = FrameKind.ACK
 
 
 @dataclass(frozen=True)
 class ShortFrame(Frame):
     """Short frame: 10 C A CS 16."""
 
+    raw: bytes = b""
+    checksum: int | None = None
+    checksum_valid: bool | None = None
+    diagnostics: tuple[Diagnostic, ...] = ()
     control: ControlField = ControlField(raw=0)
     address: PrimaryAddress = PrimaryAddress(0)
     kind: FrameKind = FrameKind.SHORT
@@ -58,6 +63,10 @@ class ShortFrame(Frame):
 class ControlFrame(Frame):
     """Control frame with length 3."""
 
+    raw: bytes = b""
+    checksum: int | None = None
+    checksum_valid: bool | None = None
+    diagnostics: tuple[Diagnostic, ...] = ()
     length: int = 3
     control: ControlField = ControlField(raw=0)
     address: PrimaryAddress = PrimaryAddress(0)
@@ -69,6 +78,10 @@ class ControlFrame(Frame):
 class LongFrame(Frame):
     """Long frame carrying application payload bytes."""
 
+    raw: bytes = b""
+    checksum: int | None = None
+    checksum_valid: bool | None = None
+    diagnostics: tuple[Diagnostic, ...] = ()
     length: int = 0
     control: ControlField = ControlField(raw=0)
     address: PrimaryAddress = PrimaryAddress(0)
