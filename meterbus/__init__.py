@@ -41,7 +41,11 @@ except ImportError:
 
 from .exceptions import MBusFrameDecodeError, FrameMismatch
 
-from .serial import *
+try:
+    from .serial import *
+except ImportError:
+    pass
+
 from .auxiliary import *
 from .api import decode, decode_one, decode_one_frame
 
