@@ -103,9 +103,9 @@ def test_base_vif_duration_ranges(vif, multiplier):
 
 
 def test_unknown_base_vif_stays_preserved():
-    value_information = parse_vif(bytes([0x55])).value_information
+    value_information = parse_vif(bytes([0x7F])).value_information
 
     assert value_information.unit is None
     assert value_information.kind == "unknown"
     assert value_information.multiplier == Decimal("1")
-    assert value_information.enhancement == "unknown_base_vif_0x55"
+    assert value_information.enhancement == "unknown_base_vif_0x7F"
