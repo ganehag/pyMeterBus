@@ -12,12 +12,7 @@ authors = [
 license = "BSD-3-Clause"
 readme = "README.md"
 requires-python = ">=3.6"
-dependencies = [
-    "pyaml",
-    "pycryptodome",
-    "pyserial",
-    "simplejson"
-]
+dependencies = []
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -29,6 +24,13 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Topic :: Software Development :: Libraries"
 ]
+
+[project.optional-dependencies]
+serial = ["pyserial"]
+yaml = ["pyaml"]
+crypto = ["pycryptodome"]
+legacy = ["pyserial", "pyaml", "pycryptodome"]
+all = ["pyserial", "pyaml", "pycryptodome"]
 
 [project.urls]
 Homepage = "https://github.com/ganehag/pyMeterBus"
