@@ -25,6 +25,8 @@ The current v2 branch is useful, tested, and documented enough for preview use. 
 - [x] v2 usage documentation.
 - [x] Focused v2 test script.
 - [x] Focused v2 GitHub Actions workflow.
+- [x] Dependency-free default install.
+- [x] Lightweight root package exports for the v2 decode API.
 
 ## Protocol coverage gaps
 
@@ -38,10 +40,13 @@ The current v2 branch is useful, tested, and documented enough for preview use. 
 
 ## Compatibility decisions
 
-- [ ] Decide whether v2 remains a parallel API or becomes the default decode path.
-- [ ] Decide whether `meterbus.load()` should eventually wrap v2 or remain legacy-only.
+- [x] Treat v2 as a breaking rewrite rather than a drop-in legacy-compatible release.
+- [x] Make root package exports v2-focused: `decode`, `decode_one`, and `decode_one_frame`.
+- [x] Do not guarantee legacy classes or serial helpers from `import meterbus`.
+- [x] Keep v2 decode/export/CLI usable from a dependency-free default install.
+- [ ] Decide whether `meterbus.load()` should eventually wrap v2, move to a legacy module, or remain unavailable from the v2 root.
 - [ ] Decide whether v2 models are public stable API or still preview API.
-- [ ] Decide whether root package exports should expose `decode`, `to_dict`, and `to_json`.
+- [ ] Decide whether root package exports should also expose `to_dict` and `to_json`.
 - [ ] Decide strict/lenient/compat semantics for all known non-fatal frame issues.
 - [ ] Document any intentional differences from legacy parsed values.
 
@@ -50,7 +55,7 @@ The current v2 branch is useful, tested, and documented enough for preview use. 
 - [ ] Choose a preview version scheme, for example `2.0.0a1`, `2.0.0b1`, or `1.x` with v2 preview APIs.
 - [ ] Update package classifiers if Python support has changed.
 - [ ] Confirm `requires-python` matches the tested support window.
-- [ ] Confirm optional dependencies are not needed for the v2 decoder path.
+- [x] Confirm optional dependencies are not needed for the v2 decoder path.
 - [ ] Verify editable install and wheel install both expose `pymeterbus-decode`.
 - [ ] Add changelog or release notes for the v2 preview.
 
@@ -65,6 +70,7 @@ The current v2 branch is useful, tested, and documented enough for preview use. 
 ## Documentation
 
 - [ ] Keep README v2 section concise and link to detailed docs.
+- [x] Document the v2 root API contract and dependency-free default install.
 - [ ] Expand `docs/v2-usage.md` with real-world examples as fixtures grow.
 - [ ] Document common diagnostics and what users should do with them.
 - [ ] Document strict, lenient, and compat mode differences with examples.

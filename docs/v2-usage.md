@@ -2,7 +2,28 @@
 
 The v2 API is a structured decoder path built around explicit results, diagnostics, and deterministic export helpers.
 
-It does not replace the older `meterbus.load()` object model yet. Use it when you want a predictable decode result, JSON output, and clear diagnostics.
+v2 is a breaking rewrite. The package root is intentionally lightweight and focused on the v2 decode API. Legacy root-level imports from the older object model are no longer the supported public contract.
+
+## Public imports
+
+Preferred v2 imports:
+
+```python
+from meterbus import decode
+from meterbus.api import decode
+from meterbus.export import to_dict, to_json
+from meterbus.model import DecodeMode
+```
+
+The package root exports only the small v2 decode surface:
+
+```python
+from meterbus import decode, decode_one, decode_one_frame
+```
+
+Do not rely on legacy symbols such as `TelegramLong`, `TelegramACK`, serial helpers, or wireless telegram classes being available from `import meterbus`. Import v2 APIs directly instead.
+
+The default package install is dependency-free. Serial, YAML, and crypto dependencies are available as extras for legacy or optional workflows, but the v2 decode/export/CLI path does not require them.
 
 ## Decode a frame
 
