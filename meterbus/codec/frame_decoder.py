@@ -249,8 +249,7 @@ class FrameDecoder:
                     length=length,
                 )
             )
-            if mode is DecodeMode.STRICT:
-                return FrameDecodeResult(False, None, tuple(diagnostics), raw)
+            return FrameDecodeResult(False, None, tuple(diagnostics), raw)
 
         expected_total_length = length + 6
         if len(raw) != expected_total_length:

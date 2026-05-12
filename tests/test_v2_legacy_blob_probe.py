@@ -108,23 +108,21 @@ def test_legacy_blob_probe_bucket_counts_are_stable():
         "clean_with_undecoded_tail": 2,
         "frame_level_error": 1,
         "lenient_with_diagnostics": 18,
-        "raises_exception": 1,
-        "unparsed": 3,
+        "unparsed": 4,
     }
 
 
-def test_legacy_blob_probe_only_known_file_raises_from_public_decode():
+def test_legacy_blob_probe_public_decode_does_not_raise():
     actual = _actual_classifications()
 
-    assert [path for path, status in actual.items() if status == "raises_exception"] == [
-        "tests/test-frames/invalid_length.blob"
-    ]
+    assert [path for path, status in actual.items() if status == "raises_exception"] == []
 
 
-def test_legacy_blob_probe_unparsed_files_are_known_unsupported_inputs():
+def test_legacy_blob_probe_unparsed_files_are_known_unsupported_or_invalid_inputs():
     actual = _actual_classifications()
 
     assert sorted(path for path, status in actual.items() if status == "unparsed") == [
+        "tests/test-frames/invalid_length.blob",
         "tests/unsupported-frames/gabriel-wmbus.blob",
         "tests/unsupported-frames/gabriel-wmbus.blob.2",
         "tests/unsupported-frames/manual_frame1.blob",
