@@ -27,3 +27,11 @@ def test_v2_release_checklist_mentions_core_release_paths():
     assert "prerelease" in checklist
     assert "pymeterbus-decode" in checklist
     assert "bash scripts/test-v2.sh" in checklist
+
+
+def test_v2_release_checklist_mentions_preview_version():
+    checklist = (_PROJECT_ROOT / "docs" / "v2-release-checklist.md").read_text()
+
+    assert "2.0.0a1" in checklist
+    assert "Explicit v2 prerelease version" in checklist
+    assert "Choose a preview version scheme" in checklist
