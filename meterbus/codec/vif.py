@@ -114,7 +114,7 @@ def _decode_base_vif(base_vif: int) -> tuple[Unit | None, str, Decimal, str | No
     if 0x00 <= base_vif <= 0x07:
         return Unit("energy", "Wh"), "energy", _power10(base_vif - 3), None
     if 0x10 <= base_vif <= 0x17:
-        return Unit("volume", "m^3"), "volume", _power10(base_vif - 6), None
+        return Unit("volume", "m^3"), "volume", _power10((base_vif & 0x0F) - 6), None
     if base_vif == 0x75:
         return Unit("manufacturer", None), "manufacturer", Decimal("1"), None
     if base_vif == 0x78:
