@@ -71,17 +71,36 @@ def test_decode_variable_length_binary_value():
     assert result.value.type is ValueType.BINARY
 
 
-def test_decode_variable_length_floating_point_marker_is_preserved_as_binary():
-    result = decode_value(bytes([0xF2, 0x41, 0x42]), _variable_dif(), data_length=None)
+@pytest.mark.parametrize(
+    ("marker", "length"),
+    [
+        (0xF0, 16),
+        (0xF1, 20),
+        (0xF2, 24),
+        (0xF3, 28),
+        (0xF4, 32),
+        (0xF5, 48),
+        (0xF6, 64),
+    ],
+)
+def test_decode_variable_length_extended_binary_lengths(marker, length):
+    payload = bytes(range(length))
 
-    assert result.consumed == 3
-    assert result.value.raw == b"AB"
-    assert result.value.value == b"AB"
+    result = decode_value(bytes([marker]) + payload + b"extra", _variable_dif(), data_length=None)
+
+    assert result.consumed == 1 + length
+    assert result.value.raw == payload
+    assert result.value.value == payload
     assert result.value.type is ValueType.BINARY
 
 
+def test_decode_variable_length_extended_binary_rejects_truncated_value():
+    with pytest.raises(ValueDecodeError, match="truncated"):
+        decode_value(bytes([0xF0]) + bytes(range(15)), _variable_dif(), data_length=None)
+
+
 def test_decode_variable_length_reserved_marker_consumes_marker_only():
-    result = decode_value(bytes([0xFB, 0x41, 0x42]), _variable_dif(), data_length=None)
+    result = decode_value(bytes([0xF7, 0x41, 0x42]), _variable_dif(), data_length=None)
 
     assert result.consumed == 1
     assert result.value.raw == b""
