@@ -129,7 +129,7 @@ def test_parse_main_extension_duration_vifs(vife, kind, symbol, multiplier):
         (0x4F, "voltage", "V", Decimal("1000000")),
         (0x50, "current", "A", Decimal("0.000000000001")),
         (0x5F, "current", "A", Decimal("1000")),
-        (0x71, "rf_level", "dBm", Decimal("1")),
+        (0x71, "dimensionless", None, Decimal("1")),
         (0x74, "remaining_battery_lifetime", "days", Decimal("1")),
     ],
 )
