@@ -8,6 +8,16 @@ from meterbus.model import DecodeError, DecodeMode, DecodeResult, FrameKind, Sho
 from tests.helpers.fixtures import load_hex_fixture
 
 
+def _checksum(data: bytes) -> int:
+    return sum(data) & 0xFF
+
+
+def _long_variable_frame(application_data: bytes, *, ci: int = 0x72) -> bytes:
+    payload = bytes.fromhex("21 00 00 00 B0 5C 02 1B 12 00 00 00") + application_data
+    body = bytes([0x08, 0x0B, ci]) + payload
+    return bytes([0x68, len(body), len(body), 0x68]) + body + bytes([_checksum(body), 0x16])
+
+
 def test_decode_returns_decode_result_with_frame_but_no_telegram_for_short_frame():
     raw = load_hex_fixture("frames/short.hex").data
 
@@ -41,6 +51,26 @@ def test_decode_returns_variable_data_telegram_with_records_for_long_frame():
     assert result.telegram.records[2].vif.kind == "dimensionless"
     assert result.telegram.raw_application_data == result.frame.payload[12:]
     assert result.telegram.undecoded_data.startswith(b"\x2F\x2F")
+
+
+def test_decode_variable_data_mode_1_reverses_lvar_text_characters():
+    result = decode(_long_variable_frame(bytes([0x0D, 0xFD, 0x11, 0x03]) + b"ABC"))
+
+    assert result.ok is True
+    assert result.frame.ci == 0x72
+    assert result.telegram.records[0].vif.kind == "customer"
+    assert result.telegram.records[0].value.raw == b"ABC"
+    assert result.telegram.records[0].value.value == "CBA"
+
+
+def test_decode_variable_data_mode_2_keeps_lvar_text_character_order():
+    result = decode(_long_variable_frame(bytes([0x0D, 0xFD, 0x11, 0x03]) + b"ABC", ci=0x76))
+
+    assert result.ok is True
+    assert result.frame.ci == 0x76
+    assert result.telegram.records[0].vif.kind == "customer"
+    assert result.telegram.records[0].value.raw == b"ABC"
+    assert result.telegram.records[0].value.value == "ABC"
 
 
 def test_decode_is_exposed_from_meterbus_package_root():
