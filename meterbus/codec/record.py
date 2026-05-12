@@ -105,7 +105,7 @@ def _decode_datetime_value(value: DecodedValue) -> DecodedValue:
     hour = value.raw[1] & 0x1F
     day = value.raw[2] & 0x1F
     month = value.raw[3] & 0x0F
-    year = ((value.raw[1] >> 5) & 0x07) | ((value.raw[3] << 1) & 0x78)
+    year = ((value.raw[2] & 0xE0) >> 5) | ((value.raw[3] & 0xF0) >> 1)
     year += 2000
 
     if not _valid_date_parts(year, month, day) or hour > 23 or minute > 59:
