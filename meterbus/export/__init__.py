@@ -2,5 +2,6 @@
 
 from .dict import to_dict
 from .json import to_json
+from .views import ExportView
 
-__all__ = ["to_dict", "to_json"]
+__all__ = ["ExportView", "to_dict", "to_json"]

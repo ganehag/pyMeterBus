@@ -32,9 +32,20 @@ from meterbus.model import (
     VariableDataTelegram,
 )
 
+from .views import ExportView
 
-def to_dict(value: Any) -> Any:
+
+def to_dict(value: Any, *, view: ExportView | str = ExportView.FULL) -> Any:
     """Convert a pyMeterBus v2 model object into plain Python data."""
+
+    export_view = ExportView(view)
+    if export_view is not ExportView.FULL:
+        if not isinstance(value, DecodeResult):
+            raise TypeError("non-full export views require a DecodeResult")
+        if export_view is ExportView.SUMMARY:
+            return _decode_result_summary_to_dict(value)
+        if export_view is ExportView.RECORDS:
+            return _decode_result_records_to_dict(value)
 
     if value is None:
         return None
@@ -99,6 +110,82 @@ def _decode_result_to_dict(result: DecodeResult) -> dict[str, Any]:
         "diagnostics": to_dict(result.diagnostics),
         "raw": to_dict(result.raw),
     }
+
+
+def _decode_result_summary_to_dict(result: DecodeResult) -> dict[str, Any]:
+    telegram = result.telegram
+    frame = result.frame
+
+    payload: dict[str, Any] = {
+        "ok": result.ok,
+        "frame": _frame_summary_to_dict(frame) if frame is not None else None,
+        "meter": _meter_summary_to_dict(telegram) if telegram is not None else None,
+        "records": len(telegram.records) if isinstance(telegram, VariableDataTelegram) else None,
+        "diagnostics": to_dict(result.diagnostics),
+    }
+    return _drop_none(payload)
+
+
+def _decode_result_records_to_dict(result: DecodeResult) -> dict[str, Any]:
+    telegram = result.telegram
+    records = telegram.records if isinstance(telegram, VariableDataTelegram) else ()
+
+    payload: dict[str, Any] = {
+        "ok": result.ok,
+        "meter": _meter_summary_to_dict(telegram) if telegram is not None else None,
+        "records": [_record_summary_to_dict(record) for record in records],
+        "diagnostics": to_dict(result.diagnostics),
+    }
+    return _drop_none(payload)
+
+
+def _frame_summary_to_dict(frame: Frame) -> dict[str, Any]:
+    return _drop_none(
+        {
+            "kind": to_dict(frame.kind),
+            "checksum_valid": frame.checksum_valid,
+        }
+    )
+
+
+def _meter_summary_to_dict(telegram: Telegram) -> dict[str, Any] | None:
+    if not isinstance(telegram, VariableDataTelegram):
+        return None
+
+    header = telegram.header
+    return _drop_none(
+        {
+            "manufacturer": header.manufacturer,
+            "identification_number": header.identification_number,
+            "medium": header.medium,
+            "version": header.version,
+        }
+    )
+
+
+def _record_summary_to_dict(record: DataRecord | UnknownRecord) -> dict[str, Any]:
+    if isinstance(record, UnknownRecord):
+        return _drop_none(
+            {
+                "kind": "unknown_record",
+                "reason": record.reason,
+                "diagnostics": to_dict(record.diagnostics),
+            }
+        )
+
+    unit = record.value.unit or record.vif.unit
+    return _drop_none(
+        {
+            "kind": record.vif.kind,
+            "value": to_dict(record.value.value),
+            "unit": unit.symbol if unit is not None else None,
+            "function": to_dict(record.function),
+            "storage_number": record.storage_number,
+            "tariff": record.tariff,
+            "subunit": record.subunit,
+            "diagnostics": to_dict(record.diagnostics) if record.diagnostics else None,
+        }
+    )
 
 
 def _control_field_to_dict(control: ControlField) -> dict[str, Any]:
