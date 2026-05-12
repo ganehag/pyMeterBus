@@ -66,3 +66,56 @@ def test_lenient_mode_preserves_good_records_before_unknown_record():
     assert isinstance(result.telegram.records[1], UnknownRecord)
     assert result.telegram.records[1].raw == bytes([0x02, 0x78, 0x01])
     assert result.telegram.undecoded_data == b""
+
+
+def test_manufacturer_specific_data_is_preserved_without_diagnostic():
+    application_data = bytes([0x0F, 0xAA, 0xBB, 0xCC])
+
+    result = decode(_long_variable_frame(application_data), mode=DecodeMode.STRICT)
+
+    assert result.ok is True
+    assert result.diagnostics == ()
+    assert result.telegram.more_records_follow is False
+    assert result.telegram.undecoded_data == b""
+    assert len(result.telegram.records) == 1
+
+    record = result.telegram.records[0]
+    assert isinstance(record, UnknownRecord)
+    assert record.raw == application_data
+    assert record.reason == "manufacturer_specific_data"
+    assert record.diagnostics == ()
+
+
+def test_manufacturer_specific_data_preserves_good_records_before_tail():
+    application_data = bytes([0x02, 0x75, 0x0A, 0x00, 0x0F, 0xAA, 0xBB])
+
+    result = decode(_long_variable_frame(application_data), mode=DecodeMode.STRICT)
+
+    assert result.ok is True
+    assert result.diagnostics == ()
+    assert result.telegram.more_records_follow is False
+    assert result.telegram.undecoded_data == b""
+    assert len(result.telegram.records) == 2
+    assert result.telegram.records[0].value.value == 10
+
+    record = result.telegram.records[1]
+    assert isinstance(record, UnknownRecord)
+    assert record.raw == bytes([0x0F, 0xAA, 0xBB])
+    assert record.reason == "manufacturer_specific_data"
+
+
+def test_manufacturer_specific_more_records_follow_sets_telegram_flag():
+    application_data = bytes([0x1F, 0xAA, 0xBB])
+
+    result = decode(_long_variable_frame(application_data), mode=DecodeMode.STRICT)
+
+    assert result.ok is True
+    assert result.diagnostics == ()
+    assert result.telegram.more_records_follow is True
+    assert result.telegram.undecoded_data == b""
+    assert len(result.telegram.records) == 1
+
+    record = result.telegram.records[0]
+    assert isinstance(record, UnknownRecord)
+    assert record.raw == application_data
+    assert record.reason == "manufacturer_specific_data_more_records_follow"
