@@ -48,6 +48,25 @@ class VariableDataTelegram(Telegram):
 
 
 @dataclass(frozen=True)
+class FixedDataUnit:
+    """Fixed data unit code from the low six bits of a medium/unit byte."""
+
+    code: int
+    label: str
+
+
+@dataclass(frozen=True)
+class FixedDataMediumUnit:
+    """Decoded fixed data medium/unit field."""
+
+    raw: bytes
+    medium_code: int
+    medium: str
+    counter_1_unit: FixedDataUnit
+    counter_2_unit: FixedDataUnit
+
+
+@dataclass(frozen=True)
 class FixedDataHeader:
     """Fixed data response header fields plus raw bytes."""
 
@@ -55,6 +74,7 @@ class FixedDataHeader:
     access_number: int
     status: int
     medium_unit_raw: bytes
+    medium_unit: FixedDataMediumUnit | None
     raw: bytes
 
 
