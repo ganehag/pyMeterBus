@@ -11,7 +11,7 @@ def test_decode_date_value_from_vif_6c():
     assert result.consumed == 4
     assert record.vif.kind == "date"
     assert record.value.raw == b"\x21\x2C"
-    assert record.value.value == "2022-12-01"
+    assert record.value.value == "2017-12-01"
     assert record.value.type is ValueType.DATE
     assert record.value.scaled is False
 
@@ -45,6 +45,6 @@ def test_invalid_datetime_value_falls_back_to_raw_integer_value():
 
     assert record.vif.kind == "datetime"
     assert record.value.raw == b"\x3F\x1F\x00\x00"
-    assert record.value.value == 2039615
+    assert record.value.value == 7999
     assert record.value.type is ValueType.INTEGER
     assert record.value.scaled is False
