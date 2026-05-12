@@ -117,7 +117,7 @@ def _decode_base_vif(base_vif: int) -> tuple[Unit | None, str, Decimal, str | No
     if 0x00 <= base_vif <= 0x07:
         return Unit("energy", "Wh"), "energy", _power10(base_vif - 3), None
     if 0x08 <= base_vif <= 0x0F:
-        return Unit("energy", "J"), "energy", _power10(base_vif), None
+        return Unit("energy", "J"), "energy", _power10(base_vif & 0x07), None
     if 0x10 <= base_vif <= 0x17:
         return Unit("volume", "m^3"), "volume", _power10((base_vif & 0x0F) - 6), None
     if 0x18 <= base_vif <= 0x1F:
@@ -158,8 +158,14 @@ def _decode_base_vif(base_vif: int) -> tuple[Unit | None, str, Decimal, str | No
         return Unit("reserved", None), "reserved", Decimal("1"), None
     if 0x70 <= base_vif <= 0x73:
         return Unit("average_duration", "s"), "average_duration", _time_multiplier(base_vif & 0x03), None
-    if 0x74 <= base_vif <= 0x77:
-        return Unit("actuality_duration", "s"), "actuality_duration", _time_multiplier(base_vif & 0x03), None
+    if base_vif == 0x74:
+        return Unit("actuality_duration", "s"), "actuality_duration", Decimal("1"), None
+    if base_vif == 0x75:
+        return Unit("manufacturer", None), "manufacturer", Decimal("1"), None
+    if base_vif == 0x76:
+        return Unit("enhanced_identification", None), "enhanced_identification", Decimal("1"), None
+    if base_vif == 0x77:
+        return Unit("bus_address", None), "bus_address", Decimal("1"), None
     if base_vif == 0x78:
         return Unit("fabrication_number", None), "fabrication_number", Decimal("1"), None
     if base_vif == 0x79:
