@@ -13,7 +13,7 @@ from tests.helpers.fixtures import load_hex_fixture
 def test_decode_first_record_from_long_fixture_payload():
     telegram = decode(load_hex_fixture("frames/long_basic.hex").data).telegram
 
-    result = decode_record(telegram.undecoded_data)
+    result = decode_record(telegram.raw_application_data)
     record = result.record
 
     assert result.consumed == 6
