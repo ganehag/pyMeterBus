@@ -24,6 +24,14 @@ python -m venv "${INSTALL_VENV_DIR}"
 "${INSTALL_VENV_DIR}/bin/python" -m pip install --upgrade pip
 "${INSTALL_VENV_DIR}/bin/python" -m pip install "${WHEEL_PATH}"
 
+"${INSTALL_VENV_DIR}/bin/python" - <<'PY'
+from importlib import metadata
+
+installed = {dist.metadata["Name"].lower() for dist in metadata.distributions()}
+for package in {"pyserial", "pyaml", "simplejson", "pycryptodome", "pyyaml"}:
+    assert package not in installed, f"unexpected default dependency installed: {package}"
+PY
+
 CLI_OUTPUT="$(${INSTALL_VENV_DIR}/bin/pymeterbus-decode E5)"
 "${INSTALL_VENV_DIR}/bin/python" - <<'PY' "${CLI_OUTPUT}"
 import json
