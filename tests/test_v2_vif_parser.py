@@ -85,13 +85,13 @@ def test_parse_custom_vif():
 
 
 def test_parse_unknown_vif_is_preserved():
-    result = parse_vif(bytes([0x55]))
+    result = parse_vif(bytes([0x7F]))
     vif = result.value_information
 
     assert result.consumed == 1
     assert vif.unit is None
     assert vif.kind == "unknown"
-    assert vif.enhancement == "unknown_base_vif_0x55"
+    assert vif.enhancement == "unknown_base_vif_0x7F"
 
 
 def test_parse_vif_after_first_dif_from_long_fixture():
