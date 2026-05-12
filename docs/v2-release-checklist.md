@@ -27,6 +27,7 @@ The current v2 branch is useful, tested, and documented enough for preview use. 
 - [x] Focused v2 GitHub Actions workflow.
 - [x] Dependency-free default install.
 - [x] Lightweight root package exports for the v2 decode API.
+- [x] Explicit v2 prerelease version: `2.0.0a1`.
 
 ## Protocol coverage gaps
 
@@ -52,7 +53,7 @@ The current v2 branch is useful, tested, and documented enough for preview use. 
 
 ## Packaging and release
 
-- [ ] Choose a preview version scheme, for example `2.0.0a1`, `2.0.0b1`, or `1.x` with v2 preview APIs.
+- [x] Choose a preview version scheme: `2.0.0a1`.
 - [ ] Update package classifiers if Python support has changed.
 - [ ] Confirm `requires-python` matches the tested support window.
 - [x] Confirm optional dependencies are not needed for the v2 decoder path.

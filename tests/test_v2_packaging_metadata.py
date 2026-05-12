@@ -9,6 +9,8 @@ if sys.version_info >= (3, 11):
 else:  # pragma: no cover - Python < 3.11 fallback for supported package metadata
     import tomli as tomllib
 
+import meterbus
+
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,6 +29,15 @@ def test_pyproject_uses_modern_license_metadata():
     assert pyproject["build-system"]["requires"] == ["setuptools>=77.0"]
     assert pyproject["project"]["license"] == "BSD-3-Clause"
     assert "License :: OSI Approved :: BSD License" not in pyproject["project"]["classifiers"]
+
+
+def test_pyproject_uses_dynamic_runtime_version():
+    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
+
+    assert "version" not in pyproject["project"]
+    assert pyproject["project"]["dynamic"] == ["version"]
+    assert pyproject["tool"]["setuptools"]["dynamic"]["version"] == {"attr": "meterbus.__version__"}
+    assert meterbus.__version__ == "2.0.0a1"
 
 
 def test_v2_default_install_has_no_runtime_dependencies():
