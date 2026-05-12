@@ -26,6 +26,17 @@ def test_build_smoke_script_does_not_install_build_into_system_python():
     assert '"${INSTALL_VENV_DIR}/bin/python" -m pip install "${WHEEL_PATH}"' in script
 
 
+def test_build_smoke_script_asserts_default_install_has_no_legacy_dependencies():
+    script = (_PROJECT_ROOT / "scripts" / "smoke-build.sh").read_text()
+
+    assert "metadata.distributions()" in script
+    assert "pyserial" in script
+    assert "pyaml" in script
+    assert "simplejson" in script
+    assert "pycryptodome" in script
+    assert "unexpected default dependency installed" in script
+
+
 def test_build_smoke_workflow_uses_smoke_script():
     workflow = (_PROJECT_ROOT / ".github" / "workflows" / "build-smoke.yml").read_text()
 
