@@ -1,0 +1,36 @@
+name: v2 focused tests
+
+on:
+  push:
+    branches:
+      - v2
+      - v2-*
+  pull_request:
+    branches:
+      - v2
+
+jobs:
+  test-v2:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+
+      - name: Run v2 focused tests
+        run: bash scripts/test-v2.sh
