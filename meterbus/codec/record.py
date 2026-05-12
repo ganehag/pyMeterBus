@@ -1,0 +1,76 @@
+"""Single data-record decoder for pyMeterBus 2.0.
+
+This module assembles exactly one variable-data record from a byte slice. It
+does not loop through a telegram payload.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from meterbus.model import DataRecord
+
+from .dif import DataInformationParseError, parse_dif
+from .value import ValueDecodeError, decode_value
+from .vif import ValueInformationParseError, parse_vif
+
+
+@dataclass(frozen=True)
+class DataRecordDecodeResult:
+    """Decoded record plus cursor information."""
+
+    record: DataRecord
+    consumed: int
+
+
+class DataRecordDecodeError(ValueError):
+    """Raised when a single data record cannot be decoded."""
+
+
+def decode_record(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]) -> DataRecordDecodeResult:
+    """Decode one DIF/VIF/value record from the start of `data`."""
+
+    raw = _normalize_input(data)
+    if not raw:
+        raise DataRecordDecodeError("cannot decode record from empty input")
+
+    try:
+        dif_result = parse_dif(raw)
+        vif_offset = dif_result.consumed
+        vif_result = parse_vif(raw[vif_offset:])
+        value_offset = vif_offset + vif_result.consumed
+        value_result = decode_value(
+            raw[value_offset:],
+            dif_result.data_information,
+            dif_result.data_length,
+            unit=vif_result.value_information.unit,
+        )
+    except (DataInformationParseError, ValueInformationParseError, ValueDecodeError) as exc:
+        raise DataRecordDecodeError(str(exc)) from exc
+
+    consumed = value_offset + value_result.consumed
+    record = DataRecord(
+        raw=raw[:consumed],
+        dif=dif_result.data_information,
+        vif=vif_result.value_information,
+        value=value_result.value,
+        function=dif_result.data_information.function,
+        storage_number=dif_result.data_information.storage_number,
+        tariff=dif_result.data_information.tariff,
+        subunit=dif_result.data_information.subunit,
+        more_records_follow=dif_result.is_special_function,
+        diagnostics=(),
+    )
+    return DataRecordDecodeResult(record=record, consumed=consumed)
+
+
+def _normalize_input(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]) -> bytes:
+    if isinstance(data, bytes):
+        return data
+    if isinstance(data, bytearray):
+        return bytes(data)
+    if isinstance(data, memoryview):
+        return data.tobytes()
+    if isinstance(data, (list, tuple)):
+        return bytes(data)
+    raise TypeError(f"unsupported record input type: {type(data).__name__}")
