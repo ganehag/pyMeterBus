@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import sys
 from configparser import ConfigParser
 from pathlib import Path
@@ -11,6 +12,18 @@ else:  # pragma: no cover - Python < 3.11 fallback for supported package metadat
 
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load_meterbus_version() -> str:
+    spec = importlib.util.spec_from_file_location(
+        "meterbus_version_check",
+        _PROJECT_ROOT / "meterbus" / "__init__.py",
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.__version__
 
 
 def test_setup_cfg_uses_modern_metadata_keys():
@@ -27,6 +40,14 @@ def test_pyproject_uses_modern_license_metadata():
     assert pyproject["build-system"]["requires"] == ["setuptools>=77.0"]
     assert pyproject["project"]["license"] == "BSD-3-Clause"
     assert "License :: OSI Approved :: BSD License" not in pyproject["project"]["classifiers"]
+
+
+def test_pyproject_uses_dynamic_runtime_version():
+    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
+
+    assert pyproject["project"]["version"] == "0.0.0"
+    assert pyproject["tool"]["setuptools"]["dynamic"]["version"] == {"attr": "meterbus.__version__"}
+    assert _load_meterbus_version() == "2.0.0a1"
 
 
 def test_v2_default_install_has_no_runtime_dependencies():
