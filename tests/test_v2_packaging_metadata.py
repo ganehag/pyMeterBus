@@ -40,6 +40,21 @@ def test_pyproject_uses_dynamic_runtime_version():
     assert meterbus.__version__ == "2.0.0a1"
 
 
+def test_v2_python_support_metadata_matches_ci_matrix():
+    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
+    classifiers = pyproject["project"]["classifiers"]
+
+    assert pyproject["project"]["requires-python"] == ">=3.11"
+    assert "Programming Language :: Python :: 3.11" in classifiers
+    assert "Programming Language :: Python :: 3.12" in classifiers
+    assert "Programming Language :: Python :: 3.13" in classifiers
+    assert "Programming Language :: Python :: 3.6" not in classifiers
+    assert "Programming Language :: Python :: 3.7" not in classifiers
+    assert "Programming Language :: Python :: 3.8" not in classifiers
+    assert "Programming Language :: Python :: 3.9" not in classifiers
+    assert "Programming Language :: Python :: 3.10" not in classifiers
+
+
 def test_v2_default_install_has_no_runtime_dependencies():
     pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
 
