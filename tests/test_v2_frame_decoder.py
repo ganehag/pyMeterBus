@@ -161,3 +161,21 @@ def test_long_frame_length_mismatch_fails_in_strict_mode():
     assert result.ok is False
     assert result.frame is None
     assert result.diagnostics[0].code == "length_mismatch"
+
+
+def test_invalid_long_frame_length_does_not_construct_partial_frame_in_lenient_mode():
+    result = decode_frame(bytes([0x68, 0x02, 0x02, 0x68, 0x16]), mode=DecodeMode.LENIENT)
+
+    assert result.ok is False
+    assert result.frame is None
+    assert result.diagnostics[0].code == "truncated_frame"
+    assert result.diagnostics[0].severity is Severity.ERROR
+
+
+def test_long_frame_declared_length_below_mandatory_fields_returns_diagnostic():
+    result = decode_frame(bytes([0x68, 0x02, 0x02, 0x68, 0x00, 0x16]), mode=DecodeMode.LENIENT)
+
+    assert result.ok is False
+    assert result.frame is None
+    assert result.diagnostics[0].code == "invalid_length"
+    assert result.diagnostics[0].severity is Severity.ERROR
