@@ -34,7 +34,7 @@ def test_decode_first_record_from_long_fixture_payload():
     assert record.diagnostics == ()
 
 
-def test_decode_integer_record():
+def test_decode_integer_record_applies_vif_scaling():
     result = decode_record(bytes([0x02, 0x13, 0x34, 0x12]))
     record = result.record
 
@@ -42,9 +42,10 @@ def test_decode_integer_record():
     assert record.raw == b"\x02\x13\x34\x12"
     assert record.dif.data_encoding is DataEncoding.INTEGER
     assert record.vif.kind == "volume"
-    assert record.value.value == 0x1234
-    assert record.value.type is ValueType.INTEGER
+    assert record.value.value == Decimal("4.660")
+    assert record.value.type is ValueType.DECIMAL
     assert record.value.unit.name == "volume"
+    assert record.value.scaled is True
 
 
 def test_decode_record_with_dife_metadata():

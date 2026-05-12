@@ -7,8 +7,9 @@ does not loop through a telegram payload.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 
-from meterbus.model import DataRecord
+from meterbus.model import DataRecord, DecodedValue, ValueType
 
 from .dif import DataInformationParseError, parse_dif
 from .value import ValueDecodeError, decode_value
@@ -49,11 +50,12 @@ def decode_record(data: bytes | bytearray | memoryview | list[int] | tuple[int, 
         raise DataRecordDecodeError(str(exc)) from exc
 
     consumed = value_offset + value_result.consumed
+    value = _apply_vif_multiplier(value_result.value, vif_result.value_information.multiplier)
     record = DataRecord(
         raw=raw[:consumed],
         dif=dif_result.data_information,
         vif=vif_result.value_information,
-        value=value_result.value,
+        value=value,
         function=dif_result.data_information.function,
         storage_number=dif_result.data_information.storage_number,
         tariff=dif_result.data_information.tariff,
@@ -62,6 +64,22 @@ def decode_record(data: bytes | bytearray | memoryview | list[int] | tuple[int, 
         diagnostics=(),
     )
     return DataRecordDecodeResult(record=record, consumed=consumed)
+
+
+def _apply_vif_multiplier(value: DecodedValue, multiplier: Decimal) -> DecodedValue:
+    if multiplier == Decimal("1"):
+        return value
+    if not isinstance(value.value, (int, Decimal)):
+        return value
+
+    scaled_value = Decimal(value.value) * multiplier
+    return DecodedValue(
+        raw=value.raw,
+        value=scaled_value,
+        type=ValueType.DECIMAL,
+        unit=value.unit,
+        scaled=True,
+    )
 
 
 def _normalize_input(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]) -> bytes:
