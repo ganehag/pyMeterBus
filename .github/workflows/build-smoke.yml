@@ -1,0 +1,31 @@
+name: build smoke
+
+on:
+  push:
+    branches:
+      - v2
+      - v2-*
+  pull_request:
+    branches:
+      - v2
+
+jobs:
+  build-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build wheel and smoke-test installed package
+        run: bash scripts/smoke-build.sh
