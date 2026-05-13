@@ -8,6 +8,7 @@ The policy is strict:
 
 - non-master release tests publish to TestPyPI only;
 - production releases publish to real PyPI only from commits contained in `master`;
+- production PyPI publishing is manual-only and does not run automatically for tags;
 - only real PyPI releases create a public GitHub Release.
 
 This lets prerelease work from `v2` validate the packaging path without risking the production PyPI project.
@@ -45,16 +46,18 @@ It:
 - runs the build smoke matrix on Python 3.11, 3.12, and 3.13;
 - builds source and wheel distributions;
 - runs `twine check`;
-- publishes to real PyPI when `publish=true` or when a master tag is pushed;
-- refuses to publish if the commit is not contained in `origin/master`;
+- publishes to real PyPI only when manually dispatched with `publish=true`;
+- refuses to publish if the selected commit is not contained in `origin/master`;
 - creates a GitHub Release from `docs/releases/<version>.md` and attaches the built artifacts.
+
+Production PyPI publishing intentionally does not trigger from tag pushes. This avoids noisy failed production workflows when prerelease tags are pushed from non-master branches.
 
 ## Tag format
 
-Both workflows accept tags matching:
+Release tags should match:
 
 ```text
-v*
+v<package-version>
 ```
 
 For example:
@@ -65,7 +68,9 @@ v2.0.0
 v2.0.1
 ```
 
-The tag must match the package version from `meterbus.__version__`. For example, if the package version is `2.0.0a1`, the release tag must be `v2.0.0a1`.
+For TestPyPI tag-triggered prereleases, the tag must match the package version from `meterbus.__version__`. For example, if the package version is `2.0.0a1`, the prerelease tag must be `v2.0.0a1`.
+
+For production PyPI releases, create the version tag on `master` after the package version is finalized, then run `publish-pypi.yml` manually from that tagged commit or release commit with `publish=true`.
 
 ## Trusted Publishing setup
 
@@ -147,7 +152,7 @@ git tag -a v2.0.0a1 -m "pyMeterBus 2.0.0a1"
 git push origin v2.0.0a1
 ```
 
-Because this tag is on `v2` and not contained in `master`, `publish-testpypi.yml` publishes to TestPyPI only. `publish-pypi.yml` also sees the tag, but refuses to publish because the commit is not contained in `origin/master`.
+Because this tag is on `v2` and not contained in `master`, `publish-testpypi.yml` publishes to TestPyPI only. `publish-pypi.yml` does not run automatically for the tag.
 
 ## PyPI release from master
 
@@ -168,7 +173,7 @@ git tag -a v2.0.0 -m "pyMeterBus 2.0.0"
 git push origin v2.0.0
 ```
 
-Because this tag is contained in `master`, `publish-pypi.yml` publishes to real PyPI and creates a GitHub Release. `publish-testpypi.yml` also sees the tag, but refuses to publish because the commit is contained in `origin/master`.
+Then run `.github/workflows/publish-pypi.yml` manually from GitHub Actions with `publish=true`. The workflow still verifies that the selected commit is contained in `origin/master` before publishing to real PyPI or creating a GitHub Release.
 
 ## Post-TestPyPI verification
 
