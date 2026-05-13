@@ -38,6 +38,8 @@ class ApplicationKind(StrEnum):
     NONE = "none"
     VARIABLE_DATA = "variable_data"
     FIXED_DATA = "fixed_data"
+    COMPACT_DATA = "compact_data"
+    FORMAT_DATA = "format_data"
     MANUFACTURER_SPECIFIC = "manufacturer_specific"
     ENCRYPTED = "encrypted"
     UNKNOWN = "unknown"
