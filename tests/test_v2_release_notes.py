@@ -35,7 +35,7 @@ def test_v2_release_notes_document_packaging_and_python_support():
     assert "Python 3.12" in notes
     assert "Python 3.13" in notes
     assert "default install is intentionally dependency-free" in notes
-    assert "does not currently aim to provide serial communication helpers" in notes
+    assert "Serial transport is caller-owned" in notes
 
 
 def test_v2_release_notes_document_coverage_and_gaps():
