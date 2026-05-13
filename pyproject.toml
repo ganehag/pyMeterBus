@@ -36,6 +36,3 @@ exclude = ["tests", "tests.*", "examples"]
 
 [tool.setuptools.dynamic]
 version = { attr = "meterbus.__version__" }
-
-[tool.pytest.ini_options]
-asyncio_default_fixture_loop_scope = "function"
