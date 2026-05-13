@@ -5,6 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from decimal import Decimal
+from enum import Enum
+from types import MappingProxyType
+from typing import Any, Mapping
 
 from meterbus.api import decode
 from meterbus.codec.compact import expand_compact_telegram
@@ -65,18 +69,38 @@ def main(argv: list[str] | None = None) -> int:
     payload = to_dict(result, view=ExportView(args.view))
     if not isinstance(payload, dict):
         payload = {"result": payload}
-    payload["compact_expansion"] = to_dict(
-        {
-            "records": expansion.records,
-            "undecoded_data": expansion.undecoded_data,
-            "diagnostics": expansion.diagnostics,
-            "recovered_application_data": expansion.recovered_application_data,
-        }
+    payload["compact_expansion"] = _jsonable(
+        to_dict(
+            {
+                "records": expansion.records,
+                "undecoded_data": expansion.undecoded_data,
+                "diagnostics": expansion.diagnostics,
+                "recovered_application_data": expansion.recovered_application_data,
+            }
+        )
     )
     print(json.dumps(payload, indent=args.indent))
 
     expansion_has_error = any(diagnostic.severity is Severity.ERROR for diagnostic in expansion.diagnostics)
     return 0 if result.ok and template_result.ok and not expansion_has_error else 1
+
+
+def _jsonable(value: Any) -> Any:
+    """Normalize nested values that may remain after model export."""
+
+    if value is None or isinstance(value, bool | int | float | str):
+        return value
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, bytes):
+        return value.hex(" ").upper()
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, MappingProxyType | Mapping):
+        return {str(key): _jsonable(item) for key, item in value.items()}
+    if isinstance(value, tuple | list):
+        return [_jsonable(item) for item in value]
+    return value
 
 
 if __name__ == "__main__":
