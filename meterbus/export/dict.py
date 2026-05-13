@@ -12,6 +12,7 @@ from typing import Any
 
 from meterbus.model import (
     AckFrame,
+    CompactDataTelegram,
     ControlField,
     ControlFrame,
     DataInformation,
@@ -24,6 +25,7 @@ from meterbus.model import (
     FixedDataMediumUnit,
     FixedDataTelegram,
     FixedDataUnit,
+    FormatDataTelegram,
     Frame,
     LongFrame,
     PrimaryAddress,
@@ -415,6 +417,24 @@ def _telegram_to_dict(telegram: Telegram) -> dict[str, Any]:
                 "counters": to_dict(telegram.counters),
                 "raw_application_data": to_dict(telegram.raw_application_data),
                 "undecoded_data": to_dict(telegram.undecoded_data),
+            }
+        )
+    elif isinstance(telegram, CompactDataTelegram):
+        payload.update(
+            {
+                "raw_application_data": to_dict(telegram.raw_application_data),
+                "format_signature": to_dict(telegram.format_signature),
+                "full_frame_crc": to_dict(telegram.full_frame_crc),
+                "compact_data": to_dict(telegram.compact_data),
+            }
+        )
+    elif isinstance(telegram, FormatDataTelegram):
+        payload.update(
+            {
+                "raw_application_data": to_dict(telegram.raw_application_data),
+                "length_field": telegram.length_field,
+                "format_signature": to_dict(telegram.format_signature),
+                "format_data": to_dict(telegram.format_data),
             }
         )
 

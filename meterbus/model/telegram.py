@@ -100,3 +100,34 @@ class FixedDataTelegram(Telegram):
     raw_application_data: bytes = b""
     undecoded_data: bytes = b""
     application_kind: ApplicationKind = ApplicationKind.FIXED_DATA
+
+
+@dataclass(frozen=True)
+class CompactDataTelegram(Telegram):
+    """Compact M-Bus frame shell.
+
+    Compact records require a matching format/full-frame template before they
+    can be expanded safely. This model intentionally preserves the payload
+    without guessing record boundaries.
+    """
+
+    raw_application_data: bytes = b""
+    format_signature: bytes | None = None
+    full_frame_crc: bytes | None = None
+    compact_data: bytes = b""
+    application_kind: ApplicationKind = ApplicationKind.COMPACT_DATA
+
+
+@dataclass(frozen=True)
+class FormatDataTelegram(Telegram):
+    """Format M-Bus frame shell.
+
+    A later decoder can turn the raw format payload into record descriptors.
+    This first-pass model only recognizes and preserves the format frame.
+    """
+
+    raw_application_data: bytes = b""
+    length_field: int | None = None
+    format_signature: bytes | None = None
+    format_data: bytes = b""
+    application_kind: ApplicationKind = ApplicationKind.FORMAT_DATA

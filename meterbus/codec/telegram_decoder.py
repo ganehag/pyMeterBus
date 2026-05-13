@@ -1,8 +1,8 @@
 """Application telegram decoder for pyMeterBus 2.0.
 
 This decoder recognizes variable-data telegrams carried by long frames with
-CI 0x72 or 0x76, and fixed-data telegrams carried by long frames with CI 0x73
-or 0x77.
+CI 0x72 or 0x76, fixed-data telegrams carried by long frames with CI 0x73 or
+0x77, and first-pass compact/format M-Bus frame shells from EN 13757-3 Annex G.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from meterbus.model import (
+    CompactDataTelegram,
     DecodeMode,
     DecodeResult,
     Diagnostic,
@@ -19,6 +20,7 @@ from meterbus.model import (
     FixedDataMediumUnit,
     FixedDataTelegram,
     FixedDataUnit,
+    FormatDataTelegram,
     LongFrame,
     Severity,
     UnknownRecord,
@@ -33,10 +35,21 @@ _VARIABLE_DATA_CI_MODE_1 = 0x72
 _VARIABLE_DATA_CI_MODE_2 = 0x76
 _FIXED_DATA_CI_MODE_1 = 0x73
 _FIXED_DATA_CI_MODE_2 = 0x77
+_COMPACT_DATA_CI_NO_HEADER = 0x79
+_COMPACT_DATA_CI_SHORT_HEADER = 0x7B
+_COMPACT_DATA_CI_LONG_HEADER = 0x73
+_FORMAT_DATA_CI_NO_HEADER = 0x69
+_FORMAT_DATA_CI_SHORT_HEADER = 0x6A
+_FORMAT_DATA_CI_LONG_HEADER = 0x6B
 _VARIABLE_DATA_HEADER_LENGTH = 12
 _FIXED_DATA_HEADER_LENGTH = 8
 _FIXED_DATA_COUNTER_LENGTH = 4
 _FIXED_DATA_MINIMUM_LENGTH = _FIXED_DATA_HEADER_LENGTH + (2 * _FIXED_DATA_COUNTER_LENGTH)
+_WIRELESS_SHORT_DATA_HEADER_LENGTH = 6
+_WIRELESS_LONG_DATA_HEADER_LENGTH = 14
+_FORMAT_LENGTH_FIELD_LENGTH = 1
+_FORMAT_SIGNATURE_LENGTH = 2
+_FULL_FRAME_CRC_LENGTH = 2
 _FILLER_BYTE = 0x2F
 _MANUFACTURER_SPECIFIC_DATA = 0x0F
 _MANUFACTURER_SPECIFIC_DATA_MORE_RECORDS = 0x1F
@@ -165,6 +178,12 @@ class TelegramDecoder:
         if frame.ci in (_FIXED_DATA_CI_MODE_1, _FIXED_DATA_CI_MODE_2):
             return _decode_fixed_data_result(frame_result, mode)
 
+        if frame.ci in (_COMPACT_DATA_CI_NO_HEADER, _COMPACT_DATA_CI_SHORT_HEADER):
+            return _decode_compact_data_result(frame_result)
+
+        if frame.ci in (_FORMAT_DATA_CI_NO_HEADER, _FORMAT_DATA_CI_SHORT_HEADER, _FORMAT_DATA_CI_LONG_HEADER):
+            return _decode_format_data_result(frame_result)
+
         return DecodeResult(
             ok=frame_result.ok,
             telegram=None,
@@ -283,6 +302,90 @@ def _decode_fixed_data_result(frame_result: DecodeResult, mode: DecodeMode) -> D
         diagnostics=tuple(diagnostics),
         raw=frame_result.raw,
     )
+
+
+def _decode_compact_data_result(frame_result: DecodeResult) -> DecodeResult:
+    frame = frame_result.frame
+    assert isinstance(frame, LongFrame)
+
+    data_header_length = _wireless_data_header_length(frame.ci)
+    compact_payload = frame.payload[data_header_length:]
+    format_signature = compact_payload[:_FORMAT_SIGNATURE_LENGTH] if len(compact_payload) >= _FORMAT_SIGNATURE_LENGTH else None
+    full_frame_crc_offset = _FORMAT_SIGNATURE_LENGTH
+    full_frame_crc_end = full_frame_crc_offset + _FULL_FRAME_CRC_LENGTH
+    full_frame_crc = compact_payload[full_frame_crc_offset:full_frame_crc_end] if len(compact_payload) >= full_frame_crc_end else None
+    compact_data = compact_payload[full_frame_crc_end:] if len(compact_payload) >= full_frame_crc_end else b""
+
+    diagnostic = Diagnostic(
+        severity=Severity.WARNING,
+        code="compact_frame_template_required",
+        message="Compact M-Bus frame expansion requires a matching format or full-frame template.",
+        context={
+            "ci": frame.ci,
+            "data_header_length": data_header_length,
+        },
+    )
+    telegram = CompactDataTelegram(
+        frame=frame,
+        diagnostics=(diagnostic,),
+        raw_application_data=frame.payload,
+        format_signature=format_signature,
+        full_frame_crc=full_frame_crc,
+        compact_data=compact_data,
+    )
+    return DecodeResult(
+        ok=True,
+        telegram=telegram,
+        frame=frame,
+        diagnostics=frame_result.diagnostics + (diagnostic,),
+        raw=frame_result.raw,
+    )
+
+
+def _decode_format_data_result(frame_result: DecodeResult) -> DecodeResult:
+    frame = frame_result.frame
+    assert isinstance(frame, LongFrame)
+
+    data_header_length = _wireless_data_header_length(frame.ci)
+    format_payload = frame.payload[data_header_length:]
+    length_field = format_payload[0] if len(format_payload) >= _FORMAT_LENGTH_FIELD_LENGTH else None
+    format_signature_offset = _FORMAT_LENGTH_FIELD_LENGTH
+    format_signature_end = format_signature_offset + _FORMAT_SIGNATURE_LENGTH
+    format_signature = format_payload[format_signature_offset:format_signature_end] if len(format_payload) >= format_signature_end else None
+    format_data = format_payload[format_signature_end:] if len(format_payload) >= format_signature_end else b""
+
+    diagnostic = Diagnostic(
+        severity=Severity.INFO,
+        code="format_frame_descriptors_not_decoded",
+        message="Format M-Bus frame was recognized and preserved, but descriptor decoding is not implemented yet.",
+        context={
+            "ci": frame.ci,
+            "data_header_length": data_header_length,
+        },
+    )
+    telegram = FormatDataTelegram(
+        frame=frame,
+        diagnostics=(diagnostic,),
+        raw_application_data=frame.payload,
+        length_field=length_field,
+        format_signature=format_signature,
+        format_data=format_data,
+    )
+    return DecodeResult(
+        ok=True,
+        telegram=telegram,
+        frame=frame,
+        diagnostics=frame_result.diagnostics + (diagnostic,),
+        raw=frame_result.raw,
+    )
+
+
+def _wireless_data_header_length(ci: int) -> int:
+    if ci in (_COMPACT_DATA_CI_SHORT_HEADER, _FORMAT_DATA_CI_SHORT_HEADER):
+        return _WIRELESS_SHORT_DATA_HEADER_LENGTH
+    if ci == _FORMAT_DATA_CI_LONG_HEADER:
+        return _WIRELESS_LONG_DATA_HEADER_LENGTH
+    return 0
 
 
 def decode_variable_data_header(raw: bytes) -> VariableDataHeader:

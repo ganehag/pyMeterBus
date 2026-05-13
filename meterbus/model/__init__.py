@@ -25,11 +25,13 @@ from .errors import (
 from .frame import AckFrame, ControlField, ControlFrame, Frame, LongFrame, ShortFrame
 from .record import DataInformation, DataRecord, UnknownRecord, ValueInformation
 from .telegram import (
+    CompactDataTelegram,
     FixedDataCounter,
     FixedDataHeader,
     FixedDataMediumUnit,
     FixedDataTelegram,
     FixedDataUnit,
+    FormatDataTelegram,
     Telegram,
     VariableDataHeader,
     VariableDataTelegram,
@@ -40,6 +42,7 @@ __all__ = [
     "AckFrame",
     "ApplicationKind",
     "ChecksumError",
+    "CompactDataTelegram",
     "ControlField",
     "ControlFrame",
     "ControlFunction",
@@ -58,6 +61,7 @@ __all__ = [
     "FixedDataMediumUnit",
     "FixedDataTelegram",
     "FixedDataUnit",
+    "FormatDataTelegram",
     "Frame",
     "FrameKind",
     "FunctionType",
