@@ -60,71 +60,71 @@ _FIXED_DATA_MEDIA = {
     0xF: "reserved",
 }
 
-_FIXED_DATA_UNITS = {
-    0x00: "h_m_s",
-    0x01: "d_m_y",
-    0x02: "Wh",
-    0x03: "Wh_10",
-    0x04: "Wh_100",
-    0x05: "kWh",
-    0x06: "kWh_10",
-    0x07: "kWh_100",
-    0x08: "MWh",
-    0x09: "MWh_10",
-    0x0A: "MWh_100",
-    0x0B: "kJ",
-    0x0C: "kJ_10",
-    0x0D: "kJ_100",
-    0x0E: "MJ",
-    0x0F: "MJ_10",
-    0x10: "MJ_100",
-    0x11: "GJ",
-    0x12: "GJ_10",
-    0x13: "GJ_100",
-    0x14: "W",
-    0x15: "W_10",
-    0x16: "W_100",
-    0x17: "kW",
-    0x18: "kW_10",
-    0x19: "kW_100",
-    0x1A: "MW",
-    0x1B: "MW_10",
-    0x1C: "MW_100",
-    0x1D: "kJ_h",
-    0x1E: "kJ_h_10",
-    0x1F: "kJ_h_100",
-    0x20: "MJ_h",
-    0x21: "MJ_h_10",
-    0x22: "MJ_h_100",
-    0x23: "GJ_h",
-    0x24: "GJ_h_10",
-    0x25: "GJ_h_100",
-    0x26: "ml",
-    0x27: "ml_10",
-    0x28: "ml_100",
-    0x29: "l",
-    0x2A: "l_10",
-    0x2B: "l_100",
-    0x2C: "m3",
-    0x2D: "m3_10",
-    0x2E: "m3_100",
-    0x2F: "ml_h",
-    0x30: "ml_h_10",
-    0x31: "ml_h_100",
-    0x32: "l_h",
-    0x33: "l_h_10",
-    0x34: "l_h_100",
-    0x35: "m3_h",
-    0x36: "m3_h_10",
-    0x37: "m3_h_100",
-    0x38: "degC_0_001",
-    0x39: "heat_cost_allocator_units",
-    0x3A: "reserved",
-    0x3B: "reserved",
-    0x3C: "reserved",
-    0x3D: "reserved",
-    0x3E: "same_but_historic",
-    0x3F: "without_units",
+_FIXED_DATA_UNIT_SPECS: dict[int, tuple[str, str | None, Decimal | None]] = {
+    0x00: ("h_m_s", None, None),
+    0x01: ("d_m_y", None, None),
+    0x02: ("Wh", "Wh", Decimal("1")),
+    0x03: ("Wh_10", "Wh", Decimal("10")),
+    0x04: ("Wh_100", "Wh", Decimal("100")),
+    0x05: ("kWh", "kWh", Decimal("1")),
+    0x06: ("kWh_10", "kWh", Decimal("10")),
+    0x07: ("kWh_100", "kWh", Decimal("100")),
+    0x08: ("MWh", "MWh", Decimal("1")),
+    0x09: ("MWh_10", "MWh", Decimal("10")),
+    0x0A: ("MWh_100", "MWh", Decimal("100")),
+    0x0B: ("kJ", "kJ", Decimal("1")),
+    0x0C: ("kJ_10", "kJ", Decimal("10")),
+    0x0D: ("kJ_100", "kJ", Decimal("100")),
+    0x0E: ("MJ", "MJ", Decimal("1")),
+    0x0F: ("MJ_10", "MJ", Decimal("10")),
+    0x10: ("MJ_100", "MJ", Decimal("100")),
+    0x11: ("GJ", "GJ", Decimal("1")),
+    0x12: ("GJ_10", "GJ", Decimal("10")),
+    0x13: ("GJ_100", "GJ", Decimal("100")),
+    0x14: ("W", "W", Decimal("1")),
+    0x15: ("W_10", "W", Decimal("10")),
+    0x16: ("W_100", "W", Decimal("100")),
+    0x17: ("kW", "kW", Decimal("1")),
+    0x18: ("kW_10", "kW", Decimal("10")),
+    0x19: ("kW_100", "kW", Decimal("100")),
+    0x1A: ("MW", "MW", Decimal("1")),
+    0x1B: ("MW_10", "MW", Decimal("10")),
+    0x1C: ("MW_100", "MW", Decimal("100")),
+    0x1D: ("kJ_h", "kJ/h", Decimal("1")),
+    0x1E: ("kJ_h_10", "kJ/h", Decimal("10")),
+    0x1F: ("kJ_h_100", "kJ/h", Decimal("100")),
+    0x20: ("MJ_h", "MJ/h", Decimal("1")),
+    0x21: ("MJ_h_10", "MJ/h", Decimal("10")),
+    0x22: ("MJ_h_100", "MJ/h", Decimal("100")),
+    0x23: ("GJ_h", "GJ/h", Decimal("1")),
+    0x24: ("GJ_h_10", "GJ/h", Decimal("10")),
+    0x25: ("GJ_h_100", "GJ/h", Decimal("100")),
+    0x26: ("ml", "ml", Decimal("1")),
+    0x27: ("ml_10", "ml", Decimal("10")),
+    0x28: ("ml_100", "ml", Decimal("100")),
+    0x29: ("l", "l", Decimal("1")),
+    0x2A: ("l_10", "l", Decimal("10")),
+    0x2B: ("l_100", "l", Decimal("100")),
+    0x2C: ("m3", "m^3", Decimal("1")),
+    0x2D: ("m3_10", "m^3", Decimal("10")),
+    0x2E: ("m3_100", "m^3", Decimal("100")),
+    0x2F: ("ml_h", "ml/h", Decimal("1")),
+    0x30: ("ml_h_10", "ml/h", Decimal("10")),
+    0x31: ("ml_h_100", "ml/h", Decimal("100")),
+    0x32: ("l_h", "l/h", Decimal("1")),
+    0x33: ("l_h_10", "l/h", Decimal("10")),
+    0x34: ("l_h_100", "l/h", Decimal("100")),
+    0x35: ("m3_h", "m^3/h", Decimal("1")),
+    0x36: ("m3_h_10", "m^3/h", Decimal("10")),
+    0x37: ("m3_h_100", "m^3/h", Decimal("100")),
+    0x38: ("degC_0_001", "degC", Decimal("0.001")),
+    0x39: ("heat_cost_allocator_units", "HCA", Decimal("1")),
+    0x3A: ("reserved", None, None),
+    0x3B: ("reserved", None, None),
+    0x3C: ("reserved", None, None),
+    0x3D: ("reserved", None, None),
+    0x3E: ("same_but_historic", None, None),
+    0x3F: ("without_units", None, None),
 }
 
 
@@ -254,9 +254,17 @@ def _decode_fixed_data_result(frame_result: DecodeResult, mode: DecodeMode) -> D
     lsb_order = frame.ci == _FIXED_DATA_CI_MODE_1
     header = decode_fixed_data_header(frame.payload[:_FIXED_DATA_HEADER_LENGTH], lsb_order=lsb_order)
     counter_data = frame.payload[_FIXED_DATA_HEADER_LENGTH:_FIXED_DATA_MINIMUM_LENGTH]
+    counter_1_unit = header.medium_unit.counter_1_unit if header.medium_unit is not None else None
+    counter_2_unit = header.medium_unit.counter_2_unit if header.medium_unit is not None else None
     counters = (
-        _decode_fixed_data_counter(1, counter_data[:_FIXED_DATA_COUNTER_LENGTH], lsb_order=lsb_order),
-        _decode_fixed_data_counter(2, counter_data[_FIXED_DATA_COUNTER_LENGTH:], lsb_order=lsb_order),
+        _decode_fixed_data_counter(1, counter_data[:_FIXED_DATA_COUNTER_LENGTH], lsb_order=lsb_order, unit=counter_1_unit),
+        _decode_fixed_data_counter(
+            2,
+            counter_data[_FIXED_DATA_COUNTER_LENGTH:],
+            lsb_order=lsb_order,
+            unit=counter_2_unit,
+            historic_unit=counter_1_unit,
+        ),
     )
     undecoded_data = frame.payload[_FIXED_DATA_MINIMUM_LENGTH:]
 
@@ -334,15 +342,32 @@ def decode_fixed_data_medium_unit(raw: bytes) -> FixedDataMediumUnit:
         raw=raw,
         medium_code=medium_code,
         medium=_FIXED_DATA_MEDIA[medium_code],
-        counter_1_unit=FixedDataUnit(counter_1_code, _FIXED_DATA_UNITS[counter_1_code]),
-        counter_2_unit=FixedDataUnit(counter_2_code, _FIXED_DATA_UNITS[counter_2_code]),
+        counter_1_unit=_fixed_data_unit(counter_1_code),
+        counter_2_unit=_fixed_data_unit(counter_2_code),
     )
 
 
-def _decode_fixed_data_counter(index: int, raw: bytes, *, lsb_order: bool) -> FixedDataCounter:
+def _fixed_data_unit(code: int) -> FixedDataUnit:
+    label, symbol, multiplier = _FIXED_DATA_UNIT_SPECS[code]
+    return FixedDataUnit(code=code, label=label, symbol=symbol, multiplier=multiplier)
+
+
+def _decode_fixed_data_counter(
+    index: int,
+    raw: bytes,
+    *,
+    lsb_order: bool,
+    unit: FixedDataUnit | None,
+    historic_unit: FixedDataUnit | None = None,
+) -> FixedDataCounter:
     if len(raw) != _FIXED_DATA_COUNTER_LENGTH:
         raise ValueError("fixed data counters must be exactly 4 bytes")
-    return FixedDataCounter(index=index, raw=raw, value=_decode_bcd_decimal(raw, lsb_order=lsb_order))
+    value = _decode_bcd_decimal(raw, lsb_order=lsb_order)
+    scaling_unit = historic_unit if unit is not None and unit.label == "same_but_historic" else unit
+    scaled_value = None
+    if scaling_unit is not None and scaling_unit.multiplier is not None:
+        scaled_value = value * scaling_unit.multiplier
+    return FixedDataCounter(index=index, raw=raw, value=value, unit=unit, scaled_value=scaled_value)
 
 
 def _decode_records(application_data: bytes, mode: DecodeMode, *, lsb_order: bool):
