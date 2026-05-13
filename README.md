@@ -142,7 +142,7 @@ result = decode(raw)
 records_payload = to_dict(result, view=ExportView.RECORDS)
 ```
 
-### Decode modes
+### Decode modes and diagnostics
 
 The CLI and Python API support three decode modes:
 
@@ -157,6 +157,8 @@ pymeterbus-decode --mode lenient --indent 2 "$HEX"
 ```
 
 For real-world meter collection, lenient mode is often more useful because meters may include manufacturer-specific data, filler bytes, malformed tails, or unsupported records.
+
+See [diagnostics and decode modes](docs/diagnostics.md) for severity levels, common diagnostic categories, and ingestion guidance.
 
 ### Compact and format frames
 
@@ -215,7 +217,7 @@ Common entry points:
 - Decode frames from serial data: [serial transport example](docs/serial-transport.md)
 - Upgrade from v1: [migration guide](docs/migration-v1-to-v2.md)
 - Export JSON or dictionaries: [export examples](docs/v2-usage.md#export-to-json)
-- Understand diagnostics and lenient mode: [diagnostics](docs/v2-usage.md#diagnostics)
+- Understand diagnostics and lenient mode: [diagnostics and decode modes](docs/diagnostics.md)
 - Expand compact frames with a format template: [compact and format frames](docs/v2-usage.md#compact-and-format-frames)
 
 For contributors and maintainers:
