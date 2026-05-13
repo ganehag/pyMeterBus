@@ -25,6 +25,7 @@ from meterbus.model import (
     FixedDataMediumUnit,
     FixedDataTelegram,
     FixedDataUnit,
+    FormatDataRecordDescriptor,
     FormatDataTelegram,
     Frame,
     LongFrame,
@@ -103,6 +104,8 @@ def to_dict(value: Any, *, view: ExportView | str = ExportView.FULL) -> Any:
         return _fixed_data_header_to_dict(value)
     if isinstance(value, FixedDataCounter):
         return _fixed_data_counter_to_dict(value)
+    if isinstance(value, FormatDataRecordDescriptor):
+        return _format_data_record_descriptor_to_dict(value)
     if isinstance(value, Telegram):
         return _telegram_to_dict(value)
 
@@ -137,6 +140,7 @@ def _decode_result_summary_to_dict(result: DecodeResult) -> dict[str, Any]:
         "meter": _meter_summary_to_dict(telegram) if telegram is not None else None,
         "records": len(telegram.records) if isinstance(telegram, VariableDataTelegram) else None,
         "counters": len(telegram.counters) if isinstance(telegram, FixedDataTelegram) else None,
+        "descriptors": len(telegram.descriptors) if isinstance(telegram, FormatDataTelegram) else None,
         "diagnostics": to_dict(result.diagnostics),
     }
     return _drop_none(payload)
@@ -393,6 +397,16 @@ def _fixed_data_counter_to_dict(counter: FixedDataCounter) -> dict[str, Any]:
     )
 
 
+def _format_data_record_descriptor_to_dict(descriptor: FormatDataRecordDescriptor) -> dict[str, Any]:
+    return {
+        "index": descriptor.index,
+        "raw": to_dict(descriptor.raw),
+        "data_length": descriptor.data_length,
+        "dif": to_dict(descriptor.dif),
+        "vif": to_dict(descriptor.vif),
+    }
+
+
 def _telegram_to_dict(telegram: Telegram) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "application_kind": to_dict(telegram.application_kind),
@@ -435,6 +449,8 @@ def _telegram_to_dict(telegram: Telegram) -> dict[str, Any]:
                 "length_field": telegram.length_field,
                 "format_signature": to_dict(telegram.format_signature),
                 "format_data": to_dict(telegram.format_data),
+                "descriptors": to_dict(telegram.descriptors),
+                "undecoded_data": to_dict(telegram.undecoded_data),
             }
         )
 
