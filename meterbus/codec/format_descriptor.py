@@ -73,6 +73,7 @@ def decode_format_descriptors(format_data: bytes) -> FormatDescriptorDecodeResul
                 dif=dif_result.data_information,
                 vif=vif_result.value_information,
                 index=len(descriptors) + 1,
+                data_length=dif_result.data_length,
             )
         )
 
