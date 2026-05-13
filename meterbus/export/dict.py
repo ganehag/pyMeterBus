@@ -348,10 +348,14 @@ def _variable_data_header_to_dict(header: VariableDataHeader) -> dict[str, Any]:
 
 
 def _fixed_data_unit_to_dict(unit: FixedDataUnit) -> dict[str, Any]:
-    return {
-        "code": unit.code,
-        "label": unit.label,
-    }
+    return _drop_none(
+        {
+            "code": unit.code,
+            "label": unit.label,
+            "symbol": unit.symbol,
+            "multiplier": to_dict(unit.multiplier),
+        }
+    )
 
 
 def _fixed_data_medium_unit_to_dict(medium_unit: FixedDataMediumUnit) -> dict[str, Any]:
@@ -376,11 +380,15 @@ def _fixed_data_header_to_dict(header: FixedDataHeader) -> dict[str, Any]:
 
 
 def _fixed_data_counter_to_dict(counter: FixedDataCounter) -> dict[str, Any]:
-    return {
-        "index": counter.index,
-        "raw": to_dict(counter.raw),
-        "value": to_dict(counter.value),
-    }
+    return _drop_none(
+        {
+            "index": counter.index,
+            "raw": to_dict(counter.raw),
+            "value": to_dict(counter.value),
+            "unit": to_dict(counter.unit),
+            "scaled_value": to_dict(counter.scaled_value),
+        }
+    )
 
 
 def _telegram_to_dict(telegram: Telegram) -> dict[str, Any]:
