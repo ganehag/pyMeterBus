@@ -6,7 +6,7 @@ from .api import decode, decode_one, decode_one_frame
 
 __author__ = "Mikael Ganehag Brorsson"
 __license__ = "BSD-3-Clause"
-__version__ = "2.0.0a1"
+__version__ = "2.0.0a2"
 
 __all__ = [
     "decode",
