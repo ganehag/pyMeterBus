@@ -45,7 +45,9 @@ For development:
 python -m pip install -e .
 ```
 
-## Quick start: Python
+## Common use cases
+
+### Decode frame bytes in Python
 
 ```python
 from meterbus.api import decode
@@ -76,7 +78,7 @@ Output:
 
 For normal application code, use `decode()` and inspect `result.ok` and `result.diagnostics`. The decoder returns structured diagnostics rather than hiding malformed or unsupported data.
 
-## Quick start: CLI
+### Decode from the command line
 
 ```shell
 python -m meterbus.cli.decode E5
@@ -98,7 +100,25 @@ python -m meterbus.cli.decode \
   "$(xxd -p -c 999999 frame.blob)"
 ```
 
-## Export views
+### Decode serial data
+
+A common use case is reading M-Bus frames from a serial adapter. pyMeterBus deliberately does not depend on `pyserial`, but it does document a recommended pattern: your application reads one complete frame, then passes those bytes to `decode()`.
+
+See the [serial transport example](docs/serial-transport.md) for a complete frame reader and `pyserial` integration example.
+
+The basic shape is:
+
+```python
+from meterbus.api import decode
+from meterbus.model import DecodeMode
+
+raw = read_complete_mbus_frame_from_your_transport()
+result = decode(raw, mode=DecodeMode.LENIENT)
+```
+
+## Core concepts
+
+### Export views
 
 The decoder can export full results or smaller views for common workflows:
 
@@ -120,7 +140,7 @@ result = decode(raw)
 records_payload = to_dict(result, view=ExportView.RECORDS)
 ```
 
-## Decode modes
+### Decode modes
 
 The CLI and Python API support three decode modes:
 
@@ -136,13 +156,7 @@ pymeterbus-decode --mode lenient --indent 2 "$HEX"
 
 For real-world meter collection, lenient mode is often more useful because meters may include manufacturer-specific data, filler bytes, malformed tails, or unsupported records.
 
-## Serial data
-
-A common use case is reading M-Bus frames from a serial adapter. pyMeterBus deliberately does not depend on `pyserial`, but it does document a recommended pattern: your application reads one complete frame, then passes those bytes to `decode()`.
-
-See the [serial transport example](docs/serial-transport.md) for a complete frame reader and `pyserial` integration example.
-
-## Compact and format frames
+### Compact and format frames
 
 pyMeterBus v2 recognizes EN 13757 compact and format frames. Compact frames do not carry DIF/VIF descriptors, so the decoder does not auto-expand them from hidden state.
 
