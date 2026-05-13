@@ -32,7 +32,8 @@ def test_pyproject_uses_dynamic_runtime_version():
     assert "version" not in pyproject["project"]
     assert pyproject["project"]["dynamic"] == ["version"]
     assert pyproject["tool"]["setuptools"]["dynamic"]["version"] == {"attr": "meterbus.__version__"}
-    assert meterbus.__version__ == "2.0.0a1"
+    assert meterbus.__version__.startswith("2.0.0")
+    assert (_PROJECT_ROOT / "docs" / "releases" / f"{meterbus.__version__}.md").exists()
 
 
 def test_v2_python_support_metadata_matches_ci_matrix():
