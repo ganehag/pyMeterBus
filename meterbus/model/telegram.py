@@ -53,6 +53,8 @@ class FixedDataUnit:
 
     code: int
     label: str
+    symbol: str | None = None
+    multiplier: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -85,6 +87,8 @@ class FixedDataCounter:
     index: int
     raw: bytes
     value: Decimal
+    unit: FixedDataUnit | None = None
+    scaled_value: Decimal | None = None
 
 
 @dataclass(frozen=True)
