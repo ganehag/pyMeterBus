@@ -9,7 +9,9 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_readme_points_to_v2_usage_documentation():
     readme = (_PROJECT_ROOT / "README.md").read_text()
 
-    assert "Version 2 decoder API" in readme
+    assert "The `v2` decoder is the supported direction" in readme
+    assert "no runtime dependencies" in readme
+    assert "byte-oriented" in readme
     assert "docs/v2-usage.md" in readme
     assert "python -m meterbus.cli.decode" in readme
     assert "pymeterbus-decode" in readme
