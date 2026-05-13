@@ -23,21 +23,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries"
 ]
 
-[project.optional-dependencies]
-serial = ["pyserial"]
-yaml = ["pyaml"]
-crypto = ["pycryptodome"]
-legacy = ["pyserial", "pyaml", "pycryptodome"]
-all = ["pyserial", "pyaml", "pycryptodome"]
-
 [project.urls]
 Homepage = "https://github.com/ganehag/pyMeterBus"
 
 [project.scripts]
-mbus-serial-scan-primary = "meterbus.tools:serial_scan_primary"
-mbus-serial-scan-secondary = "meterbus.tools:serial_scan_secondary"
-mbus-serial-req-single = "meterbus.tools:serial_request_single"
-mbus-serial-req-multi = "meterbus.tools:serial_request_multi"
 pymeterbus-decode = "meterbus.cli.decode:main"
 
 [tool.setuptools.packages.find]

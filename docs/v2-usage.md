@@ -25,7 +25,7 @@ from meterbus import decode, decode_one, decode_one_frame
 
 Do not rely on legacy symbols such as `TelegramLong`, `TelegramACK`, serial helpers, or wireless telegram classes being available from `import meterbus`. Import v2 APIs directly instead.
 
-The default package install is dependency-free. Serial, YAML, and crypto dependencies are available as extras for legacy or optional workflows, but the v2 decode/export/CLI path does not require them.
+The default v2 package install has no runtime dependencies. The decoder is byte-oriented: bring your own transport, read raw M-Bus frame bytes, then pass those bytes to `decode()`.
 
 ## Mental model
 
@@ -191,7 +191,7 @@ python -m meterbus.cli.decode \
   --mode lenient \
   --view records \
   --indent 2 \
-  "$(xxd -p -c 999999 tests/test-frames/amt_meter.blob)"
+  "$(xxd -p -c 999999 frame.blob)"
 ```
 
 Exit codes:
@@ -201,6 +201,23 @@ Exit codes:
 - `2`: invalid CLI input, such as malformed hex.
 
 The CLI writes the JSON decode result to stdout. CLI input errors are written to stderr.
+
+## Serial and other transports
+
+The v2 package does not import or depend on `pyserial`. This is intentional. Serial I/O, sockets, HTTP gateways, files, and test fixtures are transports; pyMeterBus v2 decodes bytes.
+
+A serial application should read a complete M-Bus frame with its own transport code, then call the decoder:
+
+```python
+from meterbus.api import decode
+from meterbus.model import DecodeMode
+
+# Example shape only: use pyserial or another transport in your application.
+raw = read_complete_mbus_frame_from_transport()
+result = decode(raw, mode=DecodeMode.LENIENT)
+```
+
+This keeps the library dependency-free and avoids coupling protocol decoding to one I/O library. Future serial helpers should stay thin and optional: they should help callers collect complete frame bytes, not become a required runtime dependency for decoding.
 
 ## Variable-data telegrams
 
