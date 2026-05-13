@@ -1,161 +1,144 @@
 # Compact and format frame review
 
-This note is intentionally a design/review checkpoint, not an implementation.
-Compact and format frames affect wireless M-Bus application decoding and should not be bolted onto the existing long-frame variable/fixed data decoder without a clean model.
+This note records the design reasoning and current implementation status for compact and format frames in the v2 decoder. It is intentionally engineering context, not user-facing usage documentation. For user-facing examples, see `docs/v2-usage.md`.
 
 ## Source scope
 
-Reviewed from the uploaded protocol PDFs already used during the v2 compliance pass:
+Reviewed from the protocol PDFs used during the v2 compliance pass:
 
-- EN 13757-3:2018, especially the annex material describing full, compact, and format M-Bus frames.
+- EN 13757-3:2018, especially Annex G for full, compact, and format M-Bus frames.
 - MBDOC48, for older explanatory wording and examples.
 - EN 13757-2:2018, for lower/link-layer framing constraints where applicable.
 
-The working conclusion is that compact/format frames are a separate application-layer variant, mainly relevant to wireless transmission, and should be modeled explicitly.
+The working conclusion remains that compact/format frames are a separate application-layer variant and must be modeled explicitly.
 
 ## What compact/format frames are
 
-The current v2 decoder understands:
+A normal full M-Bus frame carries the data record descriptors and values together:
 
-- frame envelope parsing,
-- variable data telegrams using CI 72h/76h,
-- fixed data telegrams using CI 73h/77h.
-
-Compact/format support is different. It involves a relationship between at least two telegrams:
-
-1. a format frame that describes the record layout, and
-2. one or more compact frames that carry values using that prior layout.
-
-That means compact decoding is not a pure stateless single-frame operation unless the caller supplies the format/template context.
-
-## Implementation boundary
-
-Do not decode compact frames by guessing record boundaries from payload bytes. That would defeat the point of the format frame and create silent misdecodes.
-
-A safe implementation should introduce explicit types similar to:
-
-```python
-FormatDataTelegram
-CompactDataTelegram
-CompactFormatTemplate
+```text
+DIF/VIF + value bytes
 ```
 
-The decoder should probably support two modes:
+Compact/format support separates those concerns:
+
+1. a format frame carries the record layout, and
+2. one or more compact frames carry only values using that layout.
+
+That means compact decoding is not a safe single-frame operation unless the caller supplies matching format/template context.
+
+## Current implementation status
+
+The v2 decoder now implements the safe subset of this model:
+
+- recognizes full, compact, and format frame CI variants currently in scope;
+- parses format frames into descriptor records;
+- parses compact frames into a compact telegram with Format Signature, Full-Frame-CRC, and compact payload bytes;
+- does not automatically expand compact frames from `decode()`;
+- expands compact frames only through explicit caller-supplied descriptors or a `FormatDataTelegram`;
+- validates the Format Signature when a `FormatDataTelegram` is supplied;
+- reconstructs recovered application data during successful expansion;
+- validates Full-Frame-CRC over the recovered application data;
+- exposes compact expansion through the CLI with `--compact-template`.
+
+This keeps template ownership caller-visible and avoids hidden global state.
+
+## Key implementation boundary
+
+Do not decode compact frames by guessing record boundaries from payload bytes. That would defeat the purpose of the format frame and create silent misdecodes.
+
+The current implementation follows this boundary:
 
 ```python
 decode(raw)
-# Parses a format frame into a template-capable telegram.
-# Parses a compact frame as a compact telegram but does not expand records without a template.
+# Parses a format frame into a FormatDataTelegram.
+# Parses a compact frame into a CompactDataTelegram.
+# Does not expand compact records without a template.
 
-decode_compact(raw, template=template)
-# Expands compact values using an explicit format template.
+expand_compact_telegram(compact_telegram, format_telegram)
+# Checks Format Signature.
+# Expands values according to format descriptors.
+# Validates Full-Frame-CRC if expansion is complete.
 ```
 
-The exact public API should be decided before code is written.
+Descriptor-only expansion is still available for low-level callers that have already matched template context themselves, but application code should normally pass the full `FormatDataTelegram`.
 
-## High-confidence requirements
+## High-confidence requirements and status
 
 ### 1. CI recognition
 
-Add tests first for recognizing the compact/format CI values from EN 13757-3 Annex G.
+Status: implemented for the v2 compact/format scope.
 
-Expected behavior before full decode:
-
-- known format frame CI returns a structured unsupported-or-partial telegram, not a generic long-frame-with-no-telegram result;
-- known compact frame CI returns a structured unsupported-or-partial telegram, not a guessed variable-data telegram;
-- unsupported compact expansion without a template should be explicit.
+Known compact and format CIs are modeled separately instead of being misclassified as variable-data or fixed-data telegrams.
 
 ### 2. Template dependency
 
-Compact frame expansion must require the corresponding format/template information.
+Status: implemented.
 
-Required behavior:
-
-- no template: preserve payload and emit a clear diagnostic or unsupported feature result;
-- wrong template: reject or diagnose; do not silently decode;
-- matching template: expand records according to the format frame.
+A compact frame is preserved as compact data until a caller supplies format descriptors or a `FormatDataTelegram`. Expansion without explicit template state is not attempted.
 
 ### 3. CRC/signature handling
 
-The annex examples include CRC/signature behavior. Before decoding compact payloads, decide where this belongs:
+Status: implemented for explicit expansion with a `FormatDataTelegram`.
 
-- frame-level diagnostics,
-- telegram-level diagnostics,
-- template validation,
-- or an unsupported marker.
-
-Do not silently ignore CRC/signature bytes if the spec says they validate layout or compact-frame content.
+The Format Signature must match. If expansion consumes all compact value bytes, the recovered full application data is checked against the compact frame's Full-Frame-CRC.
 
 ### 4. Record layout reuse
 
-A format frame should be parsed into record descriptors, not record values. The compact frame then supplies values for those descriptors.
+Status: implemented.
 
-This suggests separating:
+Format frames produce descriptors. Compact expansion combines descriptor bytes with compact value bytes to create expanded `DataRecord` instances and recovered application data.
 
-- `DataRecord`: fully decoded record with DIF/VIF/value,
-- `DataRecordDescriptor`: DIF/VIF metadata without value,
-- compact value stream parsing against descriptors.
+### 5. State management remains caller-owned
 
-### 5. State management should remain caller-owned
+Status: implemented by omission.
 
-The library should not hide a global cache of format frames. A hidden cache will be hard to reason about and hard to test. Prefer passing templates explicitly, or expose a small caller-owned context object.
+There is no hidden global format cache. The caller supplies the template explicitly. A future caller-owned context object could still be added, but it should be explicit and testable.
 
-Possible API:
+## Test coverage
+
+Current coverage includes:
+
+- compact and format CI recognition;
+- format frame descriptor parsing;
+- compact frame parsing and payload preservation;
+- explicit compact expansion from descriptors;
+- signature mismatch rejection when using a `FormatDataTelegram`;
+- Full-Frame-CRC mismatch diagnostics;
+- compact CLI expansion with `--compact-template`;
+- preservation of undecoded compact tails and truncated values.
+
+## Remaining gaps
+
+- Add real compact/format frame captures if available. Current compact expansion tests are synthetic and spec-shaped.
+- Verify byte order of Format Signature and Full-Frame-CRC against real devices.
+- Decide whether a caller-owned context object is useful enough to add.
+- Document common compact-frame diagnostics in the user docs after real captures exist.
+- Decide whether additional Annex G CI variants should be recognized as explicit unsupported telegrams.
+
+## Current decision
+
+Keep compact expansion explicit. Do not add hidden template caches. Do not auto-expand compact frames in `decode()`.
+
+The safe public path is:
 
 ```python
-context = MeterBusDecodeContext()
-context.add_format(decode(format_frame).telegram)
-result = context.decode(compact_frame)
+format_result = decode(format_frame_bytes)
+compact_result = decode(compact_frame_bytes)
+expansion = expand_compact_telegram(compact_result.telegram, format_result.telegram)
 ```
 
-But a stateless `decode_compact(raw, template=...)` may be better for v2.
+The safe CLI path is:
 
-## Test plan
-
-Start with tests that do not require full compact expansion:
-
-1. Recognize a format frame CI.
-2. Recognize a compact frame CI.
-3. Return a clear diagnostic for compact frame without template.
-4. Preserve raw compact payload.
-5. Ensure compact/format CIs are not misclassified as variable-data CI 72h/76h or fixed-data CI 73h/77h.
-
-Then add fixture-based tests from the PDFs:
-
-6. Parse format frame into descriptors.
-7. Expand one compact frame using the format descriptor.
-8. Validate the example CRC/signature behavior if the example includes enough information.
-9. Reject compact expansion with a mismatched template.
-10. Round-trip full export/dict output for descriptor and expanded forms.
-
-## Open questions before implementation
-
-- Which exact CI values from Annex G should be supported first?
-- Are compact/format frames in scope for wired M-Bus, wireless M-Bus only, or both in this project?
-- Should the core `decode()` ever expand compact frames automatically?
-- Where should compact-frame template identifiers live in the model?
-- How should the CLI expose template-dependent decoding?
-
-## Recommended branch sequence
-
-1. `v2-compact-format-ci-recognition`
-   - Add model shells and CI recognition only.
-   - Preserve raw payload.
-   - Add unsupported/template-required diagnostics.
-
-2. `v2-format-frame-descriptors`
-   - Decode format frames into descriptors.
-   - No compact expansion yet.
-
-3. `v2-compact-frame-expansion`
-   - Add explicit template-based compact value expansion.
-
-4. `v2-compact-format-cli`
-   - Add CLI options for supplying a format/template frame.
+```shell
+pymeterbus-decode \
+  --compact-template "$(xxd -p -c 999999 format-frame.blob)" \
+  "$(xxd -p -c 999999 compact-frame.blob)"
+```
 
 ## Additional PDF-backed compliance areas to investigate next
 
-These are worth reviewing after compact/format framing is scoped:
+These are worth reviewing after the current v2 preview stabilizes:
 
 - selection-for-readout DIF value and global readout request VIF handling;
 - application reset subcodes and request telegrams, if v2 aims to encode/request as well as decode responses;
@@ -163,7 +146,3 @@ These are worth reviewing after compact/format framing is scoped:
 - manufacturer-specific VIF and DIF blocks where payload should be preserved rather than diagnosed;
 - wireless-specific CI values that should be recognized but kept unsupported rather than silently ignored;
 - link-layer ACK/error/control behavior from EN 13757-2 if v2 will support more than payload decoding.
-
-## Current decision
-
-Do not implement compact/format frame expansion until the project has at least one real fixture or PDF example encoded as a test. The first code branch should be CI recognition and safe preservation only.
