@@ -1,7 +1,6 @@
 # pyMeterBus
 
-[![Build status](https://github.com/ganehag/pyMeterBus/actions/workflows/run-test.yml/badge.svg)](https://github.com/ganehag/pyMeterBus/actions/workflows/run-test.yml)
-[![codecov](https://codecov.io/gh/ganehag/pyMeterBus/branch/master/graph/badge.svg?token=gHfokXGQ70)](https://codecov.io/gh/ganehag/pyMeterBus)
+[![Build status](https://github.com/ganehag/pyMeterBus/actions/workflows/run-test.yml/badge.svg?branch=v2)](https://github.com/ganehag/pyMeterBus/actions/workflows/run-test.yml?query=branch%3Av2)
 [![pypi](https://img.shields.io/pypi/pyversions/pyMeterBus)](https://pypi.org/project/pyMeterBus/)
 [![GitHub issues](https://img.shields.io/github/issues/ganehag/pyMeterBus.svg)](https://github.com/ganehag/pyMeterBus/issues)
 [![GitHub issues closed](https://img.shields.io/github/issues-closed/ganehag/pyMeterBus.svg)](https://github.com/ganehag/pyMeterBus/issues/?q=is%3Aissue+is%3Aclosed)
@@ -9,13 +8,15 @@
 
 pyMeterBus is a Python decoder for M-Bus frames.
 
-M-Bus, also called Meter-Bus, is a European metering protocol used for remote reading of heat, water, gas, electricity, and other consumption meters. pyMeterBus focuses on decoding complete frame bytes into structured Python objects and stable JSON-friendly exports.
+M-Bus, also called Meter-Bus, is a European metering protocol used for remote reading of heat, water, gas, electricity, and other consumption meters. pyMeterBus focuses on decoding complete frame bytes into structured Python objects, diagnostics, and JSON-friendly exports.
 
 ## Current status
 
-The `v2` decoder is the supported direction of the project. It is a breaking rewrite of the older object model and is intentionally small, explicit, and diagnostics-first.
+The `v2` decoder is the supported direction of the project. It is a breaking rewrite of the older object model and is intentionally small, explicit, byte-oriented, and diagnostics-first.
 
-The v2 package has no runtime dependencies. It does not import `pyserial`, YAML libraries, or crypto packages. It is byte-oriented: read a complete M-Bus frame with whatever transport you use, then pass those bytes to the decoder.
+The current `v2` line is still a prerelease line. Use it for migration testing, fixture validation, and external feedback before treating the API and export model as final `2.0.0` contracts.
+
+The v2 package has no runtime dependencies. It does not import `pyserial`, YAML libraries, crypto packages, or dependency-update tooling. Read a complete M-Bus frame with whatever transport you use, then pass those bytes to the decoder.
 
 Transport is caller-owned. Serial adapters, sockets, HTTP gateways, files, and test fixtures are all just ways to obtain frame bytes.
 
@@ -25,14 +26,20 @@ If you are upgrading existing pyMeterBus code, read the [v1 to v2 migration guid
 
 Python 3.11 or newer.
 
-Only actively supported Python versions are targeted.
+Only actively supported Python versions are targeted. The v2 CI matrix currently covers Python 3.11, 3.12, and 3.13.
 
 ## Install
 
-From PyPI:
+For the current stable PyPI release:
 
 ```shell
 python -m pip install pyMeterBus
+```
+
+For v2 prerelease testing, install a tagged prerelease explicitly:
+
+```shell
+python -m pip install --pre pyMeterBus
 ```
 
 From a checkout:
@@ -52,7 +59,7 @@ python -m pip install -e .
 ### Decode frame bytes in Python
 
 ```python
-from meterbus.api import decode
+from meterbus import decode
 from meterbus.export import to_json
 
 raw = bytes.fromhex("E5")
@@ -111,7 +118,7 @@ See the [serial transport example](docs/serial-transport.md) for a complete fram
 The basic shape is:
 
 ```python
-from meterbus.api import decode
+from meterbus import decode
 from meterbus.model import DecodeMode
 
 raw = read_complete_mbus_frame_from_your_transport()
@@ -135,7 +142,7 @@ Use `full` while debugging protocol behavior. Use `records` when feeding reading
 The same views are available from Python:
 
 ```python
-from meterbus.api import decode
+from meterbus import decode
 from meterbus.export import ExportView, to_dict
 
 result = decode(raw)
@@ -188,7 +195,8 @@ The v2 decoder currently covers:
 - Fixed-data telegram decoding.
 - Format-frame descriptor parsing.
 - Explicit compact-frame expansion with signature and Full-Frame-CRC validation.
-- Structured diagnostics and stable JSON export.
+- Structured diagnostics and JSON-friendly export.
+- Real-world wired M-Bus corpus regression checks when `tests/fixtures/real_world_corpus.jsonl` is present.
 
 Unsupported or manufacturer-specific data should be preserved with diagnostics where possible rather than guessed.
 
@@ -200,9 +208,13 @@ The v2 decoder does not currently aim to provide:
 - Hidden transport state.
 - Automatic compact-frame template caching.
 - Encoding/transmission of M-Bus request or control frames.
+- Wireless M-Bus decoding.
+- Silent acceptance of aggregator-stripped or headerless payloads as valid wired M-Bus frames.
 - Full coverage of every manufacturer-specific extension.
 
 Serial support belongs at the application or example layer: read complete frames using your preferred transport library, then call `decode(raw)`.
+
+If an aggregator gives you payloads without normal wired M-Bus framing, handle that explicitly before calling the core decoder. Do not rely on the wired decoder to guess frame boundaries or invent missing headers.
 
 ## Documentation
 
@@ -246,6 +258,17 @@ Build smoke testing is available through:
 ```shell
 bash scripts/smoke-build.sh
 ```
+
+Import and report on a real-world `.hex` corpus:
+
+```shell
+python scripts/import-real-world-corpus.py path/to/individual.zip
+python scripts/report-real-world-corpus.py \
+  --csv /tmp/mbus-corpus-report.csv \
+  --markdown /tmp/mbus-corpus-report.md
+```
+
+The corpus importer intentionally keeps valid wired frames, malformed wired-looking frames, and wireless/aggregator-looking payloads separate.
 
 ## Contributing
 
