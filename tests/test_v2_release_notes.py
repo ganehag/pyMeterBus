@@ -34,8 +34,8 @@ def test_v2_release_notes_document_packaging_and_python_support():
     assert "Python 3.11" in notes
     assert "Python 3.12" in notes
     assert "Python 3.13" in notes
-    assert "pymeterbus[serial]" in notes
-    assert "pymeterbus[legacy]" in notes
+    assert "default install is intentionally dependency-free" in notes
+    assert "does not currently aim to provide serial communication helpers" in notes
 
 
 def test_v2_release_notes_document_coverage_and_gaps():
@@ -44,7 +44,7 @@ def test_v2_release_notes_document_coverage_and_gaps():
     assert "Implemented decoder coverage" in notes
     assert "Known gaps" in notes
     assert "Variable-data telegram header decoding" in notes
-    assert "Fixed-data telegram strategy is not finalized" in notes
+    assert "Fixed-data telegram decoding" in notes
     assert "v2 model stability is still preview-level" in notes
 
 
