@@ -65,12 +65,14 @@ def main(argv: list[str] | None = None) -> int:
     payload = to_dict(result, view=ExportView(args.view))
     if not isinstance(payload, dict):
         payload = {"result": payload}
-    payload["compact_expansion"] = {
-        "records": to_dict(expansion.records),
-        "undecoded_data": to_dict(expansion.undecoded_data),
-        "diagnostics": to_dict(expansion.diagnostics),
-        "recovered_application_data": to_dict(expansion.recovered_application_data),
-    }
+    payload["compact_expansion"] = to_dict(
+        {
+            "records": expansion.records,
+            "undecoded_data": expansion.undecoded_data,
+            "diagnostics": expansion.diagnostics,
+            "recovered_application_data": expansion.recovered_application_data,
+        }
+    )
     print(json.dumps(payload, indent=args.indent))
 
     expansion_has_error = any(diagnostic.severity is Severity.ERROR for diagnostic in expansion.diagnostics)
