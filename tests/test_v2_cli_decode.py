@@ -5,10 +5,28 @@ import subprocess
 import sys
 from pathlib import Path
 
+from meterbus.codec.crc import crc16_en13757_bytes
 from tests.helpers.fixtures import load_hex_fixture
 
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _checksum(data: bytes) -> int:
+    return sum(data) & 0xFF
+
+
+def _long_application_frame(payload: bytes, *, ci: int) -> bytes:
+    body = bytes([0x08, 0x0B, ci]) + payload
+    return bytes([0x68, len(body), len(body), 0x68]) + body + bytes([_checksum(body), 0x16])
+
+
+def _format_frame(format_data: bytes, *, signature: bytes = b"\x12\x34") -> bytes:
+    return _long_application_frame(bytes([0x00]) + signature + format_data, ci=0x69)
+
+
+def _compact_frame(compact_data: bytes, *, signature: bytes = b"\x12\x34", crc: bytes = b"\xAB\xCD") -> bytes:
+    return _long_application_frame(signature + crc + compact_data, ci=0x79)
 
 
 def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
@@ -93,6 +111,74 @@ def test_decode_cli_supports_records_view():
     assert len(payload["records"]) == 22
     assert payload["records"][0]["kind"] == "energy"
     assert payload["records"][0]["unit"] == "Wh"
+
+
+def test_decode_cli_expands_compact_frame_with_template():
+    format_frame = _format_frame(bytes.fromhex("02 03"))
+    compact_data = bytes.fromhex("34 12")
+    full_frame_crc = crc16_en13757_bytes(bytes.fromhex("02 03 34 12"))
+    compact_frame = _compact_frame(compact_data, crc=full_frame_crc)
+
+    completed = _run_cli(
+        "--compact-template",
+        format_frame.hex(),
+        compact_frame.hex(),
+    )
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    payload = json.loads(completed.stdout)
+    assert payload["ok"] is True
+    assert payload["telegram"]["application_kind"] == "compact_data"
+    assert payload["compact_expansion"]["diagnostics"] == []
+    assert payload["compact_expansion"]["undecoded_data"] == ""
+    assert payload["compact_expansion"]["recovered_application_data"] == "02 03 34 12"
+    assert payload["compact_expansion"]["records"][0]["vif"]["kind"] == "energy"
+    assert payload["compact_expansion"]["records"][0]["value"]["value"] == 4660
+
+
+def test_decode_cli_returns_one_for_compact_template_crc_mismatch():
+    format_frame = _format_frame(bytes.fromhex("02 03"))
+    compact_frame = _compact_frame(bytes.fromhex("34 12"), crc=b"\x00\x00")
+
+    completed = _run_cli("--compact-template", format_frame.hex(), compact_frame.hex())
+
+    assert completed.returncode == 1
+    assert completed.stderr == ""
+    payload = json.loads(completed.stdout)
+    assert payload["compact_expansion"]["diagnostics"][-1]["code"] == "compact_full_frame_crc_mismatch"
+
+
+def test_decode_cli_rejects_compact_template_with_invalid_hex():
+    raw = load_hex_fixture("frames/ack.hex").data.hex()
+
+    completed = _run_cli("--compact-template", "not-hex", raw)
+
+    assert completed.returncode == 2
+    assert completed.stdout == ""
+    assert "invalid compact template hex input" in completed.stderr
+
+
+def test_decode_cli_rejects_compact_template_for_non_compact_input():
+    raw = load_hex_fixture("frames/ack.hex").data.hex()
+    format_frame = _format_frame(bytes.fromhex("02 03"))
+
+    completed = _run_cli("--compact-template", format_frame.hex(), raw)
+
+    assert completed.returncode == 1
+    assert completed.stdout == ""
+    assert "compact template can only be used" in completed.stderr
+
+
+def test_decode_cli_rejects_non_format_compact_template():
+    raw = _compact_frame(bytes.fromhex("34 12")).hex()
+    bad_template = load_hex_fixture("frames/ack.hex").data.hex()
+
+    completed = _run_cli("--compact-template", bad_template, raw)
+
+    assert completed.returncode == 1
+    assert completed.stdout == ""
+    assert "compact template must decode to an M-Bus Format frame" in completed.stderr
 
 
 def test_decode_cli_rejects_unknown_view():
