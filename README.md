@@ -19,6 +19,8 @@ The v2 package has no runtime dependencies. It does not import `pyserial`, YAML 
 
 Transport is caller-owned. Serial adapters, sockets, HTTP gateways, files, and test fixtures are all just ways to obtain frame bytes.
 
+If you are upgrading existing pyMeterBus code, read the [v1 to v2 migration guide](docs/migration-v1-to-v2.md) before changing production integrations.
+
 ## Requirements
 
 Python 3.11 or newer.
@@ -204,11 +206,14 @@ Serial support belongs at the application or example layer: read complete frames
 
 For normal use, start with the [v2 usage guide](docs/v2-usage.md). It covers installation assumptions, Python decoding, CLI decoding, export views, diagnostics, decode modes, fixed and variable data, and compact/format expansion.
 
+If you are upgrading from older pyMeterBus code, start with the [v1 to v2 migration guide](docs/migration-v1-to-v2.md). It covers removed APIs, transport ownership, export changes, and practical upgrade steps.
+
 Common entry points:
 
 - Decode frames from Python: [v2 usage guide](docs/v2-usage.md#decode-a-frame)
 - Decode frames from the command line: [CLI usage](docs/v2-usage.md#decode-from-the-command-line)
 - Decode frames from serial data: [serial transport example](docs/serial-transport.md)
+- Upgrade from v1: [migration guide](docs/migration-v1-to-v2.md)
 - Export JSON or dictionaries: [export examples](docs/v2-usage.md#export-to-json)
 - Understand diagnostics and lenient mode: [diagnostics](docs/v2-usage.md#diagnostics)
 - Expand compact frames with a format template: [compact and format frames](docs/v2-usage.md#compact-and-format-frames)
