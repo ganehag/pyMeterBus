@@ -14,8 +14,8 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _decode_amt_meter():
-    raw = (_PROJECT_ROOT / "tests" / "test-frames" / "amt_meter.blob").read_bytes()
-    return decode(raw, mode=DecodeMode.LENIENT)
+    raw_hex = (_PROJECT_ROOT / "tests" / "fixtures" / "legacy_frames" / "amt_meter.hex").read_text()
+    return decode(bytes.fromhex(raw_hex), mode=DecodeMode.LENIENT)
 
 
 def test_export_view_enum_is_public():
