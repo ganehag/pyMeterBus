@@ -8,7 +8,7 @@ from decimal import Decimal
 from .diagnostics import Diagnostic
 from .enums import ApplicationKind
 from .frame import Frame
-from .record import DataRecord, UnknownRecord
+from .record import DataInformation, DataRecord, UnknownRecord, ValueInformation
 
 
 @dataclass(frozen=True)
@@ -119,15 +119,28 @@ class CompactDataTelegram(Telegram):
 
 
 @dataclass(frozen=True)
-class FormatDataTelegram(Telegram):
-    """Format M-Bus frame shell.
+class FormatDataRecordDescriptor:
+    """One DIF/VIF descriptor from an M-Bus Format frame."""
 
-    A later decoder can turn the raw format payload into record descriptors.
-    This first-pass model only recognizes and preserves the format frame.
+    raw: bytes
+    dif: DataInformation
+    vif: ValueInformation
+    index: int
+
+
+@dataclass(frozen=True)
+class FormatDataTelegram(Telegram):
+    """Format M-Bus frame with descriptor metadata.
+
+    Format frames contain Data Information Fields and Value Information Fields,
+    but no values. The descriptors can later be used as a compact-frame
+    template, but this model does not expand compact data.
     """
 
     raw_application_data: bytes = b""
     length_field: int | None = None
     format_signature: bytes | None = None
     format_data: bytes = b""
+    descriptors: tuple[FormatDataRecordDescriptor, ...] = ()
+    undecoded_data: bytes = b""
     application_kind: ApplicationKind = ApplicationKind.FORMAT_DATA
