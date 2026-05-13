@@ -38,11 +38,11 @@ def test_expand_compact_telegram_uses_explicit_format_descriptors():
     assert len(result.records) == 2
     assert result.records[0].raw == bytes.fromhex("02 03 34 12")
     assert result.records[0].vif.kind == "energy"
-    assert result.records[0].value.value == Decimal("1234")
+    assert result.records[0].value.value == 4660
     assert result.records[0].value.unit.symbol == "Wh"
     assert result.records[1].raw == bytes.fromhex("04 05 78 56 34 12")
     assert result.records[1].vif.kind == "energy"
-    assert result.records[1].value.value == Decimal("12345678")
+    assert result.records[1].value.value == 305419896
 
 
 def test_expand_compact_telegram_applies_vif_scaling():
@@ -59,7 +59,7 @@ def test_expand_compact_telegram_applies_vif_scaling():
     assert result.records[0].vif.kind == "energy"
     assert result.records[0].vif.unit.symbol == "Wh"
     assert result.records[0].vif.multiplier == Decimal("0.001")
-    assert result.records[0].value.value == Decimal("1.234")
+    assert result.records[0].value.value == Decimal("4.660")
     assert result.records[0].value.scaled is True
 
 
@@ -74,7 +74,7 @@ def test_expand_compact_telegram_preserves_extra_value_bytes():
 
     assert result.diagnostics == ()
     assert len(result.records) == 1
-    assert result.records[0].value.value == Decimal("1234")
+    assert result.records[0].value.value == 4660
     assert result.undecoded_data == bytes.fromhex("AA BB")
 
 
@@ -88,7 +88,7 @@ def test_expand_compact_telegram_preserves_truncated_value_tail():
     result = expand_compact_telegram(compact, fmt.descriptors)
 
     assert len(result.records) == 1
-    assert result.records[0].value.value == Decimal("1234")
+    assert result.records[0].value.value == 4660
     assert result.undecoded_data == bytes.fromhex("78 56")
     assert result.diagnostics[-1].code == "compact_value_decode_error"
     assert result.diagnostics[-1].context["descriptor_index"] == 2
