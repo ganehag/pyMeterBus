@@ -41,7 +41,7 @@ def test_build_smoke_workflow_uses_smoke_script():
     workflow = (_PROJECT_ROOT / ".github" / "workflows" / "build-smoke.yml").read_text()
 
     assert "bash scripts/smoke-build.sh" in workflow
-    assert "actions/setup-python@v5" in workflow
+    assert "actions/setup-python@v6" in workflow
     assert '"3.11"' in workflow
     assert '"3.12"' in workflow
     assert '"3.13"' in workflow
