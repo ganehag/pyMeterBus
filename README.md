@@ -37,7 +37,7 @@ python -m meterbus.cli.decode "E5"
 pymeterbus-decode "E5"
 ```
 
-See [docs/v2-usage.md](docs/v2-usage.md) for decode modes, JSON export, and longer examples.
+See [docs/v2-usage.md](docs/v2-usage.md) for practical CLI examples, Python API usage, export views, diagnostics, fixed/variable data notes, and compact/format frame expansion.
 
 Current State (2025)
 -------------
