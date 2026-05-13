@@ -182,12 +182,21 @@ Serial support belongs at the application or example layer: read complete frames
 
 ## Documentation
 
-Start here:
+For normal use, start with the [v2 usage guide](docs/v2-usage.md). It covers installation assumptions, Python decoding, CLI decoding, export views, diagnostics, decode modes, fixed and variable data, and compact/format expansion.
 
-- [v2 usage guide](docs/v2-usage.md)
+Common entry points:
+
+- Decode frames from Python: [v2 usage guide](docs/v2-usage.md#decode-a-frame)
+- Decode frames from the command line: [CLI usage](docs/v2-usage.md#decode-from-the-command-line)
+- Export JSON or dictionaries: [export examples](docs/v2-usage.md#export-to-json)
+- Understand diagnostics and lenient mode: [diagnostics](docs/v2-usage.md#diagnostics)
+- Expand compact frames with a format template: [compact and format frames](docs/v2-usage.md#compact-and-format-frames)
+
+For contributors and maintainers:
+
 - [architecture notes](docs/architecture.md)
 - [data model](docs/data-model.md)
-- [compact and format frame review](docs/spec-review/compact-format-frames.md)
+- [compact and format frame implementation review](docs/spec-review/compact-format-frames.md)
 - [release checklist](docs/v2-release-checklist.md)
 
 ## Development
