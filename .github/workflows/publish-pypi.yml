@@ -1,9 +1,6 @@
 name: Publish to PyPI
 
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
     inputs:
       publish:
@@ -99,13 +96,6 @@ jobs:
           print(import_module("meterbus").__version__)
           PY
           )
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            EXPECTED_TAG="v${VERSION}"
-            if [[ "${GITHUB_REF_NAME}" != "${EXPECTED_TAG}" ]]; then
-              echo "tag ${GITHUB_REF_NAME} does not match package version ${VERSION}; expected ${EXPECTED_TAG}" >&2
-              exit 1
-            fi
-          fi
           if [[ "${VERSION}" =~ (a|b|rc) ]]; then
             PRERELEASE=true
           else
@@ -118,9 +108,7 @@ jobs:
         id: target
         run: |
           SHOULD_PUBLISH=false
-          if [[ "${GITHUB_EVENT_NAME}" == "push" && "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            SHOULD_PUBLISH=true
-          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && "${{ inputs.publish }}" == "true" ]]; then
+          if [[ "${{ inputs.publish }}" == "true" ]]; then
             SHOULD_PUBLISH=true
           fi
 
