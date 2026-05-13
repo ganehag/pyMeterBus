@@ -33,7 +33,7 @@ The current v2 branch is useful, tested, documented, and intentionally dependenc
 - [x] EN 13757 CRC helper.
 - [x] v2 usage documentation.
 - [x] v2-focused README.
-- [x] Focused v2 test script.
+- [x] Full v2 test script runs the complete `tests` directory.
 - [x] Focused v2 GitHub Actions workflow.
 - [x] Dependency-free default install.
 - [x] No runtime optional dependency groups in package metadata.
@@ -61,10 +61,11 @@ The current v2 branch is useful, tested, documented, and intentionally dependenc
 - [x] Remove stale legacy optional dependency metadata.
 - [x] Remove stale serial console entry points.
 - [x] Remove legacy pre-v2 implementation modules and tests from the v2 branch.
-- [ ] Decide whether `meterbus.load()` should remain unavailable, be reintroduced as a v2 compatibility wrapper, or live only in a separate legacy branch.
+- [x] Document that `meterbus.load()` remains unavailable in v2 unless a separate compatibility layer is intentionally added later.
 - [ ] Decide whether v2 models are public stable API or still preview API.
-- [ ] Decide whether root package exports should also expose `to_dict` and `to_json`.
+- [x] Keep root package exports limited to the decode API; keep `to_dict` and `to_json` under `meterbus.export`.
 - [ ] Decide strict/lenient/compat semantics for all known non-fatal frame issues.
+- [x] Add a v1 to v2 migration guide covering removed APIs, transport ownership, exports, and upgrade steps.
 - [ ] Document any intentional differences from legacy parsed values that users are likely to notice.
 
 ## Packaging and release
@@ -74,7 +75,7 @@ The current v2 branch is useful, tested, documented, and intentionally dependenc
 - [x] Keep package runtime dependencies empty.
 - [x] Keep only the supported `pymeterbus-decode` console script.
 - [x] Add release notes for the v2 preview.
-- [ ] Confirm package classifiers match the tested Python versions before publishing.
+- [x] Confirm package classifiers match the tested Python versions in metadata tests.
 - [ ] Verify editable install and wheel install both expose `pymeterbus-decode`.
 - [ ] Build package artifacts from a clean checkout.
 - [ ] Install the built wheel in a fresh virtual environment.
@@ -83,7 +84,7 @@ The current v2 branch is useful, tested, documented, and intentionally dependenc
 ## CI and quality gates
 
 - [ ] Keep `bash scripts/test-v2.sh` passing locally.
-- [ ] Keep `.github/workflows/test-v2.yml` passing for Python 3.11, 3.12, and 3.13.
+- [ ] Keep `.github/workflows/run-test.yml` passing for Python 3.11, 3.12, and 3.13.
 - [ ] Keep build smoke workflow passing.
 - [ ] Decide whether v2 CI should run on `master` after merge.
 - [ ] Add coverage thresholds only after the v2 API surface stabilizes.
@@ -96,6 +97,7 @@ The current v2 branch is useful, tested, documented, and intentionally dependenc
 - [x] Document CLI command and exit codes.
 - [x] Document compact/format expansion from Python and CLI.
 - [x] Document full, summary, and records export views.
+- [x] Add and link a v1 to v2 migration guide.
 - [ ] Expand `docs/v2-usage.md` with real-world examples as fixtures grow.
 - [ ] Document common diagnostics and what users should do with them.
 - [ ] Document strict, lenient, and compat mode differences with examples.
@@ -118,4 +120,4 @@ The current v2 branch is useful, tested, documented, and intentionally dependenc
 - [ ] Run `pymeterbus-decode "E5"` from the installed wheel.
 - [ ] Smoke-test at least one long variable-data telegram fixture.
 - [ ] Smoke-test compact expansion with the synthetic template fixture or a real capture if available.
-- [ ] Review README, `docs/v2-usage.md`, and release notes together.
+- [ ] Review README, `docs/v2-usage.md`, migration guide, and release notes together.
