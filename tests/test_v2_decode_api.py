@@ -260,11 +260,11 @@ def test_decode_format_frame_without_header_decodes_descriptors():
     assert result.telegram.undecoded_data == b""
     assert len(result.telegram.descriptors) == 2
     assert result.telegram.descriptors[0].raw == bytes.fromhex("02 03")
-    assert result.telegram.descriptors[0].dif.data_length == 2
+    assert result.telegram.descriptors[0].data_length == 2
     assert result.telegram.descriptors[0].vif.kind == "energy"
     assert result.telegram.descriptors[0].vif.unit.symbol == "Wh"
     assert result.telegram.descriptors[1].raw == bytes.fromhex("04 05")
-    assert result.telegram.descriptors[1].dif.data_length == 4
+    assert result.telegram.descriptors[1].data_length == 4
     assert result.telegram.descriptors[1].vif.kind == "energy"
 
 
