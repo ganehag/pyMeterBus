@@ -96,13 +96,19 @@ def test_decode_fixed_data_mode_1_telegram():
     assert result.telegram.header.medium_unit_raw == bytes.fromhex("2C 01")
     assert result.telegram.header.medium_unit.medium == "other"
     assert result.telegram.header.medium_unit.counter_1_unit.label == "m3"
+    assert result.telegram.header.medium_unit.counter_1_unit.symbol == "m^3"
+    assert result.telegram.header.medium_unit.counter_1_unit.multiplier == Decimal("1")
     assert result.telegram.header.medium_unit.counter_2_unit.label == "d_m_y"
     assert result.telegram.counters[0].index == 1
     assert result.telegram.counters[0].raw == bytes.fromhex("49 04 00 64")
     assert result.telegram.counters[0].value == Decimal("64000449")
+    assert result.telegram.counters[0].unit.label == "m3"
+    assert result.telegram.counters[0].scaled_value == Decimal("64000449")
     assert result.telegram.counters[1].index == 2
     assert result.telegram.counters[1].raw == bytes.fromhex("32 10 00 00")
     assert result.telegram.counters[1].value == Decimal("1032")
+    assert result.telegram.counters[1].unit.label == "d_m_y"
+    assert result.telegram.counters[1].scaled_value is None
     assert result.telegram.undecoded_data == b""
 
 
@@ -115,6 +121,7 @@ def test_decode_fixed_data_mode_2_telegram_keeps_byte_order():
     assert isinstance(result.telegram, FixedDataTelegram)
     assert result.telegram.header.identification_number == "00000021"
     assert result.telegram.counters[0].value == Decimal("64000449")
+    assert result.telegram.counters[0].scaled_value == Decimal("64000449")
     assert result.telegram.counters[1].value == Decimal("1032")
 
 
@@ -126,6 +133,8 @@ def test_decode_fixed_data_medium_unit_from_spec_example():
     assert medium_unit.medium == "water"
     assert medium_unit.counter_1_unit.code == 0x29
     assert medium_unit.counter_1_unit.label == "l"
+    assert medium_unit.counter_1_unit.symbol == "l"
+    assert medium_unit.counter_1_unit.multiplier == Decimal("1")
     assert medium_unit.counter_2_unit.code == 0x3E
     assert medium_unit.counter_2_unit.label == "same_but_historic"
 
@@ -136,7 +145,40 @@ def test_decode_fixed_data_medium_unit_mode_2_medium_code():
     assert medium_unit.medium_code == 0x0A
     assert medium_unit.medium == "gas_mode_2"
     assert medium_unit.counter_1_unit.label == "l_10"
+    assert medium_unit.counter_1_unit.symbol == "l"
+    assert medium_unit.counter_1_unit.multiplier == Decimal("10")
     assert medium_unit.counter_2_unit.label == "same_but_historic"
+
+
+def test_decode_fixed_data_historic_counter_uses_first_counter_unit_for_scaling():
+    payload = bytes.fromhex("21 00 00 00 12 00 AA BE 01 00 00 00 35 01 00 00")
+
+    result = decode(_long_fixed_frame(payload, ci=0x73))
+
+    assert result.ok is True
+    assert isinstance(result.telegram, FixedDataTelegram)
+    assert result.telegram.header.medium_unit.medium == "gas_mode_2"
+    assert result.telegram.counters[0].unit.label == "l_10"
+    assert result.telegram.counters[0].value == Decimal("1")
+    assert result.telegram.counters[0].scaled_value == Decimal("10")
+    assert result.telegram.counters[1].unit.label == "same_but_historic"
+    assert result.telegram.counters[1].value == Decimal("135")
+    assert result.telegram.counters[1].scaled_value == Decimal("1350")
+
+
+def test_decode_fixed_data_temperature_unit_scaling():
+    payload = bytes.fromhex("21 00 00 00 12 00 38 3F 12 34 00 00 00 00 00 00")
+
+    result = decode(_long_fixed_frame(payload, ci=0x73))
+
+    assert result.ok is True
+    assert result.telegram.counters[0].unit.label == "degC_0_001"
+    assert result.telegram.counters[0].unit.symbol == "degC"
+    assert result.telegram.counters[0].unit.multiplier == Decimal("0.001")
+    assert result.telegram.counters[0].value == Decimal("3412")
+    assert result.telegram.counters[0].scaled_value == Decimal("3.412")
+    assert result.telegram.counters[1].unit.label == "without_units"
+    assert result.telegram.counters[1].scaled_value is None
 
 
 def test_decode_fixed_data_medium_unit_rejects_wrong_length():
@@ -173,9 +215,15 @@ def test_fixed_data_telegram_exports_to_dict():
     assert exported["header"]["identification_number"] == "00000021"
     assert exported["header"]["medium_unit"]["medium"] == "water"
     assert exported["header"]["medium_unit"]["counter_1_unit"]["label"] == "l"
+    assert exported["header"]["medium_unit"]["counter_1_unit"]["symbol"] == "l"
+    assert exported["header"]["medium_unit"]["counter_1_unit"]["multiplier"] == "1"
     assert exported["header"]["medium_unit"]["counter_2_unit"]["label"] == "same_but_historic"
     assert exported["counters"][0]["value"] == "1"
+    assert exported["counters"][0]["unit"]["label"] == "l"
+    assert exported["counters"][0]["scaled_value"] == "1"
     assert exported["counters"][1]["value"] == "135"
+    assert exported["counters"][1]["unit"]["label"] == "same_but_historic"
+    assert exported["counters"][1]["scaled_value"] == "135"
 
 
 def test_decode_is_exposed_from_meterbus_package_root():
