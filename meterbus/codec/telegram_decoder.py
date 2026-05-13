@@ -1,9 +1,4 @@
-"""Application telegram decoder for pyMeterBus 2.0.
-
-This decoder recognizes variable-data telegrams carried by long frames with
-CI 0x72 or 0x76, fixed-data telegrams carried by long frames with CI 0x73 or
-0x77, and first-pass compact/format M-Bus frame shells from EN 13757-3 Annex G.
-"""
+"""Application telegram decoder for pyMeterBus 2.0."""
 
 from __future__ import annotations
 
@@ -28,6 +23,7 @@ from meterbus.model import (
     VariableDataTelegram,
 )
 
+from .format_descriptor import decode_format_descriptors
 from .frame_decoder import FrameDecoder
 from .record import DataRecordDecodeError, decode_record
 
@@ -174,101 +170,41 @@ class TelegramDecoder:
 
         if frame.ci in (_VARIABLE_DATA_CI_MODE_1, _VARIABLE_DATA_CI_MODE_2):
             return _decode_variable_data_result(frame_result, mode)
-
         if frame.ci in (_FIXED_DATA_CI_MODE_1, _FIXED_DATA_CI_MODE_2):
             return _decode_fixed_data_result(frame_result, mode)
-
         if frame.ci in (_COMPACT_DATA_CI_NO_HEADER, _COMPACT_DATA_CI_SHORT_HEADER):
             return _decode_compact_data_result(frame_result)
-
         if frame.ci in (_FORMAT_DATA_CI_NO_HEADER, _FORMAT_DATA_CI_SHORT_HEADER, _FORMAT_DATA_CI_LONG_HEADER):
             return _decode_format_data_result(frame_result)
 
-        return DecodeResult(
-            ok=frame_result.ok,
-            telegram=None,
-            frame=frame,
-            diagnostics=frame_result.diagnostics,
-            raw=frame_result.raw,
-        )
+        return DecodeResult(ok=frame_result.ok, telegram=None, frame=frame, diagnostics=frame_result.diagnostics, raw=frame_result.raw)
 
 
 def _decode_variable_data_result(frame_result: DecodeResult, mode: DecodeMode) -> DecodeResult:
     frame = frame_result.frame
     assert isinstance(frame, LongFrame)
-
     diagnostics = list(frame_result.diagnostics)
+
     if len(frame.payload) < _VARIABLE_DATA_HEADER_LENGTH:
-        diagnostics.append(
-            Diagnostic(
-                severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,
-                code="truncated_variable_data_header",
-                message="Variable data telegram is too short to contain a complete header.",
-                context={
-                    "expected_minimum_length": _VARIABLE_DATA_HEADER_LENGTH,
-                    "actual_length": len(frame.payload),
-                },
-            )
-        )
-        return DecodeResult(
-            ok=False,
-            telegram=None,
-            frame=frame,
-            diagnostics=tuple(diagnostics),
-            raw=frame_result.raw,
-        )
+        diagnostics.append(Diagnostic(severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR, code="truncated_variable_data_header", message="Variable data telegram is too short to contain a complete header.", context={"expected_minimum_length": _VARIABLE_DATA_HEADER_LENGTH, "actual_length": len(frame.payload)}))
+        return DecodeResult(ok=False, telegram=None, frame=frame, diagnostics=tuple(diagnostics), raw=frame_result.raw)
 
     header = decode_variable_data_header(frame.payload[:_VARIABLE_DATA_HEADER_LENGTH])
     application_data = frame.payload[_VARIABLE_DATA_HEADER_LENGTH:]
-    records, undecoded_data, more_records_follow, record_diagnostics = _decode_records(
-        application_data,
-        mode,
-        lsb_order=frame.ci == _VARIABLE_DATA_CI_MODE_1,
-    )
+    records, undecoded_data, more_records_follow, record_diagnostics = _decode_records(application_data, mode, lsb_order=frame.ci == _VARIABLE_DATA_CI_MODE_1)
     diagnostics.extend(record_diagnostics)
-
-    telegram = VariableDataTelegram(
-        frame=frame,
-        diagnostics=tuple(diagnostics),
-        header=header,
-        records=tuple(records),
-        more_records_follow=more_records_follow,
-        raw_application_data=application_data,
-        undecoded_data=undecoded_data,
-    )
-    return DecodeResult(
-        ok=not any(diagnostic.severity is Severity.FATAL for diagnostic in diagnostics),
-        telegram=telegram,
-        frame=frame,
-        diagnostics=tuple(diagnostics),
-        raw=frame_result.raw,
-    )
+    telegram = VariableDataTelegram(frame=frame, diagnostics=tuple(diagnostics), header=header, records=tuple(records), more_records_follow=more_records_follow, raw_application_data=application_data, undecoded_data=undecoded_data)
+    return DecodeResult(ok=not any(diagnostic.severity is Severity.FATAL for diagnostic in diagnostics), telegram=telegram, frame=frame, diagnostics=tuple(diagnostics), raw=frame_result.raw)
 
 
 def _decode_fixed_data_result(frame_result: DecodeResult, mode: DecodeMode) -> DecodeResult:
     frame = frame_result.frame
     assert isinstance(frame, LongFrame)
-
     diagnostics = list(frame_result.diagnostics)
+
     if len(frame.payload) < _FIXED_DATA_MINIMUM_LENGTH:
-        diagnostics.append(
-            Diagnostic(
-                severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,
-                code="truncated_fixed_data_telegram",
-                message="Fixed data telegram is too short to contain its header and two counters.",
-                context={
-                    "expected_minimum_length": _FIXED_DATA_MINIMUM_LENGTH,
-                    "actual_length": len(frame.payload),
-                },
-            )
-        )
-        return DecodeResult(
-            ok=False,
-            telegram=None,
-            frame=frame,
-            diagnostics=tuple(diagnostics),
-            raw=frame_result.raw,
-        )
+        diagnostics.append(Diagnostic(severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR, code="truncated_fixed_data_telegram", message="Fixed data telegram is too short to contain its header and two counters.", context={"expected_minimum_length": _FIXED_DATA_MINIMUM_LENGTH, "actual_length": len(frame.payload)}))
+        return DecodeResult(ok=False, telegram=None, frame=frame, diagnostics=tuple(diagnostics), raw=frame_result.raw)
 
     lsb_order = frame.ci == _FIXED_DATA_CI_MODE_1
     header = decode_fixed_data_header(frame.payload[:_FIXED_DATA_HEADER_LENGTH], lsb_order=lsb_order)
@@ -277,107 +213,49 @@ def _decode_fixed_data_result(frame_result: DecodeResult, mode: DecodeMode) -> D
     counter_2_unit = header.medium_unit.counter_2_unit if header.medium_unit is not None else None
     counters = (
         _decode_fixed_data_counter(1, counter_data[:_FIXED_DATA_COUNTER_LENGTH], lsb_order=lsb_order, unit=counter_1_unit),
-        _decode_fixed_data_counter(
-            2,
-            counter_data[_FIXED_DATA_COUNTER_LENGTH:],
-            lsb_order=lsb_order,
-            unit=counter_2_unit,
-            historic_unit=counter_1_unit,
-        ),
+        _decode_fixed_data_counter(2, counter_data[_FIXED_DATA_COUNTER_LENGTH:], lsb_order=lsb_order, unit=counter_2_unit, historic_unit=counter_1_unit),
     )
     undecoded_data = frame.payload[_FIXED_DATA_MINIMUM_LENGTH:]
-
-    telegram = FixedDataTelegram(
-        frame=frame,
-        diagnostics=tuple(diagnostics),
-        header=header,
-        counters=counters,
-        raw_application_data=frame.payload,
-        undecoded_data=undecoded_data,
-    )
-    return DecodeResult(
-        ok=not any(diagnostic.severity is Severity.FATAL for diagnostic in diagnostics),
-        telegram=telegram,
-        frame=frame,
-        diagnostics=tuple(diagnostics),
-        raw=frame_result.raw,
-    )
+    telegram = FixedDataTelegram(frame=frame, diagnostics=tuple(diagnostics), header=header, counters=counters, raw_application_data=frame.payload, undecoded_data=undecoded_data)
+    return DecodeResult(ok=not any(diagnostic.severity is Severity.FATAL for diagnostic in diagnostics), telegram=telegram, frame=frame, diagnostics=tuple(diagnostics), raw=frame_result.raw)
 
 
 def _decode_compact_data_result(frame_result: DecodeResult) -> DecodeResult:
     frame = frame_result.frame
     assert isinstance(frame, LongFrame)
-
     data_header_length = _wireless_data_header_length(frame.ci)
     compact_payload = frame.payload[data_header_length:]
     format_signature = compact_payload[:_FORMAT_SIGNATURE_LENGTH] if len(compact_payload) >= _FORMAT_SIGNATURE_LENGTH else None
-    full_frame_crc_offset = _FORMAT_SIGNATURE_LENGTH
-    full_frame_crc_end = full_frame_crc_offset + _FULL_FRAME_CRC_LENGTH
-    full_frame_crc = compact_payload[full_frame_crc_offset:full_frame_crc_end] if len(compact_payload) >= full_frame_crc_end else None
+    full_frame_crc_end = _FORMAT_SIGNATURE_LENGTH + _FULL_FRAME_CRC_LENGTH
+    full_frame_crc = compact_payload[_FORMAT_SIGNATURE_LENGTH:full_frame_crc_end] if len(compact_payload) >= full_frame_crc_end else None
     compact_data = compact_payload[full_frame_crc_end:] if len(compact_payload) >= full_frame_crc_end else b""
-
-    diagnostic = Diagnostic(
-        severity=Severity.WARNING,
-        code="compact_frame_template_required",
-        message="Compact M-Bus frame expansion requires a matching format or full-frame template.",
-        context={
-            "ci": frame.ci,
-            "data_header_length": data_header_length,
-        },
-    )
-    telegram = CompactDataTelegram(
-        frame=frame,
-        diagnostics=(diagnostic,),
-        raw_application_data=frame.payload,
-        format_signature=format_signature,
-        full_frame_crc=full_frame_crc,
-        compact_data=compact_data,
-    )
-    return DecodeResult(
-        ok=True,
-        telegram=telegram,
-        frame=frame,
-        diagnostics=frame_result.diagnostics + (diagnostic,),
-        raw=frame_result.raw,
-    )
+    diagnostic = Diagnostic(severity=Severity.WARNING, code="compact_frame_template_required", message="Compact M-Bus frame expansion requires a matching format or full-frame template.", context={"ci": frame.ci, "data_header_length": data_header_length})
+    telegram = CompactDataTelegram(frame=frame, diagnostics=(diagnostic,), raw_application_data=frame.payload, format_signature=format_signature, full_frame_crc=full_frame_crc, compact_data=compact_data)
+    return DecodeResult(ok=True, telegram=telegram, frame=frame, diagnostics=frame_result.diagnostics + (diagnostic,), raw=frame_result.raw)
 
 
 def _decode_format_data_result(frame_result: DecodeResult) -> DecodeResult:
     frame = frame_result.frame
     assert isinstance(frame, LongFrame)
-
     data_header_length = _wireless_data_header_length(frame.ci)
     format_payload = frame.payload[data_header_length:]
     length_field = format_payload[0] if len(format_payload) >= _FORMAT_LENGTH_FIELD_LENGTH else None
-    format_signature_offset = _FORMAT_LENGTH_FIELD_LENGTH
-    format_signature_end = format_signature_offset + _FORMAT_SIGNATURE_LENGTH
-    format_signature = format_payload[format_signature_offset:format_signature_end] if len(format_payload) >= format_signature_end else None
+    format_signature_end = _FORMAT_LENGTH_FIELD_LENGTH + _FORMAT_SIGNATURE_LENGTH
+    format_signature = format_payload[_FORMAT_LENGTH_FIELD_LENGTH:format_signature_end] if len(format_payload) >= format_signature_end else None
     format_data = format_payload[format_signature_end:] if len(format_payload) >= format_signature_end else b""
-
-    diagnostic = Diagnostic(
-        severity=Severity.INFO,
-        code="format_frame_descriptors_not_decoded",
-        message="Format M-Bus frame was recognized and preserved, but descriptor decoding is not implemented yet.",
-        context={
-            "ci": frame.ci,
-            "data_header_length": data_header_length,
-        },
-    )
+    descriptor_result = decode_format_descriptors(format_data)
+    diagnostics = frame_result.diagnostics + descriptor_result.diagnostics
     telegram = FormatDataTelegram(
         frame=frame,
-        diagnostics=(diagnostic,),
+        diagnostics=descriptor_result.diagnostics,
         raw_application_data=frame.payload,
         length_field=length_field,
         format_signature=format_signature,
         format_data=format_data,
+        descriptors=descriptor_result.descriptors,
+        undecoded_data=descriptor_result.undecoded_data,
     )
-    return DecodeResult(
-        ok=True,
-        telegram=telegram,
-        frame=frame,
-        diagnostics=frame_result.diagnostics + (diagnostic,),
-        raw=frame_result.raw,
-    )
+    return DecodeResult(ok=not any(diagnostic.severity is Severity.FATAL for diagnostic in diagnostics), telegram=telegram, frame=frame, diagnostics=diagnostics, raw=frame_result.raw)
 
 
 def _wireless_data_header_length(ci: int) -> int:
@@ -389,65 +267,26 @@ def _wireless_data_header_length(ci: int) -> int:
 
 
 def decode_variable_data_header(raw: bytes) -> VariableDataHeader:
-    """Decode the fixed 12-byte variable data header."""
-
     if len(raw) != _VARIABLE_DATA_HEADER_LENGTH:
         raise ValueError("variable data header must be exactly 12 bytes")
-
-    return VariableDataHeader(
-        identification_number=_decode_bcd_identification(raw[0:4], lsb_order=True),
-        manufacturer=_decode_manufacturer(raw[4:6], lsb_order=True),
-        manufacturer_raw=raw[4:6],
-        version=raw[6],
-        medium=raw[7],
-        access_number=raw[8],
-        status=raw[9],
-        signature=raw[10:12],
-        raw=raw,
-    )
+    return VariableDataHeader(identification_number=_decode_bcd_identification(raw[0:4], lsb_order=True), manufacturer=_decode_manufacturer(raw[4:6], lsb_order=True), manufacturer_raw=raw[4:6], version=raw[6], medium=raw[7], access_number=raw[8], status=raw[9], signature=raw[10:12], raw=raw)
 
 
 def decode_fixed_data_header(raw: bytes, *, lsb_order: bool = True) -> FixedDataHeader:
-    """Decode the fixed 8-byte fixed-data response header."""
-
     if len(raw) != _FIXED_DATA_HEADER_LENGTH:
         raise ValueError("fixed data header must be exactly 8 bytes")
-
     medium_unit_raw = raw[6:8]
-    return FixedDataHeader(
-        identification_number=_decode_bcd_identification(raw[0:4], lsb_order=lsb_order),
-        access_number=raw[4],
-        status=raw[5],
-        medium_unit_raw=medium_unit_raw,
-        medium_unit=decode_fixed_data_medium_unit(medium_unit_raw),
-        raw=raw,
-    )
+    return FixedDataHeader(identification_number=_decode_bcd_identification(raw[0:4], lsb_order=lsb_order), access_number=raw[4], status=raw[5], medium_unit_raw=medium_unit_raw, medium_unit=decode_fixed_data_medium_unit(medium_unit_raw), raw=raw)
 
 
 def decode_fixed_data_medium_unit(raw: bytes) -> FixedDataMediumUnit:
-    """Decode the fixed-data Medium/Unit field.
-
-    The Medium/Unit field is always transmitted least-significant byte first.
-    The low six bits of byte 1 are counter 1's unit. The low six bits of byte 2
-    are counter 2's unit. The high two bits of both bytes form the 4-bit medium
-    code, with byte 2 contributing the two most significant bits.
-    """
-
     if len(raw) != 2:
         raise ValueError("fixed data medium/unit field must be exactly 2 bytes")
-
     first, second = raw
     counter_1_code = first & 0x3F
     counter_2_code = second & 0x3F
     medium_code = ((second & 0xC0) >> 4) | ((first & 0xC0) >> 6)
-
-    return FixedDataMediumUnit(
-        raw=raw,
-        medium_code=medium_code,
-        medium=_FIXED_DATA_MEDIA[medium_code],
-        counter_1_unit=_fixed_data_unit(counter_1_code),
-        counter_2_unit=_fixed_data_unit(counter_2_code),
-    )
+    return FixedDataMediumUnit(raw=raw, medium_code=medium_code, medium=_FIXED_DATA_MEDIA[medium_code], counter_1_unit=_fixed_data_unit(counter_1_code), counter_2_unit=_fixed_data_unit(counter_2_code))
 
 
 def _fixed_data_unit(code: int) -> FixedDataUnit:
@@ -455,21 +294,12 @@ def _fixed_data_unit(code: int) -> FixedDataUnit:
     return FixedDataUnit(code=code, label=label, symbol=symbol, multiplier=multiplier)
 
 
-def _decode_fixed_data_counter(
-    index: int,
-    raw: bytes,
-    *,
-    lsb_order: bool,
-    unit: FixedDataUnit | None,
-    historic_unit: FixedDataUnit | None = None,
-) -> FixedDataCounter:
+def _decode_fixed_data_counter(index: int, raw: bytes, *, lsb_order: bool, unit: FixedDataUnit | None, historic_unit: FixedDataUnit | None = None) -> FixedDataCounter:
     if len(raw) != _FIXED_DATA_COUNTER_LENGTH:
         raise ValueError("fixed data counters must be exactly 4 bytes")
     value = _decode_bcd_decimal(raw, lsb_order=lsb_order)
     scaling_unit = historic_unit if unit is not None and unit.label == "same_but_historic" else unit
-    scaled_value = None
-    if scaling_unit is not None and scaling_unit.multiplier is not None:
-        scaled_value = value * scaling_unit.multiplier
+    scaled_value = value * scaling_unit.multiplier if scaling_unit is not None and scaling_unit.multiplier is not None else None
     return FixedDataCounter(index=index, raw=raw, value=value, unit=unit, scaled_value=scaled_value)
 
 
@@ -478,11 +308,9 @@ def _decode_records(application_data: bytes, mode: DecodeMode, *, lsb_order: boo
     diagnostics: list[Diagnostic] = []
     offset = 0
     more_records_follow = False
-
     while offset < len(application_data):
         if application_data[offset] == _FILLER_BYTE:
             return records, application_data[offset:], more_records_follow, diagnostics
-
         if application_data[offset] in (_MANUFACTURER_SPECIFIC_DATA, _MANUFACTURER_SPECIFIC_DATA_MORE_RECORDS):
             reason = "manufacturer_specific_data"
             if application_data[offset] == _MANUFACTURER_SPECIFIC_DATA_MORE_RECORDS:
@@ -490,54 +318,32 @@ def _decode_records(application_data: bytes, mode: DecodeMode, *, lsb_order: boo
                 more_records_follow = True
             records.append(UnknownRecord(raw=application_data[offset:], reason=reason))
             return records, b"", more_records_follow, diagnostics
-
         try:
             result = decode_record(application_data[offset:], lsb_order=lsb_order)
         except DataRecordDecodeError as exc:
-            diagnostic = Diagnostic(
-                severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,
-                code="record_decode_error",
-                message=str(exc),
-                offset=_VARIABLE_DATA_HEADER_LENGTH + offset,
-            )
+            diagnostic = Diagnostic(severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR, code="record_decode_error", message=str(exc), offset=_VARIABLE_DATA_HEADER_LENGTH + offset)
             diagnostics.append(diagnostic)
             if mode is DecodeMode.STRICT:
                 return records, application_data[offset:], more_records_follow, diagnostics
-            preserved = _preserve_unknown_record(application_data[offset:], str(exc), diagnostic)
-            records.append(preserved)
+            records.append(_preserve_unknown_record(application_data[offset:], str(exc), diagnostic))
             return records, b"", more_records_follow, diagnostics
-
         if result.consumed <= 0:
-            diagnostic = Diagnostic(
-                severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR,
-                code="record_decoder_did_not_advance",
-                message="Record decoder did not consume any bytes.",
-                offset=_VARIABLE_DATA_HEADER_LENGTH + offset,
-            )
+            diagnostic = Diagnostic(severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR, code="record_decoder_did_not_advance", message="Record decoder did not consume any bytes.", offset=_VARIABLE_DATA_HEADER_LENGTH + offset)
             diagnostics.append(diagnostic)
             if mode is DecodeMode.STRICT:
                 return records, application_data[offset:], more_records_follow, diagnostics
-            preserved = _preserve_unknown_record(application_data[offset:], diagnostic.message, diagnostic)
-            records.append(preserved)
+            records.append(_preserve_unknown_record(application_data[offset:], diagnostic.message, diagnostic))
             return records, b"", more_records_follow, diagnostics
-
         records.append(result.record)
         offset += result.consumed
-
     return records, b"", more_records_follow, diagnostics
 
 
 def _preserve_unknown_record(raw: bytes, reason: str, diagnostic: Diagnostic) -> UnknownRecord:
-    return UnknownRecord(
-        raw=raw,
-        reason=reason,
-        diagnostics=(diagnostic,),
-    )
+    return UnknownRecord(raw=raw, reason=reason, diagnostics=(diagnostic,))
 
 
 def _decode_bcd_identification(raw: bytes, *, lsb_order: bool) -> str:
-    """Decode a BCD identification number using the telegram's byte order."""
-
     ordered = reversed(raw) if lsb_order else raw
     digits: list[str] = []
     for byte in ordered:
@@ -560,20 +366,10 @@ def _decode_bcd_decimal(raw: bytes, *, lsb_order: bool) -> Decimal:
 
 
 def _decode_manufacturer(raw: bytes, *, lsb_order: bool = True) -> str:
-    """Decode a two-byte EN 13757 manufacturer code."""
-
     manufacturer_raw = raw if lsb_order else bytes(reversed(raw))
     value = manufacturer_raw[0] | (manufacturer_raw[1] << 8)
-    return "".join(
-        chr(((value >> shift) & 0x1F) + 64)
-        for shift in (10, 5, 0)
-    )
+    return "".join(chr(((value >> shift) & 0x1F) + 64) for shift in (10, 5, 0))
 
 
-def decode_telegram(
-    data: bytes | bytearray | memoryview | list[int] | tuple[int, ...],
-    mode: DecodeMode = DecodeMode.STRICT,
-) -> DecodeResult:
-    """Decode one application telegram."""
-
+def decode_telegram(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...], mode: DecodeMode = DecodeMode.STRICT) -> DecodeResult:
     return TelegramDecoder().decode(data, mode=mode)
