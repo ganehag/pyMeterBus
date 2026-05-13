@@ -42,7 +42,9 @@ def test_expand_compact_telegram_uses_explicit_format_descriptors():
     assert result.records[0].value.unit.symbol == "Wh"
     assert result.records[1].raw == bytes.fromhex("04 05 78 56 34 12")
     assert result.records[1].vif.kind == "energy"
-    assert result.records[1].value.value == 305419896
+    assert result.records[1].vif.multiplier == Decimal("100")
+    assert result.records[1].value.value == Decimal("30541989600")
+    assert result.records[1].value.scaled is True
 
 
 def test_expand_compact_telegram_applies_vif_scaling():
