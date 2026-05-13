@@ -247,7 +247,7 @@ def test_decode_compact_frame_short_header_skips_wireless_header():
     assert result.diagnostics[-1].context["data_header_length"] == 6
 
 
-def test_decode_format_frame_without_header_preserves_format_descriptor_payload():
+def test_decode_format_frame_without_header_decodes_descriptors():
     result = decode(_long_application_frame(bytes.fromhex("00 12 34 02 03 04 05"), ci=0x69))
 
     assert result.ok is True
@@ -257,12 +257,38 @@ def test_decode_format_frame_without_header_preserves_format_descriptor_payload(
     assert result.telegram.format_signature == bytes.fromhex("12 34")
     assert result.telegram.format_data == bytes.fromhex("02 03 04 05")
     assert result.telegram.raw_application_data == bytes.fromhex("00 12 34 02 03 04 05")
-    assert result.diagnostics[-1].code == "format_frame_descriptors_not_decoded"
+    assert result.telegram.undecoded_data == b""
+    assert len(result.telegram.descriptors) == 2
+    assert result.telegram.descriptors[0].raw == bytes.fromhex("02 03")
+    assert result.telegram.descriptors[0].dif.data_length == 2
+    assert result.telegram.descriptors[0].vif.kind == "energy"
+    assert result.telegram.descriptors[0].vif.unit.symbol == "Wh"
+    assert result.telegram.descriptors[1].raw == bytes.fromhex("04 05")
+    assert result.telegram.descriptors[1].dif.data_length == 4
+    assert result.telegram.descriptors[1].vif.kind == "energy"
+
+
+def test_decode_format_frame_preserves_filler_tail_after_descriptors():
+    result = decode(_long_application_frame(bytes.fromhex("00 12 34 02 03 2F 2F"), ci=0x69))
+
+    assert result.ok is True
+    assert len(result.telegram.descriptors) == 1
+    assert result.telegram.undecoded_data == bytes.fromhex("2F 2F")
+    assert result.diagnostics == ()
+
+
+def test_decode_format_frame_preserves_malformed_descriptor_tail():
+    result = decode(_long_application_frame(bytes.fromhex("00 12 34 02 03 04"), ci=0x69))
+
+    assert result.ok is True
+    assert len(result.telegram.descriptors) == 1
+    assert result.telegram.undecoded_data == b"\x04"
+    assert result.diagnostics[-1].code == "format_descriptor_decode_error"
 
 
 def test_decode_format_frame_short_and_long_headers_skip_wireless_header():
     short_payload = bytes.fromhex("AA BB CC DD EE FF 00 12 34 02 03")
-    long_payload = bytes.fromhex("00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 00 12 34 02")
+    long_payload = bytes.fromhex("00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 00 12 34 02 03")
 
     short_result = decode(_long_application_frame(short_payload, ci=0x6A))
     long_result = decode(_long_application_frame(long_payload, ci=0x6B))
@@ -270,12 +296,12 @@ def test_decode_format_frame_short_and_long_headers_skip_wireless_header():
     assert isinstance(short_result.telegram, FormatDataTelegram)
     assert short_result.telegram.format_signature == bytes.fromhex("12 34")
     assert short_result.telegram.format_data == bytes.fromhex("02 03")
-    assert short_result.diagnostics[-1].context["data_header_length"] == 6
+    assert len(short_result.telegram.descriptors) == 1
 
     assert isinstance(long_result.telegram, FormatDataTelegram)
     assert long_result.telegram.format_signature == bytes.fromhex("12 34")
-    assert long_result.telegram.format_data == b"\x02"
-    assert long_result.diagnostics[-1].context["data_header_length"] == 14
+    assert long_result.telegram.format_data == bytes.fromhex("02 03")
+    assert len(long_result.telegram.descriptors) == 1
 
 
 def test_compact_and_format_telegrams_export_to_dict():
@@ -291,6 +317,9 @@ def test_compact_and_format_telegrams_export_to_dict():
     assert fmt["length_field"] == 0
     assert fmt["format_signature"] == "12 34"
     assert fmt["format_data"] == "02 03"
+    assert fmt["descriptors"][0]["raw"] == "02 03"
+    assert fmt["descriptors"][0]["vif"]["kind"] == "energy"
+    assert fmt["undecoded_data"] == ""
 
 
 def test_fixed_data_telegram_exports_to_dict():
