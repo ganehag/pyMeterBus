@@ -212,7 +212,37 @@ bash scripts/smoke-build.sh
 
 ## Contributing
 
-Issues and pull requests are welcome. For protocol behavior, prefer small changes backed by fixtures or spec references. M-Bus is specific about field meanings and byte ordering, so avoid guessing when the standard or a known meter fixture can settle the behavior.
+Contributions are welcome, but protocol changes need to be careful. M-Bus fields are tightly specified, and many real meters also contain manufacturer-specific data. A plausible decode is not good enough; changes should be backed by the standard, a real frame fixture, or both.
+
+Good contributions usually do one of these things:
+
+- Add support for a clearly identified standard field or table entry.
+- Add a real-world frame fixture and the expected v2 output.
+- Preserve unsupported data more accurately without guessing its meaning.
+- Improve diagnostics, exports, documentation, or tests without widening the runtime dependency surface.
+
+For decoder changes, prefer small pull requests. Include the raw frame bytes when possible, add focused tests, and explain which part of the standard or which known device behavior the change follows. If the behavior is uncertain, preserve raw bytes and emit diagnostics rather than silently inventing a meaning.
+
+Please avoid:
+
+- Adding runtime dependencies for core decoding.
+- Adding hidden transport state or serial I/O to the core package.
+- Adding automatic compact-frame template caches.
+- Reintroducing the old pre-v2 object model into the v2 root API.
+- Making broad rewrites at the same time as protocol behavior changes.
+
+Before opening a pull request, run:
+
+```shell
+bash scripts/test-v2.sh
+python -m meterbus.cli.decode E5
+```
+
+If your change affects packaging or console scripts, also run:
+
+```shell
+bash scripts/smoke-build.sh
+```
 
 ## License
 
