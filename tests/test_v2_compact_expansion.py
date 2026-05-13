@@ -24,9 +24,9 @@ def _compact_frame(compact_data: bytes, *, signature: bytes = b"\x12\x34", crc: 
     return _long_application_frame(signature + crc + compact_data, ci=0x79)
 
 
-def test_expand_compact_telegram_uses_explicit_format_descriptors():
+def test_expand_compact_telegram_accepts_raw_descriptors_without_signature_check():
     fmt = decode(_format_frame(bytes.fromhex("02 03 04 05"))).telegram
-    compact = decode(_compact_frame(bytes.fromhex("34 12 78 56 34 12"))).telegram
+    compact = decode(_compact_frame(bytes.fromhex("34 12 78 56 34 12"), signature=b"\xAA\xBB")).telegram
 
     assert isinstance(fmt, FormatDataTelegram)
     assert isinstance(compact, CompactDataTelegram)
@@ -47,6 +47,37 @@ def test_expand_compact_telegram_uses_explicit_format_descriptors():
     assert result.records[1].value.scaled is True
 
 
+def test_expand_compact_telegram_checks_matching_format_signature_when_template_is_format_telegram():
+    fmt = decode(_format_frame(bytes.fromhex("02 03"), signature=b"\x12\x34")).telegram
+    compact = decode(_compact_frame(bytes.fromhex("34 12"), signature=b"\x12\x34")).telegram
+
+    assert isinstance(fmt, FormatDataTelegram)
+    assert isinstance(compact, CompactDataTelegram)
+
+    result = expand_compact_telegram(compact, fmt)
+
+    assert result.diagnostics == ()
+    assert len(result.records) == 1
+    assert result.records[0].value.value == 4660
+    assert result.undecoded_data == b""
+
+
+def test_expand_compact_telegram_rejects_mismatched_format_signature():
+    fmt = decode(_format_frame(bytes.fromhex("02 03"), signature=b"\x12\x34")).telegram
+    compact = decode(_compact_frame(bytes.fromhex("34 12"), signature=b"\xAA\xBB")).telegram
+
+    assert isinstance(fmt, FormatDataTelegram)
+    assert isinstance(compact, CompactDataTelegram)
+
+    result = expand_compact_telegram(compact, fmt)
+
+    assert result.records == ()
+    assert result.undecoded_data == bytes.fromhex("34 12")
+    assert result.diagnostics[-1].code == "compact_format_signature_mismatch"
+    assert result.diagnostics[-1].context["compact_format_signature"] == b"\xAA\xBB"
+    assert result.diagnostics[-1].context["template_format_signature"] == b"\x12\x34"
+
+
 def test_expand_compact_telegram_applies_vif_scaling():
     fmt = decode(_format_frame(bytes.fromhex("02 00"))).telegram
     compact = decode(_compact_frame(bytes.fromhex("34 12"))).telegram
@@ -54,7 +85,7 @@ def test_expand_compact_telegram_applies_vif_scaling():
     assert isinstance(fmt, FormatDataTelegram)
     assert isinstance(compact, CompactDataTelegram)
 
-    result = expand_compact_telegram(compact, fmt.descriptors)
+    result = expand_compact_telegram(compact, fmt)
 
     assert result.diagnostics == ()
     assert len(result.records) == 1
@@ -72,7 +103,7 @@ def test_expand_compact_telegram_preserves_extra_value_bytes():
     assert isinstance(fmt, FormatDataTelegram)
     assert isinstance(compact, CompactDataTelegram)
 
-    result = expand_compact_telegram(compact, fmt.descriptors)
+    result = expand_compact_telegram(compact, fmt)
 
     assert result.diagnostics == ()
     assert len(result.records) == 1
@@ -87,7 +118,7 @@ def test_expand_compact_telegram_preserves_truncated_value_tail():
     assert isinstance(fmt, FormatDataTelegram)
     assert isinstance(compact, CompactDataTelegram)
 
-    result = expand_compact_telegram(compact, fmt.descriptors)
+    result = expand_compact_telegram(compact, fmt)
 
     assert len(result.records) == 1
     assert result.records[0].value.value == 4660
