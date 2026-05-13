@@ -8,7 +8,17 @@ import meterbus
 from meterbus.api import decode, decode_one, decode_one_frame
 from meterbus.codec.telegram_decoder import decode_fixed_data_medium_unit
 from meterbus.export import to_dict
-from meterbus.model import DecodeError, DecodeMode, DecodeResult, FixedDataTelegram, FrameKind, ShortFrame, VariableDataTelegram
+from meterbus.model import (
+    CompactDataTelegram,
+    DecodeError,
+    DecodeMode,
+    DecodeResult,
+    FixedDataTelegram,
+    FormatDataTelegram,
+    FrameKind,
+    ShortFrame,
+    VariableDataTelegram,
+)
 from tests.helpers.fixtures import load_hex_fixture
 
 
@@ -23,6 +33,11 @@ def _long_variable_frame(application_data: bytes, *, ci: int = 0x72) -> bytes:
 
 
 def _long_fixed_frame(payload: bytes, *, ci: int = 0x73) -> bytes:
+    body = bytes([0x08, 0x0B, ci]) + payload
+    return bytes([0x68, len(body), len(body), 0x68]) + body + bytes([_checksum(body), 0x16])
+
+
+def _long_application_frame(payload: bytes, *, ci: int) -> bytes:
     body = bytes([0x08, 0x0B, ci]) + payload
     return bytes([0x68, len(body), len(body), 0x68]) + body + bytes([_checksum(body), 0x16])
 
@@ -204,6 +219,78 @@ def test_decode_fixed_data_rejects_truncated_payload():
     assert result.ok is False
     assert result.telegram is None
     assert result.diagnostics[-1].code == "truncated_fixed_data_telegram"
+
+
+def test_decode_compact_frame_without_header_preserves_payload_and_requires_template():
+    result = decode(_long_application_frame(bytes.fromhex("12 34 AB CD 01 02 03"), ci=0x79))
+
+    assert result.ok is True
+    assert isinstance(result.telegram, CompactDataTelegram)
+    assert result.telegram.application_kind == "compact_data"
+    assert result.telegram.format_signature == bytes.fromhex("12 34")
+    assert result.telegram.full_frame_crc == bytes.fromhex("AB CD")
+    assert result.telegram.compact_data == bytes.fromhex("01 02 03")
+    assert result.telegram.raw_application_data == bytes.fromhex("12 34 AB CD 01 02 03")
+    assert result.diagnostics[-1].code == "compact_frame_template_required"
+
+
+def test_decode_compact_frame_short_header_skips_wireless_header():
+    payload = bytes.fromhex("AA BB CC DD EE FF 12 34 AB CD 01")
+
+    result = decode(_long_application_frame(payload, ci=0x7B))
+
+    assert result.ok is True
+    assert isinstance(result.telegram, CompactDataTelegram)
+    assert result.telegram.format_signature == bytes.fromhex("12 34")
+    assert result.telegram.full_frame_crc == bytes.fromhex("AB CD")
+    assert result.telegram.compact_data == b"\x01"
+    assert result.diagnostics[-1].context["data_header_length"] == 6
+
+
+def test_decode_format_frame_without_header_preserves_format_descriptor_payload():
+    result = decode(_long_application_frame(bytes.fromhex("00 12 34 02 03 04 05"), ci=0x69))
+
+    assert result.ok is True
+    assert isinstance(result.telegram, FormatDataTelegram)
+    assert result.telegram.application_kind == "format_data"
+    assert result.telegram.length_field == 0
+    assert result.telegram.format_signature == bytes.fromhex("12 34")
+    assert result.telegram.format_data == bytes.fromhex("02 03 04 05")
+    assert result.telegram.raw_application_data == bytes.fromhex("00 12 34 02 03 04 05")
+    assert result.diagnostics[-1].code == "format_frame_descriptors_not_decoded"
+
+
+def test_decode_format_frame_short_and_long_headers_skip_wireless_header():
+    short_payload = bytes.fromhex("AA BB CC DD EE FF 00 12 34 02 03")
+    long_payload = bytes.fromhex("00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 00 12 34 02")
+
+    short_result = decode(_long_application_frame(short_payload, ci=0x6A))
+    long_result = decode(_long_application_frame(long_payload, ci=0x6B))
+
+    assert isinstance(short_result.telegram, FormatDataTelegram)
+    assert short_result.telegram.format_signature == bytes.fromhex("12 34")
+    assert short_result.telegram.format_data == bytes.fromhex("02 03")
+    assert short_result.diagnostics[-1].context["data_header_length"] == 6
+
+    assert isinstance(long_result.telegram, FormatDataTelegram)
+    assert long_result.telegram.format_signature == bytes.fromhex("12 34")
+    assert long_result.telegram.format_data == b"\x02"
+    assert long_result.diagnostics[-1].context["data_header_length"] == 14
+
+
+def test_compact_and_format_telegrams_export_to_dict():
+    compact = to_dict(decode(_long_application_frame(bytes.fromhex("12 34 AB CD 01"), ci=0x79)).telegram)
+    fmt = to_dict(decode(_long_application_frame(bytes.fromhex("00 12 34 02 03"), ci=0x69)).telegram)
+
+    assert compact["application_kind"] == "compact_data"
+    assert compact["format_signature"] == "12 34"
+    assert compact["full_frame_crc"] == "AB CD"
+    assert compact["compact_data"] == "01"
+
+    assert fmt["application_kind"] == "format_data"
+    assert fmt["length_field"] == 0
+    assert fmt["format_signature"] == "12 34"
+    assert fmt["format_data"] == "02 03"
 
 
 def test_fixed_data_telegram_exports_to_dict():
