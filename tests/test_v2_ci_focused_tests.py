@@ -18,7 +18,7 @@ def test_v2_ci_workflow_uses_full_test_script():
     workflow = (_PROJECT_ROOT / ".github" / "workflows" / "run-test.yml").read_text()
 
     assert "bash scripts/test-v2.sh" in workflow
-    assert "actions/setup-python@v5" in workflow
+    assert "actions/setup-python@v6" in workflow
     assert '"3.11"' in workflow
     assert '"3.12"' in workflow
     assert '"3.13"' in workflow
