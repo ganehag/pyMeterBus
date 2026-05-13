@@ -32,7 +32,7 @@ def test_readme_documents_dependency_and_transport_boundaries():
 def test_readme_documents_real_world_corpus_workflow():
     readme = (_PROJECT_ROOT / "README.md").read_text()
 
-    assert "real-world wired M-Bus corpus regression checks" in readme
+    assert "Real-world wired M-Bus corpus regression checks" in readme
     assert "scripts/import-real-world-corpus.py" in readme
     assert "scripts/report-real-world-corpus.py" in readme
     assert "valid wired frames, malformed wired-looking frames, and wireless/aggregator-looking payloads separate" in readme
