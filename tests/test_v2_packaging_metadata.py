@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-import sys
-from configparser import ConfigParser
 from pathlib import Path
 
-if sys.version_info >= (3, 11):
-    import tomllib
-else:  # pragma: no cover - Python < 3.11 fallback for supported package metadata
-    import tomli as tomllib
+import tomllib
 
 import meterbus
 
@@ -15,16 +10,16 @@ import meterbus
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_setup_cfg_uses_modern_metadata_keys():
-    parser = ConfigParser()
-    parser.read(_PROJECT_ROOT / "setup.cfg")
+def _pyproject() -> dict:
+    return tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
 
-    assert parser["metadata"]["description_file"] == "README.md"
-    assert "description-file" not in parser["metadata"]
+
+def test_legacy_setup_cfg_has_been_removed():
+    assert not (_PROJECT_ROOT / "setup.cfg").exists()
 
 
 def test_pyproject_uses_modern_license_metadata():
-    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
+    pyproject = _pyproject()
 
     assert pyproject["build-system"]["requires"] == ["setuptools>=77.0"]
     assert pyproject["project"]["license"] == "BSD-3-Clause"
@@ -32,7 +27,7 @@ def test_pyproject_uses_modern_license_metadata():
 
 
 def test_pyproject_uses_dynamic_runtime_version():
-    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
+    pyproject = _pyproject()
 
     assert "version" not in pyproject["project"]
     assert pyproject["project"]["dynamic"] == ["version"]
@@ -41,7 +36,7 @@ def test_pyproject_uses_dynamic_runtime_version():
 
 
 def test_v2_python_support_metadata_matches_ci_matrix():
-    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
+    pyproject = _pyproject()
     classifiers = pyproject["project"]["classifiers"]
 
     assert pyproject["project"]["requires-python"] == ">=3.11"
@@ -55,27 +50,20 @@ def test_v2_python_support_metadata_matches_ci_matrix():
     assert "Programming Language :: Python :: 3.10" not in classifiers
 
 
-def test_v2_default_install_has_no_runtime_dependencies():
-    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
+def test_v2_default_install_has_no_runtime_dependencies_or_optional_groups():
+    pyproject = _pyproject()
 
     assert pyproject["project"]["dependencies"] == []
+    assert "optional-dependencies" not in pyproject["project"]
 
 
-def test_legacy_dependencies_are_available_as_extras_without_simplejson():
-    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
-    extras = pyproject["project"]["optional-dependencies"]
+def test_removed_legacy_dependencies_are_not_packaged():
+    pyproject = _pyproject()
+    project = pyproject["project"]
+    dependency_text = "\n".join(project.get("dependencies", []))
 
-    assert "json" not in extras
-    assert extras["serial"] == ["pyserial"]
-    assert extras["yaml"] == ["pyaml"]
-    assert extras["crypto"] == ["pycryptodome"]
-    assert extras["legacy"] == ["pyserial", "pyaml", "pycryptodome"]
-    assert extras["all"] == ["pyserial", "pyaml", "pycryptodome"]
-
-
-def test_simplejson_is_not_a_packaged_dependency():
-    pyproject = tomllib.loads((_PROJECT_ROOT / "pyproject.toml").read_text())
-    extras = pyproject["project"]["optional-dependencies"]
-
-    assert "simplejson" not in pyproject["project"]["dependencies"]
-    assert all("simplejson" not in dependencies for dependencies in extras.values())
+    assert "simplejson" not in dependency_text
+    assert "pyserial" not in dependency_text
+    assert "pyaml" not in dependency_text
+    assert "pyyaml" not in dependency_text
+    assert "pycryptodome" not in dependency_text
