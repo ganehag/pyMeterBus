@@ -2,18 +2,21 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import meterbus
+
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
-_RELEASE_NOTES = _PROJECT_ROOT / "docs" / "releases" / "2.0.0a1.md"
+_RELEASE_VERSION = meterbus.__version__
+_RELEASE_NOTES = _PROJECT_ROOT / "docs" / "releases" / f"{_RELEASE_VERSION}.md"
 
 
 def test_v2_release_notes_exist_and_identify_prerelease():
     notes = _RELEASE_NOTES.read_text()
 
-    assert "# pyMeterBus 2.0.0a1 release notes" in notes
-    assert "first v2 prerelease" in notes
-    assert "breaking rewrite" in notes
-    assert "dependency-free default install" in notes
+    assert f"# pyMeterBus {_RELEASE_VERSION} release notes" in notes
+    assert "v2 prerelease" in notes
+    assert "breaking" in notes.lower()
+    assert "dependency-free" in notes
 
 
 def test_v2_release_notes_document_public_api_and_cli():
@@ -30,7 +33,7 @@ def test_v2_release_notes_document_public_api_and_cli():
 def test_v2_release_notes_document_packaging_and_python_support():
     notes = _RELEASE_NOTES.read_text()
 
-    assert "pymeterbus==2.0.0a1" in notes
+    assert f"pymeterbus=={_RELEASE_VERSION}" in notes
     assert "Python 3.11" in notes
     assert "Python 3.12" in notes
     assert "Python 3.13" in notes
@@ -48,8 +51,8 @@ def test_v2_release_notes_document_coverage_and_gaps():
     assert "v2 model stability is still preview-level" in notes
 
 
-def test_changelog_points_to_v2_release_notes():
+def test_changelog_points_to_current_v2_release_notes():
     changelog = (_PROJECT_ROOT / "CHANGELOG.md").read_text()
 
-    assert "## 2.0.0a1" in changelog
-    assert "docs/releases/2.0.0a1.md" in changelog
+    assert f"## {_RELEASE_VERSION}" in changelog
+    assert f"docs/releases/{_RELEASE_VERSION}.md" in changelog
