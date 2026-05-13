@@ -20,6 +20,8 @@ The v2 package has no runtime dependencies. It does not import `pyserial`, YAML 
 
 Transport is caller-owned. Serial adapters, sockets, HTTP gateways, files, and test fixtures are all just ways to obtain frame bytes.
 
+If you simply need to decode a meter frame and are not interested in the library internals, start with the [getting started guide](docs/getting-started.md).
+
 If you are upgrading existing pyMeterBus code, read the [v1 to v2 migration guide](docs/migration-v1-to-v2.md) before changing production integrations.
 
 ## Requirements
@@ -218,12 +220,15 @@ If an aggregator gives you payloads without normal wired M-Bus framing, handle t
 
 ## Documentation
 
-For normal use, start with the [v2 usage guide](docs/v2-usage.md). It covers installation assumptions, Python decoding, CLI decoding, export views, diagnostics, decode modes, fixed and variable data, and compact/format expansion.
+If you want the shortest practical path, start with the [getting started guide](docs/getting-started.md). It shows how to install, run the CLI, decode a hex string, decode a binary file, choose a decode mode, and understand common errors.
+
+For more detailed API usage, read the [v2 usage guide](docs/v2-usage.md). It covers installation assumptions, Python decoding, CLI decoding, export views, diagnostics, decode modes, fixed and variable data, and compact/format expansion.
 
 If you are upgrading from older pyMeterBus code, start with the [v1 to v2 migration guide](docs/migration-v1-to-v2.md). It covers removed APIs, transport ownership, export changes, and practical upgrade steps.
 
 Common entry points:
 
+- Get started without reading internals: [getting started guide](docs/getting-started.md)
 - Decode frames from Python: [v2 usage guide](docs/v2-usage.md#decode-a-frame)
 - Decode frames from the command line: [CLI usage](docs/v2-usage.md#decode-from-the-command-line)
 - Decode frames from serial data: [serial transport example](docs/serial-transport.md)
