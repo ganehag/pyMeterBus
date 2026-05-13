@@ -64,7 +64,7 @@ The current v2 branch is useful, tested, documented, and intentionally dependenc
 - [x] Document that `meterbus.load()` remains unavailable in v2 unless a separate compatibility layer is intentionally added later.
 - [ ] Decide whether v2 models are public stable API or still preview API.
 - [x] Keep root package exports limited to the decode API; keep `to_dict` and `to_json` under `meterbus.export`.
-- [ ] Decide strict/lenient/compat semantics for all known non-fatal frame issues.
+- [x] Document strict, lenient, and compat mode semantics with examples and ingestion guidance.
 - [x] Add a v1 to v2 migration guide covering removed APIs, transport ownership, exports, and upgrade steps.
 - [ ] Document any intentional differences from legacy parsed values that users are likely to notice.
 
@@ -76,16 +76,19 @@ The current v2 branch is useful, tested, documented, and intentionally dependenc
 - [x] Keep only the supported `pymeterbus-decode` console script.
 - [x] Add release notes for the v2 preview.
 - [x] Confirm package classifiers match the tested Python versions in metadata tests.
-- [ ] Verify editable install and wheel install both expose `pymeterbus-decode`.
-- [ ] Build package artifacts from a clean checkout.
-- [ ] Install the built wheel in a fresh virtual environment.
-- [ ] Run `pymeterbus-decode "E5"` from the installed wheel.
+- [x] Verify editable install and wheel install both expose `pymeterbus-decode` through the local smoke checks.
+- [x] Build package artifacts from a clean checkout through `scripts/smoke-build.sh`.
+- [x] Install the built wheel in a fresh virtual environment through `scripts/smoke-build.sh`.
+- [x] Run `pymeterbus-decode "E5"` from the installed wheel through `scripts/smoke-build.sh`.
+- [x] Keep TestPyPI and PyPI publishing in separate trusted-publishing workflows.
+- [x] Keep production PyPI publishing manual-only and guarded by an `origin/master` containment check.
+- [x] Test release workflow trigger policy.
 
 ## CI and quality gates
 
-- [ ] Keep `bash scripts/test-v2.sh` passing locally.
+- [x] Keep `bash scripts/test-v2.sh` passing locally.
 - [ ] Keep `.github/workflows/run-test.yml` passing for Python 3.11, 3.12, and 3.13.
-- [ ] Keep build smoke workflow passing.
+- [x] Keep build smoke workflow passing locally.
 - [ ] Decide whether v2 CI should run on `master` after merge.
 - [ ] Add coverage thresholds only after the v2 API surface stabilizes.
 
@@ -99,8 +102,8 @@ The current v2 branch is useful, tested, documented, and intentionally dependenc
 - [x] Document full, summary, and records export views.
 - [x] Add and link a v1 to v2 migration guide.
 - [ ] Expand `docs/v2-usage.md` with real-world examples as fixtures grow.
-- [ ] Document common diagnostics and what users should do with them.
-- [ ] Document strict, lenient, and compat mode differences with examples.
+- [x] Document common diagnostics and what users should do with them.
+- [x] Document strict, lenient, and compat mode differences with examples.
 - [ ] Revisit older docs such as `PacketFormat.md` and `WirelessMBusUSB.md` for v2 relevance.
 
 ## Merge strategy
@@ -112,12 +115,27 @@ The current v2 branch is useful, tested, documented, and intentionally dependenc
 
 ## Final preview release checks
 
-- [ ] `git switch v2 && git pull origin v2`.
-- [ ] `bash scripts/test-v2.sh`.
-- [ ] `bash scripts/smoke-build.sh`.
-- [ ] Build package artifacts from a clean checkout.
-- [ ] Install the built wheel in a fresh virtual environment.
-- [ ] Run `pymeterbus-decode "E5"` from the installed wheel.
+- [x] `git switch v2 && git pull origin v2`.
+- [x] `bash scripts/test-v2.sh`.
+- [x] `bash scripts/smoke-build.sh`.
+- [x] Build package artifacts from a clean checkout.
+- [x] Install the built wheel in a fresh virtual environment.
+- [x] Run `pymeterbus-decode "E5"` from the installed wheel.
 - [ ] Smoke-test at least one long variable-data telegram fixture.
 - [ ] Smoke-test compact expansion with the synthetic template fixture or a real capture if available.
-- [ ] Review README, `docs/v2-usage.md`, migration guide, and release notes together.
+- [ ] Review README, `docs/v2-usage.md`, `docs/diagnostics.md`, migration guide, and release notes together.
+
+## Final 2.0.0 release gate
+
+Do not change `meterbus.__version__` to `2.0.0` until these are true:
+
+- [ ] v2 public API stability is explicitly decided and documented.
+- [ ] `docs/releases/2.0.0.md` exists and does not reuse prerelease wording.
+- [ ] `CHANGELOG.md` has a `2.0.0` entry.
+- [ ] README status language no longer describes the release as preview-only.
+- [ ] CI is green on Python 3.11, 3.12, and 3.13 from the release branch.
+- [ ] Build smoke workflow is green from the release branch.
+- [ ] At least one real-world long variable-data telegram is smoke-tested from installed-wheel output.
+- [ ] Compact/format support is either smoke-tested with a real capture or clearly documented as synthetic/spec-shaped coverage.
+- [ ] The release commit is contained in `origin/master` before production PyPI publishing.
+- [ ] `publish-pypi.yml` is run manually with `publish=true` only after the release commit is on `master`.
