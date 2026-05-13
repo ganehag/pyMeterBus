@@ -7,6 +7,35 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _WORKFLOWS = _PROJECT_ROOT / ".github" / "workflows"
 
 
+def _workflow_texts() -> dict[str, str]:
+    return {path.name: path.read_text() for path in _WORKFLOWS.glob("*.yml")}
+
+
+def test_workflows_use_current_checkout_action():
+    workflows = _workflow_texts()
+
+    assert workflows
+    for name, workflow in workflows.items():
+        if "actions/checkout@" in workflow:
+            assert "actions/checkout@v6" in workflow, name
+            assert "actions/checkout@v4" not in workflow, name
+            assert "actions/checkout@v5" not in workflow, name
+
+
+def test_workflows_keep_expected_current_action_versions():
+    combined = "\n".join(_workflow_texts().values())
+
+    assert "actions/setup-python@v5" in combined
+    assert "actions/upload-artifact@v4" in combined
+    assert "actions/download-artifact@v4" in combined
+    assert "pypa/gh-action-pypi-publish@release/v1" in combined
+
+
+def test_no_dependabot_configuration_is_present():
+    assert not (_PROJECT_ROOT / ".github" / "dependabot.yml").exists()
+    assert not (_PROJECT_ROOT / ".github" / "dependabot.yaml").exists()
+
+
 def test_production_pypi_workflow_is_manual_only():
     workflow = (_WORKFLOWS / "publish-pypi.yml").read_text()
 
