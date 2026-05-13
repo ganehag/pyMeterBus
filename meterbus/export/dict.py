@@ -401,6 +401,7 @@ def _format_data_record_descriptor_to_dict(descriptor: FormatDataRecordDescripto
     return {
         "index": descriptor.index,
         "raw": to_dict(descriptor.raw),
+        "data_length": descriptor.data_length,
         "dif": to_dict(descriptor.dif),
         "vif": to_dict(descriptor.vif),
     }
