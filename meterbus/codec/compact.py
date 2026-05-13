@@ -20,6 +20,7 @@ from meterbus.model import (
     Severity,
 )
 
+from .crc import crc16_en13757_bytes
 from .record import _apply_vif_multiplier, _interpret_vif_value
 from .value import ValueDecodeError, decode_value
 
@@ -31,6 +32,7 @@ class CompactExpansionResult:
     records: tuple[DataRecord, ...]
     undecoded_data: bytes
     diagnostics: tuple[Diagnostic, ...] = ()
+    recovered_application_data: bytes = b""
 
 
 def expand_compact_telegram(
@@ -38,17 +40,18 @@ def expand_compact_telegram(
     template: FormatDataTelegram | Sequence[FormatDataRecordDescriptor],
     *,
     lsb_order: bool = True,
+    crc_byteorder: str = "big",
 ) -> CompactExpansionResult:
     """Expand compact-frame value bytes using an explicit template.
 
     Passing a `FormatDataTelegram` validates that the compact frame's Format
-    Signature matches the format frame before expansion. Passing raw descriptors
-    remains supported for lower-level callers that have already matched the
-    template themselves.
-
-    This function does not validate the compact frame's Full-Frame-CRC.
+    Signature matches the format frame before expansion and, when possible,
+    validates the compact frame's Full-Frame-CRC against the recovered full
+    application data. Passing raw descriptors remains supported for lower-level
+    callers that have already matched and validated the template themselves.
     """
 
+    validate_crc = False
     if isinstance(template, FormatDataTelegram):
         if compact.format_signature != template.format_signature:
             diagnostic = Diagnostic(
@@ -66,10 +69,37 @@ def expand_compact_telegram(
                 diagnostics=(diagnostic,),
             )
         descriptors = template.descriptors
+        validate_crc = True
     else:
         descriptors = template
 
-    return expand_compact_data(compact.compact_data, descriptors, lsb_order=lsb_order)
+    result = expand_compact_data(compact.compact_data, descriptors, lsb_order=lsb_order)
+    if not validate_crc or result.diagnostics or result.undecoded_data:
+        return result
+
+    if compact.full_frame_crc is None:
+        diagnostic = Diagnostic(
+            severity=Severity.ERROR,
+            code="compact_full_frame_crc_missing",
+            message="Compact M-Bus frame does not contain a complete Full-Frame-CRC field.",
+        )
+        return _with_diagnostic(result, diagnostic)
+
+    calculated_crc = crc16_en13757_bytes(result.recovered_application_data, byteorder=crc_byteorder)
+    if calculated_crc != compact.full_frame_crc:
+        diagnostic = Diagnostic(
+            severity=Severity.ERROR,
+            code="compact_full_frame_crc_mismatch",
+            message="Compact M-Bus frame Full-Frame-CRC does not match the recovered full application data.",
+            context={
+                "transmitted_full_frame_crc": compact.full_frame_crc,
+                "calculated_full_frame_crc": calculated_crc,
+                "crc_byteorder": crc_byteorder,
+            },
+        )
+        return _with_diagnostic(result, diagnostic)
+
+    return result
 
 
 def expand_compact_data(
@@ -81,6 +111,7 @@ def expand_compact_data(
     """Expand compact value bytes using explicit format descriptors."""
 
     records: list[DataRecord] = []
+    recovered_parts: list[bytes] = []
     diagnostics: list[Diagnostic] = []
     offset = 0
 
@@ -107,13 +138,16 @@ def expand_compact_data(
                 records=tuple(records),
                 undecoded_data=compact_data[offset:],
                 diagnostics=tuple(diagnostics),
+                recovered_application_data=b"".join(recovered_parts),
             )
 
         value = _interpret_vif_value(value_result.value, descriptor.vif.kind)
         value = _apply_vif_multiplier(value, descriptor.vif.multiplier)
         consumed = value_result.consumed
+        raw_value = compact_data[offset : offset + consumed]
+        raw_record = descriptor.raw + raw_value
         record = DataRecord(
-            raw=descriptor.raw + compact_data[offset : offset + consumed],
+            raw=raw_record,
             dif=descriptor.dif,
             vif=descriptor.vif,
             value=value,
@@ -125,10 +159,21 @@ def expand_compact_data(
             diagnostics=(),
         )
         records.append(record)
+        recovered_parts.append(raw_record)
         offset += consumed
 
     return CompactExpansionResult(
         records=tuple(records),
         undecoded_data=compact_data[offset:],
         diagnostics=tuple(diagnostics),
+        recovered_application_data=b"".join(recovered_parts),
+    )
+
+
+def _with_diagnostic(result: CompactExpansionResult, diagnostic: Diagnostic) -> CompactExpansionResult:
+    return CompactExpansionResult(
+        records=result.records,
+        undecoded_data=result.undecoded_data,
+        diagnostics=result.diagnostics + (diagnostic,),
+        recovered_application_data=result.recovered_application_data,
     )
