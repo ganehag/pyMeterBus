@@ -2,43 +2,38 @@ name: Run tests
 
 on:
   push:
-    branches-ignore:
-      - v2
-      - v2-*
-  pull_request:
-    branches-ignore:
+    branches:
       - master
       - v2
       - v2-*
+  pull_request:
+    branches:
+      - master
+      - v2
 
 jobs:
   run-tests:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9, "3.10", "3.11"]
-        os: [ubuntu-latest]
+        python-version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install run requirements
-      run: python3 -m pip install -r requirements.txt
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
 
-    - name: Install test requirements
-      run: python3 -m pip install codecov pytest-cov
-
-    - name: Run tests
-      run: pytest
-
-    - name: Run coverage
-      run: pytest --cov=./meterbus
-
-    - name: Run codecov
-      run: codecov
+      - name: Run v2 tests
+        run: bash scripts/test-v2.sh
