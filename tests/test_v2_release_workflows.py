@@ -22,10 +22,21 @@ def test_workflows_use_current_checkout_action():
             assert "actions/checkout@v5" not in workflow, name
 
 
+def test_workflows_use_current_setup_python_action():
+    workflows = _workflow_texts()
+
+    assert workflows
+    for name, workflow in workflows.items():
+        if "actions/setup-python@" in workflow:
+            assert "actions/setup-python@v6" in workflow, name
+            assert "actions/setup-python@v5" not in workflow, name
+
+
 def test_workflows_keep_expected_current_action_versions():
     combined = "\n".join(_workflow_texts().values())
 
-    assert "actions/setup-python@v5" in combined
+    assert "actions/checkout@v6" in combined
+    assert "actions/setup-python@v6" in combined
     assert "actions/upload-artifact@v4" in combined
     assert "actions/download-artifact@v4" in combined
     assert "pypa/gh-action-pypi-publish@release/v1" in combined
