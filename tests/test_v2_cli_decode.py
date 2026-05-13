@@ -3,13 +3,9 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-from pathlib import Path
 
 from meterbus.codec.crc import crc16_en13757_bytes
 from tests.helpers.fixtures import load_hex_fixture
-
-
-_PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _checksum(data: bytes) -> int:
@@ -76,7 +72,7 @@ def test_decode_cli_supports_lenient_mode():
 
 
 def test_decode_cli_supports_summary_view():
-    raw = (_PROJECT_ROOT / "tests" / "test-frames" / "amt_meter.blob").read_bytes().hex()
+    raw = load_hex_fixture("frames/long_basic.hex").data.hex()
 
     completed = _run_cli("--mode", "lenient", "--view", "summary", raw)
 
@@ -89,28 +85,32 @@ def test_decode_cli_supports_summary_view():
             "checksum_valid": True,
         },
         "meter": {
-            "manufacturer": "AMT",
-            "identification_number": "05564531",
-            "medium": 4,
-            "version": 192,
+            "manufacturer": "WEP",
+            "identification_number": "00000021",
+            "medium": 27,
+            "version": 2,
         },
-        "records": 22,
+        "records": 3,
         "diagnostics": [],
     }
 
 
 def test_decode_cli_supports_records_view():
-    raw = (_PROJECT_ROOT / "tests" / "test-frames" / "amt_meter.blob").read_bytes().hex()
+    raw = load_hex_fixture("frames/long_basic.hex").data.hex()
 
     completed = _run_cli("--mode", "lenient", "--view", "records", raw)
 
     assert completed.returncode == 0
     payload = json.loads(completed.stdout)
     assert payload["ok"] is True
-    assert payload["meter"]["manufacturer"] == "AMT"
-    assert len(payload["records"]) == 22
-    assert payload["records"][0]["kind"] == "energy"
-    assert payload["records"][0]["unit"] == "Wh"
+    assert payload["meter"]["manufacturer"] == "WEP"
+    assert len(payload["records"]) == 3
+    assert payload["records"][0]["kind"] == "fabrication_number"
+    assert payload["records"][0]["value"] == "64000449"
+    assert payload["records"][1]["kind"] == "manufacturer"
+    assert payload["records"][1]["value"] == 10
+    assert payload["records"][2]["kind"] == "dimensionless"
+    assert payload["records"][2]["value"] == 30
 
 
 def test_decode_cli_expands_compact_frame_with_template():
