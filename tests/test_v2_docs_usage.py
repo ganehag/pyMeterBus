@@ -10,11 +10,32 @@ def test_readme_points_to_v2_usage_documentation():
     readme = (_PROJECT_ROOT / "README.md").read_text()
 
     assert "The `v2` decoder is the supported direction" in readme
+    assert "prerelease line" in readme
     assert "no runtime dependencies" in readme
     assert "byte-oriented" in readme
     assert "docs/v2-usage.md" in readme
     assert "python -m meterbus.cli.decode" in readme
     assert "pymeterbus-decode" in readme
+
+
+def test_readme_documents_dependency_and_transport_boundaries():
+    readme = (_PROJECT_ROOT / "README.md").read_text()
+
+    assert "does not import `pyserial`" in readme
+    assert "dependency-update tooling" in readme
+    assert "Transport is caller-owned" in readme
+    assert "Wireless M-Bus decoding" in readme
+    assert "Silent acceptance of aggregator-stripped" in readme
+    assert "Do not rely on the wired decoder to guess frame boundaries" in readme
+
+
+def test_readme_documents_real_world_corpus_workflow():
+    readme = (_PROJECT_ROOT / "README.md").read_text()
+
+    assert "real-world wired M-Bus corpus regression checks" in readme
+    assert "scripts/import-real-world-corpus.py" in readme
+    assert "scripts/report-real-world-corpus.py" in readme
+    assert "valid wired frames, malformed wired-looking frames, and wireless/aggregator-looking payloads separate" in readme
 
 
 def test_v2_usage_doc_mentions_public_api_and_exports():
