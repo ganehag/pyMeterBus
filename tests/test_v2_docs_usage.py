@@ -13,6 +13,7 @@ def test_readme_points_to_v2_usage_documentation():
     assert "prerelease line" in readme
     assert "no runtime dependencies" in readme
     assert "byte-oriented" in readme
+    assert "docs/getting-started.md" in readme
     assert "docs/v2-usage.md" in readme
     assert "python -m meterbus.cli.decode" in readme
     assert "pymeterbus-decode" in readme
@@ -36,6 +37,31 @@ def test_readme_documents_real_world_corpus_workflow():
     assert "scripts/import-real-world-corpus.py" in readme
     assert "scripts/report-real-world-corpus.py" in readme
     assert "valid wired frames, malformed wired-looking frames, and wireless/aggregator-looking payloads separate" in readme
+
+
+def test_getting_started_guide_is_practical_for_non_developers():
+    guide = (_PROJECT_ROOT / "docs" / "getting-started.md").read_text()
+
+    assert "need to get M-Bus data decoded" in guide
+    assert "pyMeterBus v2 does not talk to meters by itself" in guide
+    assert "python -m pip install --pre pyMeterBus" in guide
+    assert "pymeterbus-decode E5" in guide
+    assert "pymeterbus-decode --mode lenient --indent 2 \"$HEX\"" in guide
+    assert "$(xxd -p -c 999999 frame.blob)" in guide
+    assert "For most practical use, start with `lenient`" in guide
+
+
+def test_getting_started_guide_documents_common_failure_paths():
+    guide = (_PROJECT_ROOT / "docs" / "getting-started.md").read_text()
+
+    assert "Invalid start byte" in guide
+    assert "Length mismatch" in guide
+    assert "Checksum mismatch" in guide
+    assert "No records decoded" in guide
+    assert "pyMeterBus v2 will not silently guess missing headers" in guide
+    assert "pyMeterBus does not include serial communication helpers" in guide
+    assert "v2 is not a drop-in replacement" in guide
+    assert "What to include when asking for help" in guide
 
 
 def test_v2_usage_doc_mentions_public_api_and_exports():
