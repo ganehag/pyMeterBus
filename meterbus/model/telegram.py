@@ -126,6 +126,7 @@ class FormatDataRecordDescriptor:
     dif: DataInformation
     vif: ValueInformation
     index: int
+    data_length: int | None
 
 
 @dataclass(frozen=True)
