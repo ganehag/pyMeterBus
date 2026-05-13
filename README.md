@@ -136,6 +136,12 @@ pymeterbus-decode --mode lenient --indent 2 "$HEX"
 
 For real-world meter collection, lenient mode is often more useful because meters may include manufacturer-specific data, filler bytes, malformed tails, or unsupported records.
 
+## Serial data
+
+A common use case is reading M-Bus frames from a serial adapter. pyMeterBus deliberately does not depend on `pyserial`, but it does document a recommended pattern: your application reads one complete frame, then passes those bytes to `decode()`.
+
+See the [serial transport example](docs/serial-transport.md) for a complete frame reader and `pyserial` integration example.
+
 ## Compact and format frames
 
 pyMeterBus v2 recognizes EN 13757 compact and format frames. Compact frames do not carry DIF/VIF descriptors, so the decoder does not auto-expand them from hidden state.
@@ -188,6 +194,7 @@ Common entry points:
 
 - Decode frames from Python: [v2 usage guide](docs/v2-usage.md#decode-a-frame)
 - Decode frames from the command line: [CLI usage](docs/v2-usage.md#decode-from-the-command-line)
+- Decode frames from serial data: [serial transport example](docs/serial-transport.md)
 - Export JSON or dictionaries: [export examples](docs/v2-usage.md#export-to-json)
 - Understand diagnostics and lenient mode: [diagnostics](docs/v2-usage.md#diagnostics)
 - Expand compact frames with a format template: [compact and format frames](docs/v2-usage.md#compact-and-format-frames)
