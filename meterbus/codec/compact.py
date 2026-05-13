@@ -11,7 +11,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Sequence
 
-from meterbus.model import CompactDataTelegram, DataRecord, Diagnostic, FormatDataRecordDescriptor, Severity
+from meterbus.model import (
+    CompactDataTelegram,
+    DataRecord,
+    Diagnostic,
+    FormatDataRecordDescriptor,
+    FormatDataTelegram,
+    Severity,
+)
 
 from .record import _apply_vif_multiplier, _interpret_vif_value
 from .value import ValueDecodeError, decode_value
@@ -28,17 +35,39 @@ class CompactExpansionResult:
 
 def expand_compact_telegram(
     compact: CompactDataTelegram,
-    descriptors: Sequence[FormatDataRecordDescriptor],
+    template: FormatDataTelegram | Sequence[FormatDataRecordDescriptor],
     *,
     lsb_order: bool = True,
 ) -> CompactExpansionResult:
-    """Expand compact-frame value bytes using explicit format descriptors.
+    """Expand compact-frame value bytes using an explicit template.
 
-    The function consumes value bytes from `compact.compact_data` according to
-    each descriptor's DIF data length and VIF metadata. It does not validate the
-    compact frame's Format Signature or Full-Frame-CRC; callers should match the
-    template before invoking this function.
+    Passing a `FormatDataTelegram` validates that the compact frame's Format
+    Signature matches the format frame before expansion. Passing raw descriptors
+    remains supported for lower-level callers that have already matched the
+    template themselves.
+
+    This function does not validate the compact frame's Full-Frame-CRC.
     """
+
+    if isinstance(template, FormatDataTelegram):
+        if compact.format_signature != template.format_signature:
+            diagnostic = Diagnostic(
+                severity=Severity.ERROR,
+                code="compact_format_signature_mismatch",
+                message="Compact M-Bus frame Format Signature does not match the supplied format template.",
+                context={
+                    "compact_format_signature": compact.format_signature,
+                    "template_format_signature": template.format_signature,
+                },
+            )
+            return CompactExpansionResult(
+                records=(),
+                undecoded_data=compact.compact_data,
+                diagnostics=(diagnostic,),
+            )
+        descriptors = template.descriptors
+    else:
+        descriptors = template
 
     return expand_compact_data(compact.compact_data, descriptors, lsb_order=lsb_order)
 
