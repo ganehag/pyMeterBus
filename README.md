@@ -1,89 +1,219 @@
-Meter-Bus for Python
-====================
-[![Build status](https://github.com/ganehag/pyMeterBus/actions/workflows/run-test.yml/badge.svg)](https://github.com/ganehag/pyMeterBus/actions/workflows/run-test.yml) [![codecov](https://codecov.io/gh/ganehag/pyMeterBus/branch/master/graph/badge.svg?token=gHfokXGQ70)](https://codecov.io/gh/ganehag/pyMeterBus)
+# pyMeterBus
+
+[![Build status](https://github.com/ganehag/pyMeterBus/actions/workflows/run-test.yml/badge.svg)](https://github.com/ganehag/pyMeterBus/actions/workflows/run-test.yml)
+[![codecov](https://codecov.io/gh/ganehag/pyMeterBus/branch/master/graph/badge.svg?token=gHfokXGQ70)](https://codecov.io/gh/ganehag/pyMeterBus)
 [![pypi](https://img.shields.io/pypi/pyversions/pyMeterBus)](https://pypi.org/project/pyMeterBus/)
 [![GitHub issues](https://img.shields.io/github/issues/ganehag/pyMeterBus.svg)](https://github.com/ganehag/pyMeterBus/issues)
-[![GitHub issues](https://img.shields.io/github/issues-closed/ganehag/pyMeterBus.svg)](https://github.com/ganehag/pyMeterBus/issues/?q=is%3Aissue+is%3Aclosed)
+[![GitHub issues closed](https://img.shields.io/github/issues-closed/ganehag/pyMeterBus.svg)](https://github.com/ganehag/pyMeterBus/issues/?q=is%3Aissue+is%3Aclosed)
 [![PyPI Status](https://img.shields.io/pypi/v/pyMeterBus.svg)](https://pypi.python.org/pypi/pyMeterBus/)
 
-About
------
+pyMeterBus is a Python decoder for M-Bus frames.
 
-[M-Bus](http://www.m-bus.com/) (Meter-Bus) is a European standard (EN 13757-2 physical and link layer, EN 13757-3 application layer) for the remote reading of gas or electricity meters. M-Bus is also usable for other types of consumption meters. The M-Bus interface is made for communication on two wires, making it very cost-effective.
+M-Bus, also called Meter-Bus, is a European metering protocol used for remote reading of heat, water, gas, electricity, and other consumption meters. pyMeterBus focuses on decoding complete frame bytes into structured Python objects and stable JSON-friendly exports.
 
-Python version
---------------
+## Current status
 
-I've decided only to support active Python version. Thus, any EOL version is not supported.
+The `v2` decoder is the supported direction of the project. It is a breaking rewrite of the older object model and is intentionally small, explicit, and diagnostics-first.
 
-Version 2 decoder API
----------------------
+The v2 package has no runtime dependencies. It does not import `pyserial`, YAML libraries, or crypto packages. It is byte-oriented: read a complete M-Bus frame with whatever transport you use, then pass those bytes to the decoder.
 
-The v2 decoder work-in-progress provides a structured, diagnostics-first API for decoding M-Bus frames without using the older object model directly.
+Transport is caller-owned. Serial adapters, sockets, HTTP gateways, files, and test fixtures are all just ways to obtain frame bytes.
 
-The v2 package has no runtime dependencies. It is byte-oriented: read a complete M-Bus frame with whatever transport you use, then pass those bytes to the decoder. Serial, sockets, HTTP gateways, and files are transport concerns outside the core package.
+## Requirements
+
+Python 3.11 or newer.
+
+Only actively supported Python versions are targeted.
+
+## Install
+
+From PyPI:
+
+```shell
+python -m pip install pyMeterBus
+```
+
+From a checkout:
+
+```shell
+python -m pip install .
+```
+
+For development:
+
+```shell
+python -m pip install -e .
+```
+
+## Quick start: Python
 
 ```python
 from meterbus.api import decode
 from meterbus.export import to_json
 
-result = decode(bytes.fromhex("E5"))
+raw = bytes.fromhex("E5")
+result = decode(raw)
+
 print(result.ok)
-print(to_json(result))
+print(to_json(result, indent=2))
 ```
 
-The same decoder can be used from the command line:
+Output:
+
+```json
+{
+  "diagnostics": [],
+  "frame": {
+    "diagnostics": [],
+    "kind": "ack",
+    "raw": "E5"
+  },
+  "ok": true,
+  "raw": "E5",
+  "telegram": null
+}
+```
+
+For normal application code, use `decode()` and inspect `result.ok` and `result.diagnostics`. The decoder returns structured diagnostics rather than hiding malformed or unsupported data.
+
+## Quick start: CLI
 
 ```shell
-python -m meterbus.cli.decode "E5"
-pymeterbus-decode "E5"
+python -m meterbus.cli.decode E5
 ```
 
-See [docs/v2-usage.md](docs/v2-usage.md) for practical CLI examples, Python API usage, export views, diagnostics, fixed/variable data notes, and compact/format frame expansion.
+After installation, the console script is available as:
 
-Current State (2025)
--------------
+```shell
+pymeterbus-decode E5
+```
 
-I’m still active, but as with most side projects, this one often takes a back seat.
+Decode a binary frame file by converting it to one-line hex first:
 
-If you have improvements that could benefit the project, feel free to submit a pull request. If it’s a good fit, I’ll be happy to merge it.
+```shell
+python -m meterbus.cli.decode \
+  --mode lenient \
+  --view records \
+  --indent 2 \
+  "$(xxd -p -c 999999 frame.blob)"
+```
 
-Current State (2022)
--------------
+## Export views
 
-The library works, but it lacks proper documentation. Well, it lacks any documentation, to be honest.
+The decoder can export full results or smaller views for common workflows:
 
-The implementation is currently under ~~heavy~~ development. Its original intended use case was particular, as a library to aid in decoding M-Bus telegrams sent over HTTP, and might thus not suit everyone.
+```shell
+pymeterbus-decode --view full "$HEX"
+pymeterbus-decode --view summary "$HEX"
+pymeterbus-decode --view records "$HEX"
+```
 
-Still, it is a generic library and supports several different use cases.
+Use `full` while debugging protocol behavior. Use `records` when feeding readings into another system.
 
-- Decoding of re-encoded M-Bus frames sent from an Elvaco Wireless M-Bus master over HTTP.
-- Communication with M-Bus devices through caller-provided transports such as serial adapters, sockets, or gateways.
-- As a debugging tool to decode M-Bus frames.
+The same views are available from Python:
 
-Currently, the library can decode M-Bus frames. It does presently **NOT** support encoding and transmission of M-Bus frames, such as *control* frames.
+```python
+from meterbus.api import decode
+from meterbus.export import ExportView, to_dict
 
-However, if the need arises, I might implement missing pieces on a request basis.
+result = decode(raw)
+records_payload = to_dict(result, view=ExportView.RECORDS)
+```
 
+## Decode modes
 
-M-Bus Packet Format
--------------------
+The CLI and Python API support three decode modes:
 
-| Single Character | Short Frame | Control Frame | Long Frame             |
-|------------------|-------------|---------------|------------------------|
-| E5h              | Start 10h   | Start 68h     | Start 68h              |
-|                  | C Field     | L Field = 3   | L Field                |
-|                  | A Field     | L Field = 3   | L Field                |
-|                  | Check Sum   | Start 68h     | Start 68h              |
-|                  | Stop 16h    | C Field       | C Field                |
-|                  |             | A Field       | A Field                |
-|                  |             | CI Field      | CI Field               |
-|                  |             | Check Sum     | User Data (0-252 Byte) |
-|                  |             | Stop 16h      | Check Sum              |
-|                  |             |               | Stop 16h               |
+- `strict`: fail on malformed frames or record errors.
+- `lenient`: preserve partially decoded data where possible.
+- `compat`: compatibility-oriented lenient behavior.
 
+Example:
 
+```shell
+pymeterbus-decode --mode lenient --indent 2 "$HEX"
+```
 
-License
--------
-Please see the [LICENSE](LICENSE) file
+For real-world meter collection, lenient mode is often more useful because meters may include manufacturer-specific data, filler bytes, malformed tails, or unsupported records.
+
+## Compact and format frames
+
+pyMeterBus v2 recognizes EN 13757 compact and format frames. Compact frames do not carry DIF/VIF descriptors, so the decoder does not auto-expand them from hidden state.
+
+Expansion is explicit: provide the matching format frame as a template.
+
+```shell
+pymeterbus-decode \
+  --compact-template "$(xxd -p -c 999999 format-frame.blob)" \
+  --indent 2 \
+  "$(xxd -p -c 999999 compact-frame.blob)"
+```
+
+When a format template is supplied, pyMeterBus checks the Format Signature and validates the Full-Frame-CRC over the recovered application data.
+
+## What is supported
+
+The v2 decoder currently covers:
+
+- ACK, short, control, and long frame decoding.
+- Frame checksum validation.
+- Variable-data headers and record decoding.
+- DIF/DIFE parsing.
+- VIF/VIFE parsing for the implemented standard tables.
+- Variable-length values, dates, times, strings, integers, BCD, and floating-point values where implemented.
+- Fixed-data telegram decoding.
+- Format-frame descriptor parsing.
+- Explicit compact-frame expansion with signature and Full-Frame-CRC validation.
+- Structured diagnostics and stable JSON export.
+
+Unsupported or manufacturer-specific data should be preserved with diagnostics where possible rather than guessed.
+
+## What is not supported
+
+The v2 decoder does not currently aim to provide:
+
+- Serial communication helpers as part of the core package.
+- Hidden transport state.
+- Automatic compact-frame template caching.
+- Encoding/transmission of M-Bus request or control frames.
+- Full coverage of every manufacturer-specific extension.
+
+Serial support belongs at the application or example layer: read complete frames using your preferred transport library, then call `decode(raw)`.
+
+## Documentation
+
+Start here:
+
+- [v2 usage guide](docs/v2-usage.md)
+- [architecture notes](docs/architecture.md)
+- [data model](docs/data-model.md)
+- [compact and format frame review](docs/spec-review/compact-format-frames.md)
+- [release checklist](docs/v2-release-checklist.md)
+
+## Development
+
+Run the v2 test suite:
+
+```shell
+bash scripts/test-v2.sh
+```
+
+Run a quick CLI smoke test:
+
+```shell
+python -m meterbus.cli.decode E5
+```
+
+Build smoke testing is available through:
+
+```shell
+bash scripts/smoke-build.sh
+```
+
+## Contributing
+
+Issues and pull requests are welcome. For protocol behavior, prefer small changes backed by fixtures or spec references. M-Bus is specific about field meanings and byte ordering, so avoid guessing when the standard or a known meter fixture can settle the behavior.
+
+## License
+
+See [LICENSE](LICENSE).
