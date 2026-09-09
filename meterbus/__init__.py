@@ -47,7 +47,35 @@ def load(data):
     if not data:
         raise MBusFrameDecodeError("empty frame", data)
 
-    if isinstance(data, str):
+    data = convert_data(data)
+
+    for Frame in (TelegramACK, TelegramShort, TelegramControl,
+                  TelegramLong, WTelegramSndNr):
+        try:
+            return Frame.parse(data)
+
+        except FrameMismatch as e:
+            pass
+
+    raise MBusFrameDecodeError("unable to decode frame")
+
+
+def load_all(data):
+    if not data:
+        raise MBusFrameDecodeError("empty frame", data)
+
+    dats = split_frames(convert_data(data))
+
+    return [load(d) for d in dats]
+
+
+def convert_data(data):
+
+    if isinstance(data, list):
+        # assume that the data is already processed and quickly return it
+        return data
+
+    elif isinstance(data, str):
         data = list(map(ord, data))
 
     elif isinstance(data, bytes):
@@ -56,18 +84,52 @@ def load(data):
     elif isinstance(data, bytearray):
         data = list(data)
 
-    elif isinstance(data, list):
-        pass
+    return data
 
-    for Frame in [WTelegramSndNr, TelegramACK, TelegramShort, TelegramControl,
-                  TelegramLong]:
-        try:
-            return Frame.parse(data)
 
-        except FrameMismatch as e:
-            pass
+def split_frames(data):
+    """
+    try to extract more then one frame from data and return a list
+    of frames
 
-    raise MBusFrameDecodeError("unable to decode frame")
+    there are user cases in tcp connection when more then one frame
+    is received from the slave in one batch. These are long frames
+    in all the user cases, but the split function is designed to
+    be more generic and able to split all kinds of mbus frames
+    """
+
+    data = convert_data(data)
+    # or assume the data is already converted and skip this step
+
+    if data is None or len(data) == 0:
+        raise MBusFrameDecodeError("Data is None")
+
+    while len(data) > 0:
+        # ack
+        if data[0] == 0xE5:
+            yield data[:1]
+            data = data[1:]
+            continue
+
+        # short frame
+        elif len(data) >= 5 and data[0] == 0x10 and data[4] == 0x16:
+            yield data[:5]
+            data = data[5:]
+            continue
+
+        # long/control frame (+6 is for the header)
+        elif data[0] == 0x68 and data[3] == 0x68 and data[1] == data[2] \
+                and len(data) >= data[1]+6 and data[data[1]+6-1] == 0x16:
+            yield data[:data[1] + 6]
+            data = data[data[1] + 6:]
+            continue
+
+        else:
+            raise MBusFrameDecodeError("invalid data")
+            # or could consume data by bytes
+            # data = data[1:]
+
+
 
 def debug(state):
   g.debug = state
