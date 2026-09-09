@@ -26,7 +26,7 @@ class ControlField:
 
 @dataclass(frozen=True, init=False)
 class Frame:
-    """Base frame model preserving raw bytes and diagnostics."""
+    """Base frame model preserving raw bytes and frame-envelope diagnostics."""
 
     kind: FrameKind
     raw: bytes

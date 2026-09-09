@@ -28,6 +28,18 @@ Diagnostics use severity levels to separate hard failures from recoverable uncer
 
 For strict validation, treat any non-empty diagnostics as worth investigating. For production ingestion, a small number of known warnings may be acceptable if raw bytes are preserved.
 
+`DecodeResult.ok` means that no `fatal` diagnostic was produced in the selected mode. It does not mean that the diagnostics tuple is empty. In lenient or compat mode, a usable partial result may therefore have `ok=True` together with `error` or `warning` diagnostics.
+
+## Diagnostic ownership
+
+Each diagnostic belongs to the layer that produced it:
+
+- `result.frame.diagnostics` contains frame-envelope diagnostics such as length, stop-byte, and checksum problems.
+- `result.telegram.diagnostics` contains application-header and record diagnostics.
+- `result.diagnostics` is the ordered aggregate across all decode stages and is the normal top-level collection to inspect.
+
+When an undecodable record is preserved as an `UnknownRecord`, that record may also reference its own diagnostic. Layer-specific collections avoid copying frame problems into the telegram while the aggregate keeps complete reporting convenient.
+
 ## Decode modes
 
 ### `strict`

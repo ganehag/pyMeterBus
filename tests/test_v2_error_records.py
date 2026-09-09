@@ -22,6 +22,8 @@ def test_strict_mode_keeps_record_decode_failure_fatal():
     assert result.diagnostics[-1].code == "record_decode_error"
     assert result.telegram.records == ()
     assert result.telegram.undecoded_data == bytes([0x02, 0x78, 0x01])
+    assert result.frame.diagnostics == ()
+    assert result.telegram.diagnostics == (result.diagnostics[-1],)
 
 
 def test_lenient_mode_preserves_undecodable_record_as_unknown_record():
@@ -32,6 +34,8 @@ def test_lenient_mode_preserves_undecodable_record_as_unknown_record():
     assert result.diagnostics[-1].code == "record_decode_error"
     assert result.telegram.undecoded_data == b""
     assert len(result.telegram.records) == 1
+    assert result.frame.diagnostics == ()
+    assert result.telegram.diagnostics == (result.diagnostics[-1],)
 
     record = result.telegram.records[0]
     assert isinstance(record, UnknownRecord)

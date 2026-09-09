@@ -11,7 +11,12 @@ from .telegram import Telegram
 
 @dataclass(frozen=True)
 class DecodeResult:
-    """Result returned by non-throwing decode APIs."""
+    """Aggregate result returned by non-throwing decode APIs.
+
+    ``ok`` means that no fatal diagnostic was produced in the selected decode
+    mode. Recoverable error or warning diagnostics may still be present.
+    ``diagnostics`` contains the ordered aggregate from every decode stage.
+    """
 
     ok: bool
     telegram: Telegram | None

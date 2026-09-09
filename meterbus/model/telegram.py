@@ -13,7 +13,7 @@ from .record import DataInformation, DataRecord, UnknownRecord, ValueInformation
 
 @dataclass(frozen=True)
 class Telegram:
-    """Base application-level telegram."""
+    """Base telegram with application- and record-level diagnostics."""
 
     frame: Frame
     application_kind: ApplicationKind

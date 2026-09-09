@@ -30,6 +30,10 @@ class DecodeResult:
 
 `decode_one(data)` returns `Telegram` or raises `DecodeError`.
 
+`ok` means that the selected decode mode produced no fatal diagnostic. A lenient or compat result can therefore be usable and have `ok=True` while still carrying error or warning diagnostics.
+
+Diagnostics are owned by the layer that produced them: `frame.diagnostics` contains frame-envelope issues and `telegram.diagnostics` contains application- and record-level issues. `DecodeResult.diagnostics` is the ordered aggregate across all stages.
+
 ## Diagnostics
 
 ```python

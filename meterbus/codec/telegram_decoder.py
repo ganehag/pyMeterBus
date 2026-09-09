@@ -193,7 +193,7 @@ def _decode_variable_data_result(frame_result: DecodeResult, mode: DecodeMode) -
     application_data = frame.payload[_VARIABLE_DATA_HEADER_LENGTH:]
     records, undecoded_data, more_records_follow, record_diagnostics = _decode_records(application_data, mode, lsb_order=frame.ci == _VARIABLE_DATA_CI_MODE_1)
     diagnostics.extend(record_diagnostics)
-    telegram = VariableDataTelegram(frame=frame, diagnostics=tuple(diagnostics), header=header, records=tuple(records), more_records_follow=more_records_follow, raw_application_data=application_data, undecoded_data=undecoded_data)
+    telegram = VariableDataTelegram(frame=frame, diagnostics=tuple(record_diagnostics), header=header, records=tuple(records), more_records_follow=more_records_follow, raw_application_data=application_data, undecoded_data=undecoded_data)
     return DecodeResult(ok=not any(diagnostic.severity is Severity.FATAL for diagnostic in diagnostics), telegram=telegram, frame=frame, diagnostics=tuple(diagnostics), raw=frame_result.raw)
 
 
@@ -216,7 +216,7 @@ def _decode_fixed_data_result(frame_result: DecodeResult, mode: DecodeMode) -> D
         _decode_fixed_data_counter(2, counter_data[_FIXED_DATA_COUNTER_LENGTH:], lsb_order=lsb_order, unit=counter_2_unit, historic_unit=counter_1_unit),
     )
     undecoded_data = frame.payload[_FIXED_DATA_MINIMUM_LENGTH:]
-    telegram = FixedDataTelegram(frame=frame, diagnostics=tuple(diagnostics), header=header, counters=counters, raw_application_data=frame.payload, undecoded_data=undecoded_data)
+    telegram = FixedDataTelegram(frame=frame, diagnostics=(), header=header, counters=counters, raw_application_data=frame.payload, undecoded_data=undecoded_data)
     return DecodeResult(ok=not any(diagnostic.severity is Severity.FATAL for diagnostic in diagnostics), telegram=telegram, frame=frame, diagnostics=tuple(diagnostics), raw=frame_result.raw)
 
 

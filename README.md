@@ -167,6 +167,8 @@ pymeterbus-decode --mode lenient --indent 2 "$HEX"
 
 For real-world meter collection, lenient mode is often more useful because meters may include manufacturer-specific data, filler bytes, malformed tails, or unsupported records.
 
+`result.ok` means that no fatal diagnostic occurred in the selected mode; lenient results may still contain recoverable error or warning diagnostics. Inspect `result.diagnostics` even when `result.ok` is true.
+
 See [diagnostics and decode modes](docs/diagnostics.md) for severity levels, common diagnostic categories, and ingestion guidance.
 
 ### Compact and format frames

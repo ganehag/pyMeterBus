@@ -52,13 +52,19 @@ assert result.frame.kind.value == "ack"
 assert result.telegram is None
 ```
 
-`decode()` always returns a `DecodeResult`. It does not raise for ordinary decode failures. Check `result.ok` and inspect `result.diagnostics`.
+`decode()` always returns a `DecodeResult`. It does not raise for ordinary decode failures. Check `result.ok` and inspect `result.diagnostics`. `result.ok` means that decoding produced no fatal diagnostic in the selected mode; it does not mean that `result.diagnostics` is empty.
 
 ACK, short, and control frames do not contain application telegrams, so `result.telegram` is `None` for those frames.
 
 ## Decode one frame or telegram directly
 
-Use `decode()` when you want diagnostics-first behavior. Use the convenience helpers when you want exceptions for invalid input.
+The three entry points differ only in what they return and how they report an unusable result:
+
+| API | Returns | Raises `DecodeError` when | Typical use |
+| --- | --- | --- | --- |
+| `decode()` | `DecodeResult` | Never for an ordinary protocol decode failure | Diagnostics-first ingestion and inspection |
+| `decode_one_frame()` | `Frame` | The selected mode cannot produce a usable frame | Frame-only callers that prefer exceptions |
+| `decode_one()` | `Telegram` | The selected mode is unsuccessful or the frame has no supported application telegram | Application-data callers that prefer exceptions |
 
 ```python
 from meterbus.api import decode_one_frame, decode_one
@@ -69,7 +75,7 @@ telegram = decode_one(long_frame_bytes)
 
 `decode_one_frame()` returns a frame or raises `DecodeError`.
 
-`decode_one()` returns an application telegram or raises `DecodeError` when no telegram is available.
+`decode_one()` returns an application telegram or raises `DecodeError` when decoding is unsuccessful in the selected mode or no telegram is available. For example, a fatal record error raises in strict mode, while lenient mode can return a partial telegram carrying an error diagnostic.
 
 For most ingestion systems, `decode()` is the safer choice because it lets you log or store diagnostics without throwing away the raw result.
 
@@ -88,7 +94,7 @@ Supported modes are:
 - `DecodeMode.LENIENT`: preserve partially decoded data where possible.
 - `DecodeMode.COMPAT`: preserve partially decoded data where possible for compatibility-oriented workflows.
 
-In lenient and compat modes, undecodable records can be preserved as `UnknownRecord` values with diagnostics instead of discarding the whole telegram.
+In lenient and compat modes, undecodable records can be preserved as `UnknownRecord` values with diagnostics instead of discarding the whole telegram. Such a result can have `ok=True` and still contain `error` diagnostics: `ok` specifically means there is no fatal diagnostic in that mode.
 
 Use strict mode for tests and validation. Use lenient mode when you are collecting real-world meter data and prefer partial records plus diagnostics over a hard failure.
 
@@ -102,6 +108,8 @@ result = decode(raw, mode=DecodeMode.LENIENT)
 for diagnostic in result.diagnostics:
     print(diagnostic.severity.value, diagnostic.code, diagnostic.message)
 ```
+
+Diagnostics have one owning layer. `result.frame.diagnostics` contains frame-envelope issues, while `result.telegram.diagnostics` contains application- and record-level issues. `result.diagnostics` is their ordered aggregate and is the normal top-level collection to inspect. A malformed record can also carry its own diagnostic when it is preserved as an `UnknownRecord`.
 
 Typical handling is:
 

@@ -384,6 +384,25 @@ def test_decode_one_returns_variable_data_telegram():
     assert len(telegram.records) == 3
 
 
+def test_decode_one_raises_when_strict_record_decoding_fails():
+    raw = _long_variable_frame(bytes([0x02, 0x78, 0x01]))
+
+    with pytest.raises(DecodeError) as exc_info:
+        decode_one(raw, mode=DecodeMode.STRICT)
+
+    assert str(exc_info.value) == "not enough bytes for value"
+    assert exc_info.value.diagnostics[-1].code == "record_decode_error"
+
+
+def test_decode_one_returns_partial_telegram_when_lenient_decoding_succeeds():
+    raw = _long_variable_frame(bytes([0x02, 0x78, 0x01]))
+
+    telegram = decode_one(raw, mode=DecodeMode.LENIENT)
+
+    assert isinstance(telegram, VariableDataTelegram)
+    assert telegram.diagnostics[-1].code == "record_decode_error"
+
+
 def test_decode_one_raises_when_no_application_telegram_is_available():
     raw = load_hex_fixture("frames/short.hex").data
 
@@ -391,6 +410,18 @@ def test_decode_one_raises_when_no_application_telegram_is_available():
         decode_one(raw)
 
     assert str(exc_info.value) == "application telegram decoding is not available for this frame"
+
+
+def test_decode_keeps_frame_and_telegram_diagnostics_at_their_own_layers():
+    raw = bytearray(_long_variable_frame(bytes([0x02, 0x75, 0x0A, 0x00])))
+    raw[-2] ^= 0xFF
+
+    result = decode(bytes(raw), mode=DecodeMode.LENIENT)
+
+    assert result.ok is True
+    assert result.frame.diagnostics[-1].code == "checksum_mismatch"
+    assert result.telegram.diagnostics == ()
+    assert result.diagnostics == result.frame.diagnostics
 
 
 def test_decode_preserves_frame_decoder_errors_in_decode_result():

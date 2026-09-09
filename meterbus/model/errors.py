@@ -10,7 +10,7 @@ class MeterBusError(Exception):
 
 
 class DecodeError(MeterBusError):
-    """Raised by strict convenience APIs when decoding fails."""
+    """Raised by convenience APIs when decoding fails in the selected mode."""
 
     def __init__(self, message: str, diagnostics: tuple[Diagnostic, ...] = ()) -> None:
         super().__init__(message)
