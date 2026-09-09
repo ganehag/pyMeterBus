@@ -154,7 +154,7 @@ def recv_frame(ser, length=1):
                         return data
 
                 except MBusFrameCRCError as e:
-                        pass
+                        return False
 
                 except FrameMismatch as e:
                         pass
@@ -277,7 +277,7 @@ class MBusSerial:
                             return data
 
                     except MBusFrameCRCError as e:
-                            pass
+                            return False
 
                     except FrameMismatch as e:
                             pass

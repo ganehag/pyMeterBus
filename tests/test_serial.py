@@ -1,5 +1,6 @@
 import os
 import sys
+import io
 import serial
 
 myPath = os.path.dirname(os.path.abspath(__file__))
@@ -147,6 +148,27 @@ class TestSequenceFunctions(unittest.TestCase):
         self.slave.write(self.crcerror_frame)
         frame = meterbus.recv_frame(self.master)
         self.assertEqual(frame, False)
+
+    def test_oversized_long_frame_stops_at_declared_length(self):
+        declared_length = 240
+        payload = bytes([0x01, 0x80, 0x00, 0xFF]) * 60
+        header = bytes([
+            0x68, declared_length, declared_length, 0x68,
+            0x08, 0x01,
+            0x72,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00, 0x00,
+        ])
+        checksum = (sum(header[4:]) + sum(payload)) % 256
+        stream = io.BytesIO(header + payload + bytes([checksum, 0x16]))
+
+        self.assertEqual(meterbus.recv_frame(stream), False)
+        self.assertEqual(stream.tell(), declared_length + 6)
 
 if __name__ == '__main__':
     unittest.main()

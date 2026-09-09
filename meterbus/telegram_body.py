@@ -82,8 +82,8 @@ class TelegramBodyPayload(object):
             return startPos + 1
 
         if rec.dib.has_extension_bit:
-            for count, part in enumerate(
-                    self.body.parts[startPos + 1:]):
+            for pos in range(startPos + 1, len(self.body.parts)):
+                part = self.body.parts[pos]
                 rec.dib.parts.append(part)
 
                 if not rec.dib.has_extension_bit:
@@ -108,11 +108,12 @@ class TelegramBodyPayload(object):
                                                       var_vife_len]
 
         if rec.vib.has_extension_bit:
-            for count, part in enumerate(
-                    self.body.parts[startPos + 1 +
-                                    rec.vib.without_extension_bit +
-                                    len(rec.dib.parts) +
-                                    len(rec.vib.customVIF):]):
+            extension_start = (startPos + 1 +
+                               rec.vib.without_extension_bit +
+                               len(rec.dib.parts) +
+                               len(rec.vib.customVIF))
+            for pos in range(extension_start, len(self.body.parts)):
+                part = self.body.parts[pos]
                 rec.vib.parts.append(part)
 
                 if not rec.vib.has_extension_bit:

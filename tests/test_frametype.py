@@ -37,6 +37,27 @@ class TestSequenceFunctions(unittest.TestCase):
         tele = meterbus.load(self.long_frame)
         self.assertIsInstance(tele, meterbus.TelegramLong)
 
+    def test_long_frame_rejects_data_beyond_declared_length(self):
+        declared_length = 240
+        payload = bytes([0x01, 0x80, 0x00, 0xFF]) * 60
+        header = bytes([
+            0x68, declared_length, declared_length, 0x68,
+            0x08, 0x01,
+            0x72,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00, 0x00,
+        ])
+        checksum = (sum(header[4:]) + sum(payload)) % 256
+        frame = header + payload + bytes([checksum, 0x16])
+
+        with self.assertRaises(MBusFrameDecodeError):
+            meterbus.TelegramLong.parse(frame)
+
     def test_ack_parse_fail(self):
         with self.assertRaises(FrameMismatch):
             # Give it the wrong frame

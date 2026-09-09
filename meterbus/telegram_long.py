@@ -41,8 +41,12 @@ class TelegramLong(object):
 
             # start + length + length + start = 4 bytes
             # crc + stop = 2 bytes
-            if len(dbuf) - 6 < self.header.lField.parts[0]:
-                raise MbusFrameLengthError(self.header.lField.parts[0] + 6)
+            frame_length = self.header.lField.parts[0] + 6
+            if len(dbuf) < frame_length:
+                raise MbusFrameLengthError(frame_length)
+
+            if len(dbuf) > frame_length:
+                raise MBusFrameDecodeError("Invalid M-Bus length")
 
             if self.header.lField.parts[0] < 3:
                 raise MBusFrameDecodeError("Invalid M-Bus length value")
