@@ -123,7 +123,7 @@ Code examples
 
 ### Decode the value of a single record (record 3)
 ```python
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import meterbus
 
@@ -148,7 +148,7 @@ print telegram.records[3].parsed_value
 
 ### Request a frame over Serial and dump it in JSON format
 ```python
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import serial
 import meterbus
