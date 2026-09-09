@@ -30,28 +30,35 @@ def decode_variable_value(raw: bytes, *, lsb_order: bool = True) -> tuple[bytes,
     Raw bytes are always preserved exactly as transmitted.
     """
 
-    if not raw:
+    return _decode_variable_value_at(raw, 0, lsb_order=lsb_order)
+
+
+def _decode_variable_value_at(raw: bytes, start: int, *, lsb_order: bool = True) -> tuple[bytes, int, object, ValueType]:
+    """Decode a variable-length value at `start` without copying the input suffix."""
+
+    if start >= len(raw):
         raise VariableLengthValueError("variable-length value is missing length byte")
 
-    marker = raw[0]
+    marker = raw[start]
     length = _payload_length(marker)
-    end = 1 + length
+    end = start + 1 + length
     if len(raw) < end:
         raise VariableLengthValueError("variable-length value is truncated")
 
-    payload = raw[1:end]
+    payload = raw[start + 1:end]
+    consumed = end - start
 
     if marker <= 0xBF:
         text_payload = bytes(reversed(payload)) if lsb_order else payload
-        return payload, end, text_payload.decode("latin-1"), ValueType.STRING
+        return payload, consumed, text_payload.decode("latin-1"), ValueType.STRING
 
     if 0xC0 <= marker <= 0xCF:
-        return payload, end, _decode_bcd(payload), ValueType.DECIMAL
+        return payload, consumed, _decode_bcd(payload), ValueType.DECIMAL
 
     if 0xD0 <= marker <= 0xDF:
-        return payload, end, -_decode_bcd(payload), ValueType.DECIMAL
+        return payload, consumed, -_decode_bcd(payload), ValueType.DECIMAL
 
-    return payload, end, payload, ValueType.BINARY
+    return payload, consumed, payload, ValueType.BINARY
 
 
 def _payload_length(marker: int) -> int:

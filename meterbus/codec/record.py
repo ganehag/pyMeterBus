@@ -11,9 +11,9 @@ from decimal import Decimal
 
 from meterbus.model import DataRecord, DecodedValue, ValueType
 
-from .dif import DataInformationParseError, parse_dif
-from .value import ValueDecodeError, decode_value
-from .vif import ValueInformationParseError, parse_vif
+from .dif import DataInformationParseError, _parse_dif_at
+from .value import ValueDecodeError, _decode_value_at
+from .vif import ValueInformationParseError, _parse_vif_at
 
 
 @dataclass(frozen=True)
@@ -36,16 +36,23 @@ def decode_record(
     """Decode one DIF/VIF/value record from the start of `data`."""
 
     raw = _normalize_input(data)
-    if not raw:
+    return _decode_record_at(raw, 0, lsb_order=lsb_order)
+
+
+def _decode_record_at(raw: bytes, start: int, *, lsb_order: bool = True) -> DataRecordDecodeResult:
+    """Decode one record at `start` without copying the input suffix."""
+
+    if start >= len(raw):
         raise DataRecordDecodeError("cannot decode record from empty input")
 
     try:
-        dif_result = parse_dif(raw)
-        vif_offset = dif_result.consumed
-        vif_result = parse_vif(raw[vif_offset:])
+        dif_result = _parse_dif_at(raw, start)
+        vif_offset = start + dif_result.consumed
+        vif_result = _parse_vif_at(raw, vif_offset)
         value_offset = vif_offset + vif_result.consumed
-        value_result = decode_value(
-            raw[value_offset:],
+        value_result = _decode_value_at(
+            raw,
+            value_offset,
             dif_result.data_information,
             dif_result.data_length,
             unit=vif_result.value_information.unit,
@@ -54,11 +61,11 @@ def decode_record(
     except (DataInformationParseError, ValueInformationParseError, ValueDecodeError) as exc:
         raise DataRecordDecodeError(str(exc)) from exc
 
-    consumed = value_offset + value_result.consumed
+    consumed = value_offset + value_result.consumed - start
     value = _interpret_vif_value(value_result.value, vif_result.value_information.kind)
     value = _apply_vif_multiplier(value, vif_result.value_information.multiplier)
     record = DataRecord(
-        raw=raw[:consumed],
+        raw=raw[start:start + consumed],
         dif=dif_result.data_information,
         vif=vif_result.value_information,
         value=value,

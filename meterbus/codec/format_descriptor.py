@@ -11,8 +11,8 @@ from dataclasses import dataclass
 
 from meterbus.model import Diagnostic, FormatDataRecordDescriptor, Severity
 
-from .dif import DataInformationParseError, parse_dif
-from .vif import ValueInformationParseError, parse_vif
+from .dif import DataInformationParseError, _parse_dif_at
+from .vif import ValueInformationParseError, _parse_vif_at
 
 _FILLER_BYTE = 0x2F
 
@@ -48,9 +48,9 @@ def decode_format_descriptors(format_data: bytes) -> FormatDescriptorDecodeResul
 
         start = offset
         try:
-            dif_result = parse_dif(format_data[offset:])
+            dif_result = _parse_dif_at(format_data, offset)
             offset += dif_result.consumed
-            vif_result = parse_vif(format_data[offset:])
+            vif_result = _parse_vif_at(format_data, offset)
             offset += vif_result.consumed
         except (DataInformationParseError, ValueInformationParseError) as exc:
             diagnostics.append(

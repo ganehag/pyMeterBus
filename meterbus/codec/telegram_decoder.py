@@ -25,7 +25,7 @@ from meterbus.model import (
 
 from .format_descriptor import decode_format_descriptors
 from .frame_decoder import FrameDecoder
-from .record import DataRecordDecodeError, decode_record
+from .record import DataRecordDecodeError, _decode_record_at
 
 _VARIABLE_DATA_CI_MODE_1 = 0x72
 _VARIABLE_DATA_CI_MODE_2 = 0x76
@@ -319,7 +319,7 @@ def _decode_records(application_data: bytes, mode: DecodeMode, *, lsb_order: boo
             records.append(UnknownRecord(raw=application_data[offset:], reason=reason))
             return records, b"", more_records_follow, diagnostics
         try:
-            result = decode_record(application_data[offset:], lsb_order=lsb_order)
+            result = _decode_record_at(application_data, offset, lsb_order=lsb_order)
         except DataRecordDecodeError as exc:
             diagnostic = Diagnostic(severity=Severity.FATAL if mode is DecodeMode.STRICT else Severity.ERROR, code="record_decode_error", message=str(exc), offset=_VARIABLE_DATA_HEADER_LENGTH + offset)
             diagnostics.append(diagnostic)

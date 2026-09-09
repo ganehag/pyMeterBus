@@ -12,7 +12,7 @@ from decimal import Decimal
 
 from meterbus.model import DataEncoding, DataInformation, DecodedValue, Unit, ValueType
 
-from .variable import VariableLengthValueError, decode_variable_value
+from .variable import VariableLengthValueError, _decode_variable_value_at
 
 
 @dataclass(frozen=True)
@@ -38,6 +38,26 @@ def decode_value(
     """Decode one raw value using DIF encoding and declared byte length."""
 
     raw = _normalize_input(data)
+    return _decode_value_at(
+        raw,
+        0,
+        dif,
+        data_length,
+        unit=unit,
+        lsb_order=lsb_order,
+    )
+
+
+def _decode_value_at(
+    raw: bytes,
+    start: int,
+    dif: DataInformation,
+    data_length: int | None,
+    unit: Unit | None = None,
+    *,
+    lsb_order: bool = True,
+) -> ValueDecodeResult:
+    """Decode one value at `start` without copying the input suffix."""
 
     if dif.data_encoding is DataEncoding.NO_DATA:
         return ValueDecodeResult(DecodedValue(b"", None, ValueType.NONE, unit=unit), 0)
@@ -47,7 +67,11 @@ def decode_value(
 
     if dif.data_encoding is DataEncoding.VARIABLE_LENGTH:
         try:
-            value_raw, consumed, decoded, value_type = decode_variable_value(raw, lsb_order=lsb_order)
+            value_raw, consumed, decoded, value_type = _decode_variable_value_at(
+                raw,
+                start,
+                lsb_order=lsb_order,
+            )
         except VariableLengthValueError as exc:
             raise ValueDecodeError(str(exc)) from exc
         return ValueDecodeResult(
@@ -61,10 +85,10 @@ def decode_value(
     if data_length < 0:
         raise ValueDecodeError("data_length must not be negative")
 
-    if len(raw) < data_length:
+    if len(raw) - start < data_length:
         raise ValueDecodeError("not enough bytes for value")
 
-    value_raw = raw[:data_length]
+    value_raw = raw[start:start + data_length]
 
     if dif.data_encoding is DataEncoding.INTEGER:
         return ValueDecodeResult(

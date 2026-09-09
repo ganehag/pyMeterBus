@@ -50,13 +50,19 @@ def parse_dif(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]
     """Parse one DIF/DIFE block from the start of `data`."""
 
     raw = _normalize_input(data)
-    if not raw:
+    return _parse_dif_at(raw, 0)
+
+
+def _parse_dif_at(raw: bytes, start: int) -> DataInformationParseResult:
+    """Parse one DIF/DIFE block at `start` without copying the input suffix."""
+
+    if start >= len(raw):
         raise DataInformationParseError("cannot parse DIF from empty input")
 
-    dif = raw[0]
+    dif = raw[start]
     low_nibble = dif & 0x0F
     extension_bytes: list[int] = []
-    offset = 1
+    offset = start + 1
 
     while dif & 0x80:
         if offset >= len(raw):
@@ -70,7 +76,7 @@ def parse_dif(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]
             raise DataInformationParseError("too many DIFE extension bytes")
 
     data_information = DataInformation(
-        raw=raw[:offset],
+        raw=raw[start:offset],
         data_encoding=_decode_data_encoding(low_nibble),
         function=_decode_function(dif),
         storage_number=_decode_storage_number(dif, extension_bytes),
@@ -81,7 +87,7 @@ def parse_dif(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]
 
     return DataInformationParseResult(
         data_information=data_information,
-        consumed=offset,
+        consumed=offset - start,
         data_length=_DATA_LENGTH_BY_LOW_NIBBLE[low_nibble],
         has_extension=bool(extension_bytes),
         is_special_function=low_nibble == 0x0F,

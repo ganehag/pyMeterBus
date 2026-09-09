@@ -30,12 +30,18 @@ def parse_vif(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]
     """Parse one VIF/VIFE block from the start of `data`."""
 
     raw = _normalize_input(data)
-    if not raw:
+    return _parse_vif_at(raw, 0)
+
+
+def _parse_vif_at(raw: bytes, start: int) -> ValueInformationParseResult:
+    """Parse one VIF/VIFE block at `start` without copying the input suffix."""
+
+    if start >= len(raw):
         raise ValueInformationParseError("cannot parse VIF from empty input")
 
-    vif = raw[0]
+    vif = raw[start]
     base_vif = vif & 0x7F
-    offset = 1
+    offset = start + 1
     extension_bytes: list[int] = []
     record_error_bytes: list[int] = []
     custom_vif: bytes | None = None
@@ -66,7 +72,7 @@ def parse_vif(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]
     enhancement = _apply_record_error_enhancement(enhancement, record_error_bytes)
 
     value_information = ValueInformation(
-        raw=raw[:offset],
+        raw=raw[start:offset],
         unit=unit,
         kind=kind,
         multiplier=multiplier,
@@ -76,7 +82,7 @@ def parse_vif(data: bytes | bytearray | memoryview | list[int] | tuple[int, ...]
     )
     return ValueInformationParseResult(
         value_information=value_information,
-        consumed=offset,
+        consumed=offset - start,
         has_extension=bool(extension_bytes),
         is_custom_vif=custom_vif is not None,
     )

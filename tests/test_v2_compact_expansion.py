@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+import meterbus.codec.compact as compact_codec
 from meterbus.api import decode
 from meterbus.codec.compact import expand_compact_telegram
 from meterbus.codec.crc import crc16_en13757_bytes
@@ -158,3 +159,22 @@ def test_expand_compact_telegram_preserves_truncated_value_tail_without_crc_vali
     assert result.recovered_application_data == bytes.fromhex("02 03 34 12")
     assert result.diagnostics[-1].code == "compact_value_decode_error"
     assert result.diagnostics[-1].context["descriptor_index"] == 2
+
+
+def test_expand_compact_data_passes_shared_buffer_with_offsets(monkeypatch):
+    fmt = decode(_format_frame(bytes.fromhex("02 03 04 05"))).telegram
+    compact_data = bytes.fromhex("34 12 78 56 34 12")
+    offsets = []
+    decode_value_at = compact_codec._decode_value_at
+
+    def observe_offset(raw, offset, *args, **kwargs):
+        assert raw is compact_data
+        offsets.append(offset)
+        return decode_value_at(raw, offset, *args, **kwargs)
+
+    monkeypatch.setattr(compact_codec, "_decode_value_at", observe_offset)
+
+    result = compact_codec.expand_compact_data(compact_data, fmt.descriptors)
+
+    assert result.diagnostics == ()
+    assert offsets == [0, 2]

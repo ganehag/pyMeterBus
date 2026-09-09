@@ -22,7 +22,7 @@ from meterbus.model import (
 
 from .crc import crc16_en13757_bytes
 from .record import _apply_vif_multiplier, _interpret_vif_value
-from .value import ValueDecodeError, decode_value
+from .value import ValueDecodeError, _decode_value_at
 
 
 @dataclass(frozen=True)
@@ -117,8 +117,9 @@ def expand_compact_data(
 
     for descriptor in descriptors:
         try:
-            value_result = decode_value(
-                compact_data[offset:],
+            value_result = _decode_value_at(
+                compact_data,
+                offset,
                 descriptor.dif,
                 descriptor.data_length,
                 unit=descriptor.vif.unit,
