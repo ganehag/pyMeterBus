@@ -4,11 +4,14 @@ from .telegram_body import TelegramBody
 from .telegram_header import TelegramHeader
 from .exceptions import (MBusFrameCRCError, MBusFrameDecodeError,
                          FrameMismatch, MbusFrameLengthError)
+from decimal import Decimal
+from meterbus.telegram_variable_data_record import TelegramVariableDataRecord
+from typing import Dict, Iterator, List, Optional, Union
 
 
 class TelegramLong(object):
     @staticmethod
-    def parse(data):
+    def parse(data: Optional[List[int]]) -> "TelegramLong":
         if data is None:
             raise MBusFrameDecodeError("Data is None")
 
@@ -20,7 +23,7 @@ class TelegramLong(object):
 
         return TelegramLong(data)
 
-    def __init__(self, dbuf=None):
+    def __init__(self, dbuf: Optional[List[int]]=None) -> None:
         self._header = TelegramHeader()
         self._body = TelegramBody()
 
@@ -96,7 +99,7 @@ class TelegramLong(object):
         self._body.load(value)
 
     @property
-    def records(self):
+    def records(self) -> List[TelegramVariableDataRecord]:
         """Alias property for easy access to records"""
         return self.body.bodyPayload.records
 
@@ -109,7 +112,7 @@ class TelegramLong(object):
         return False
 
     @property
-    def interpreted(self):
+    def interpreted(self) -> Dict[str, Dict[str, Union[str, Dict[str, Union[str, int]], List[Union[Dict[str, Union[str, int]], Dict[str, Union[Decimal, str, int]]]]]]]:
         return {
             'head': self.header.interpreted,
             'body': self.body.interpreted
@@ -133,7 +136,7 @@ class TelegramLong(object):
     # def parse(self):
     #     self.body.parse()
 
-    def compute_crc(self):
+    def compute_crc(self) -> int:
         return (self.header.cField.parts[0] +
                 self.header.aField.parts[0] +
                 sum(self.body.bodyHeader.ci_field.parts) +
@@ -146,14 +149,14 @@ class TelegramLong(object):
                 sum(self.body.bodyHeader.sig_field.parts) +
                 sum(self.body.bodyPayload.body.parts)) % 256
 
-    def check_crc(self):
+    def check_crc(self) -> bool:
         return self.compute_crc() == self.header.crcField.parts[0]
 
-    def to_JSON(self):
+    def to_JSON(self) -> str:
         return json.dumps(self.interpreted, sort_keys=True,
                           indent=4, use_decimal=True)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return (
             len(self.header.startField.parts) * 2 +
             len(self.header.lField.parts) * 2 +
@@ -172,7 +175,7 @@ class TelegramLong(object):
             len(self.header.stopField.parts)
         )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int]:
         self.header.lField = [
           len(self.header.cField.parts) +
           len(self.header.aField.parts) +

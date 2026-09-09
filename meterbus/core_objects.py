@@ -1,5 +1,5 @@
 from enum import Enum
-
+from typing import Tuple, Dict, Union
 
 class MeasureUnit(Enum):
     KWH = "kWh"
@@ -219,7 +219,7 @@ class VIFUnitEnhExt(Enum):
 class VIFTable(object):
     # Primary VIFs (main table), range 0x00 - 0xFF
 
-    lut = {
+    lut: Dict[int, Tuple[float, Union[str, MeasureUnit], Union[str, VIFUnit, VIFUnitExt, VIFUnitSecExt]]] = {
         # E000 0nnn    Energy Wh (0.001Wh to 10000Wh)
         0x00: (1.0e-3, MeasureUnit.WH, VIFUnit.ENERGY_WH),
         0x01: (1.0e-2, MeasureUnit.WH, VIFUnit.ENERGY_WH),
