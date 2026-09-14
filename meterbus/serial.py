@@ -18,8 +18,8 @@ from .exceptions import (MBusFrameDecodeError, MBusFrameCRCError,
 from .defines import *
 import logging
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def serial_send(ser, data=None, read_echo=False):
