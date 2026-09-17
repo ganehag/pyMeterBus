@@ -3,11 +3,12 @@ from .core_objects import DateCalculator
 
 from builtins import (bytes, str, open, super, range,
                       zip, round, input, int, pow, object)
+from typing import List, Optional, Union
 
 
 class TelegramField(object):
-    def __init__(self, parts=None):
-        self._parts = []
+    def __init__(self, parts: Optional[Union[int, List[int]]]=None) -> None:
+        self._parts: List[int] = []
 
         if parts is not None:
             if isinstance(parts, str):
@@ -20,7 +21,7 @@ class TelegramField(object):
                 self.parts += [parts]
 
     @property
-    def decodeInt(self):
+    def decodeInt(self) -> int:
         int_data = self.parts
         value = 0
         neg = int_data[-1] & 0x80
@@ -40,7 +41,7 @@ class TelegramField(object):
         return value
 
     @property
-    def decodeBCD(self):
+    def decodeBCD(self) -> int:
         bcd_data = self.parts
         val = 0
 
@@ -64,7 +65,7 @@ class TelegramField(object):
         return struct.unpack('f', bytes(real_data))[0]
 
     @property
-    def decodeManufacturer(self):
+    def decodeManufacturer(self) -> str:
         m_id = self.decodeInt
         return "{0}{1}{2}".format(
             chr(((m_id >> 10) & 0x001F) + 64),
@@ -72,15 +73,15 @@ class TelegramField(object):
             chr(((m_id) & 0x001F) + 64))
 
     @property
-    def decodeASCII(self):
+    def decodeASCII(self) -> str:
         return "".join(map(chr, reversed(self.parts)))
 
     @property
-    def decodeRAW(self):
+    def decodeRAW(self) -> str:
         return " ".join(map(lambda x: "%02X" % x, self.parts))
 
     @property
-    def decodeDate(self):
+    def decodeDate(self) -> str:
         return DateCalculator.getDate(
             self.parts[0], self.parts[1], False)
 
@@ -144,8 +145,8 @@ class TelegramField(object):
         return " ".join(
             [hex(x).replace('0x', '').zfill(2) for x in self.parts])
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: slice) -> List[int]:
         return self.parts[key]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.parts)

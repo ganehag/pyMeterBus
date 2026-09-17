@@ -47,3 +47,15 @@ exclude = ["tests", "examples"]
 
 [tool.setuptools.dynamic]
 version = { attr = "meterbus.__version__" }
+
+#
+# MPY tuning - this command should succeed: mypy -p meterbus
+#
+[[tool.mypy.overrides]]
+module = ["simplejson.*","Crypto.Cipher.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["yaml.*", "serial.*"]
+follow_untyped_imports = true
+

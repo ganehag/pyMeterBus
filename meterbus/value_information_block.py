@@ -1,11 +1,12 @@
 from .telegram_field import TelegramField
+from typing import List, Optional
 
 
 class ValueInformationBlock(TelegramField):
     EXTENSION_BIT_MASK = 0x80  # 1000 0000
     WITHOUT_EXTENSION_BIT_MASK = 0x7F  # 0111 1111
 
-    def __init__(self, parts=None):
+    def __init__(self, parts: Optional[List[int]]=None) -> None:
         super(ValueInformationBlock, self).__init__(parts)
         self._custom_vif = TelegramField()
 
@@ -18,21 +19,21 @@ class ValueInformationBlock(TelegramField):
         self._custom_vif = value
 
     @property
-    def has_extension_bit(self):
+    def has_extension_bit(self) -> bool:
         try:
             return (self.parts[-1] & self.EXTENSION_BIT_MASK) > 0
         except IndexError:
             return False
 
     @property
-    def without_extension_bit(self):
+    def without_extension_bit(self) -> bool:
         try:
             return (self.parts[0] & self.WITHOUT_EXTENSION_BIT_MASK) == 0x7C
         except IndexError:
             return False
 
     @property
-    def has_lvar_bit(self):
+    def has_lvar_bit(self) -> bool:
         """returns true if first VIFE has LVAR set"""
         try:
             return (self.parts[1] & self.EXTENSION_BIT_MASK) > 0

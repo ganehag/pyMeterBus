@@ -1,9 +1,10 @@
 import simplejson as json
 from .telegram_field import TelegramField
+from typing import Dict, List, Union
 
 
 class TelegramHeader(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self._startField = TelegramField([0x68])
         self._lField = TelegramField([0x00])
         self._cField = TelegramField()
@@ -15,11 +16,11 @@ class TelegramHeader(object):
         self._headerLengthCRCStop = 8
 
     @property
-    def headerLength(self):
+    def headerLength(self) -> int:
         return self._headerLength
 
     @property
-    def headerLengthCRCStop(self):
+    def headerLengthCRCStop(self) -> int:
         return self._headerLengthCRCStop
 
     @property
@@ -71,7 +72,7 @@ class TelegramHeader(object):
         self._stopField = TelegramField(value)
 
     @property
-    def interpreted(self):
+    def interpreted(self) -> Dict[str, str]:
         return {
             'start': hex(self.startField.parts[0]),
             'length': hex(self.lField.parts[0]),
@@ -81,7 +82,7 @@ class TelegramHeader(object):
             'stop': hex(self.stopField.parts[0])
         }
 
-    def load(self, hat):
+    def load(self, hat: Union[str, List[int]]) -> None:
         header = hat
         if isinstance(hat, str):
             header = list(map(ord, hat))
@@ -102,6 +103,6 @@ class TelegramHeader(object):
             self.crcField = header[-2]
             self.stopField = header[-1]
 
-    def to_JSON(self):
+    def to_JSON(self) -> str:
         return json.dumps(self.interpreted, sort_keys=False,
                           indent=4, use_decimal=True)
