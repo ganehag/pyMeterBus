@@ -78,7 +78,7 @@ def mbus_probe_secondary_address(ser, mask, read_echo=False):
         if isinstance(frame, meterbus.TelegramLong):
             return True, frame.secondary_address, frame.manufacturer
 
-        return None, None, None
+        return False, None, None
 
     return frame, None, None
 
