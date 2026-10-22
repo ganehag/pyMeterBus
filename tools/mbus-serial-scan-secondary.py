@@ -45,14 +45,14 @@ def mbus_scan_secondary_address_range(ser, pos, mask, read_echo=False):
             l_start = l_end = ord(mask[pos]) - ord('0')
 
     if mask[pos].upper() == 'F' or pos == 15:
-       for i in range(l_start, l_end+1):  # l_end+1 is to include l_end val
-           new_mask = (mask[:pos] + "{0:1X}".format(i) + mask[pos+1:]).upper()
-           val, match, manufacturer = mbus_probe_secondary_address(ser, new_mask, read_echo)
-           if val == True:
-               print("Device found with id {0} ({1}), using mask {2}".format(
-                   match, manufacturer, new_mask))
-           elif val == False:  # Collision
-               mbus_scan_secondary_address_range(ser, pos+1, new_mask, read_echo)
+        for i in range(l_start, l_end+1):  # l_end+1 is to include l_end val
+            new_mask = (mask[:pos] + "{0:1X}".format(i) + mask[pos+1:]).upper()
+            val, match, manufacturer = mbus_probe_secondary_address(ser, new_mask, read_echo)
+            if val == True:
+                print("Device found with id {0} ({1}), using mask {2}".format(
+                    match, manufacturer, new_mask))
+            elif val == False:  # Collision
+                mbus_scan_secondary_address_range(ser, pos+1, new_mask, read_echo)
 
 def mbus_probe_secondary_address(ser, mask, read_echo=False):
     # False -> Collison
@@ -70,8 +70,7 @@ def mbus_probe_secondary_address(ser, mask, read_echo=False):
 
         frame = None
         try:
-            frame = meterbus.load(
-                meterbus.recv_frame(ser))
+            frame = meterbus.load(meterbus.recv_frame(ser))
         except meterbus.MBusFrameDecodeError:
             pass
 
@@ -85,7 +84,7 @@ def mbus_probe_secondary_address(ser, mask, read_echo=False):
 def main(args):
     try:
         with serial.serial_for_url(args.device,
-                           args.baudrate, 8, 'E', 1, timeout=1) as ser:
+                                   args.baudrate, 8, 'E', 1, timeout=1) as ser:
 
             # Ensure we are at the beginning of the records
             init_slaves(ser, args.echofix)
