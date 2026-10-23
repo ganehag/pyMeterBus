@@ -34,13 +34,13 @@ def init_slaves(ser, read_echo=False):
 
     return False
 
-def mbus_scan_secondary_address_range(ser, pos, mask, read_echo=False):
+def mbus_scan_secondary_address_range(ser, pos, mask, read_echo=False, discovery_delay=0.0):
     # F character is a wildcard
     if mask[pos].upper() == 'F':
         l_start, l_end = 0, 9
     else:
         if pos < 15:
-            mbus_scan_secondary_address_range(ser, pos+1, mask, read_echo)
+            mbus_scan_secondary_address_range(ser, pos+1, mask, read_echo, discovery_delay)
         else:
             l_start = l_end = ord(mask[pos]) - ord('0')
 
@@ -51,8 +51,14 @@ def mbus_scan_secondary_address_range(ser, pos, mask, read_echo=False):
             if val == True:
                 print("Device found with id {0} ({1}), using mask {2}".format(
                     match, manufacturer, new_mask))
+                # this delay is needed by some devices, like 10 seconds for the
+                # Brummerhoop F90 Series heater meter, after a successful
+                # device has been found, to ensure that the other unselected
+                # devices in the same bus do respond again to new selection
+                # commands.
+                time.sleep(discovery_delay)
             elif val == False:  # Collision
-                mbus_scan_secondary_address_range(ser, pos+1, new_mask, read_echo)
+                mbus_scan_secondary_address_range(ser, pos+1, new_mask, read_echo, discovery_delay)
 
 def mbus_probe_secondary_address(ser, mask, read_echo=False):
     # False -> Collison
@@ -89,7 +95,7 @@ def main(args):
             # Ensure we are at the beginning of the records
             init_slaves(ser, args.echofix)
 
-            mbus_scan_secondary_address_range(ser, 0, args.address, args.echofix)
+            mbus_scan_secondary_address_range(ser, 0, args.address, args.echofix, args.discovery_delay)
 
     except serial.serialutil.SerialException as e:
         print(e)
@@ -110,6 +116,10 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--address',
                         type=sec_addr_valid, default="FFFFFFFFFFFFFFFF",
                         help='Secondary address mask')
+    parser.add_argument('--discovery-delay',
+                        type=float,
+                        default=0.0,
+                        help='Delay in seconds after discovering a meter (default: 0)')
     # FIXME
     # parser.add_argument('-r', '--retries',
     #                     type=int, default=3,
