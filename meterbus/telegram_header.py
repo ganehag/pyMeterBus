@@ -91,6 +91,7 @@ class TelegramHeader(object):
             self.lField = header[1]
             self.lField = header[2]      # Re-set
             self.startField = header[3]  # Re-set
+            # TODO check equality of re-set bytes
             self.cField = header[4]
             self.aField = header[5]
             self.crcField = header[-2]

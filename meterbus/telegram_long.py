@@ -12,11 +12,15 @@ class TelegramLong(object):
         if data is None:
             raise MBusFrameDecodeError("Data is None")
 
-        if data is not None and len(data) < 9:
+        if len(data) < 9:
             raise MBusFrameDecodeError("Invalid M-Bus length")
 
         if data[0] != 0x68:
             raise FrameMismatch()
+
+        if data[1] != data[2] or len(data) != data[1] + 6:
+            print('not a single long', len(data), data[1])
+            raise FrameMismatch()  # to be able to parse multiple frames
 
         return TelegramLong(data)
 
