@@ -3,10 +3,11 @@ from .telegram_header import TelegramHeader
 from .exceptions import MBusFrameCRCError, MBusFrameDecodeError, MBusFrameEncodeError, FrameMismatch
 
 from .defines import *
+from typing import Iterator, List, Optional, Union
 
 class TelegramControl(object):
     @staticmethod
-    def parse(data):
+    def parse(data: Optional[List[int]]) -> "TelegramControl":
         if data is None:
             raise MBusFrameDecodeError("Data is None")
 
@@ -18,7 +19,7 @@ class TelegramControl(object):
 
         return TelegramControl(data)
 
-    def __init__(self, dbuf=None):
+    def __init__(self, dbuf: Optional[Union[str, bytes, List[int]]]=None) -> None:
         self._header = TelegramHeader()
         self._body = TelegramBody()
 
@@ -113,15 +114,15 @@ class TelegramControl(object):
     def body(self, value):
         self._body = value
 
-    def compute_crc(self):
+    def compute_crc(self) -> int:
         return (self.header.cField.parts[0] +
                 self.header.aField.parts[0] +
                 self.body.bodyHeader.ci_field.parts[0]) % 256
 
-    def check_crc(self):
+    def check_crc(self) -> bool:
         return self.compute_crc() == self.header.crcField.parts[0]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return (
             len(self.header.startField.parts) * 2 +
             len(self.header.lField.parts) * 2 +
@@ -132,7 +133,7 @@ class TelegramControl(object):
             len(self.header.stopField.parts)
         )
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int]:
         yield self.header.startField.parts[0]
         yield len(self.body.bodyHeader.ci_field.parts) + 2
         yield len(self.body.bodyHeader.ci_field.parts) + 2
