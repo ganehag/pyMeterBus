@@ -1,3 +1,4 @@
+import decimal
 from json import encoder
 from meterbus.exceptions import *
 import meterbus
@@ -92,7 +93,7 @@ class TestSequenceFunctions(unittest.TestCase):
 
     def test_verify_float_value(self):
         self.assertEqual(
-            self.frame.records[2].value, 45.52)
+            self.frame.records[2].value, decimal.Decimal('45.52'))
 
     def test_verify_str_value(self):
         self.assertEqual(

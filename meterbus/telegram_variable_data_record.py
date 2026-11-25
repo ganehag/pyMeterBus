@@ -152,12 +152,14 @@ class TelegramVariableDataRecord(object):
                 not all(chr(c) in string.printable for c in tdf.parts)):
             return tdf.decodeRAW
 
+        if enc in (te.ENCODING_INTEGER, te.ENCODING_BCD):
+            # Scale exact wire integers before float rounding can add digits
+            # that were not sent by the meter.
+            raw = tdf.decodeInt if enc == te.ENCODING_INTEGER else tdf.decodeBCD
+            value = decimal.Decimal(raw) * decimal.Decimal(str(mult))
+            return int(value) if enc == te.ENCODING_INTEGER and mult > 1.0 else value
+
         return {
-            te.ENCODING_INTEGER: lambda: int(
-                tdf.decodeInt * mult) if mult > 1.0 else decimal.Decimal(
-                tdf.decodeInt * mult),
-            te.ENCODING_BCD: lambda: decimal.Decimal(
-                tdf.decodeBCD * mult),
             te.ENCODING_REAL: lambda: decimal.Decimal(
                 tdf.decodeReal * mult),
             te.ENCODING_VARIABLE_LENGTH: lambda: tdf.decodeASCII,

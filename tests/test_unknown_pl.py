@@ -71,7 +71,7 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_record9_value(self):
         tele = meterbus.load(self.frame)
         records = tele.body.bodyPayload.records
-        self.assertEqual(records[8].parsed_value, 26.3)
+        self.assertEqual(records[8].parsed_value, decimal.Decimal('26.3'))
 
     def test_record10_value(self):
         tele = meterbus.load(self.frame)

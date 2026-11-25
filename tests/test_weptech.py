@@ -1,3 +1,4 @@
+import decimal
 import os
 import sys
 
@@ -45,7 +46,7 @@ class TestSequenceFunctions(unittest.TestCase):
     def test_record5_value(self):
         tele = meterbus.load(list(map(ord, self.frame)))
         records = tele.body.bodyPayload.records
-        self.assertAlmostEqual(records[4].parsed_value, 53.1, 5)
+        self.assertEqual(records[4].parsed_value, decimal.Decimal('53.1'))
 
     def test_record6_value(self):
         tele = meterbus.load(list(map(ord, self.frame)))
